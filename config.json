@@ -1,0 +1,16 @@
+{
+  "version": "1.0.0",
+  "theme": "dark",
+  "always_on_top": true,
+  "window_size": {
+    "width": 958,
+    "height": 908
+  },
+  "buffer_size": 100,
+  "threads": 4,
+  "ramdrive": true,
+  "overwrite": true,
+  "delete_source": true,
+  "language": "it",
+  "auto_elevate_on_start": false
+}

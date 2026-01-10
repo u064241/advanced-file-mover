@@ -1,0 +1,115 @@
+{
+  "app": {
+    "title": "Streaming Telecamera"
+  },
+  "header": {
+    "user": "Utente",
+    "admin": "⚙️ Admin",
+    "camera": "📹 Camera",
+    "logout": "Logout"
+  },
+  "streaming": {
+    "rec": "REC",
+    "streamError": "Errore di streaming"
+  },
+  "controls": {
+    "flipH": "Specchia H",
+    "flipV": "Specchia V",
+    "rotateLeft": "Ruota ↶",
+    "rotateRight": "Ruota ↷",
+    "reset": "Reset",
+    "switchCamera": "Cambia Camera",
+    "record": "Registra",
+    "stopRecord": "Stop",
+    "snapshot": "Snapshot",
+    "download": "Scarica"
+  },
+  "settings": {
+    "fps": "FPS",
+    "quality": "Qualità",
+    "apply": "Applica",
+    "cameraSettings": "Proprietà Webcam",
+    "cameraProperties": "Configurazione Camera",
+    "resolution": "Risoluzione",
+    "brightness": "Luminosità",
+    "contrast": "Contrasto",
+    "saturation": "Saturazione",
+    "exposure": "Esposizione",
+    "gain": "Guadagno",
+    "ledControl": "Controllo LED",
+    "ledStatus": "Stato LED",
+    "ledOn": "Acceso",
+    "ledOff": "Spento",
+    "ledNotSupported": "Non supportato"
+  },
+  "common": {
+    "apply": "Applica",
+    "reset": "Ripristina Predefiniti"
+  },
+  "admin": {
+    "users": "Impostazioni",
+    "addUser": "Aggiungi Utente",
+    "editUser": "Modifica Utente",
+    "deleteUser": "Elimina Utente",
+    "username": "Username",
+    "password": "Password",
+    "role": "Ruolo",
+    "admin": "Admin",
+    "user": "Utente",
+    "forceChange": "Forza cambio",
+    "save": "Salva",
+    "delete": "Elimina",
+    "cancel": "Annulla",
+    "close": "Chiudi",
+    "search": "Cerca..."
+  },
+  "password": {
+    "change": "Cambia Password",
+    "old": "Password Attuale",
+    "new": "Nuova Password",
+    "confirm": "Conferma Password",
+    "save": "Salva",
+    "cancel": "Annulla",
+    "mismatch": "Le password non coincidono",
+    "success": "Password cambiata con successo",
+    "error": "Errore nel cambio password"
+  },
+  "messages": {
+    "loading": "Caricamento...",
+    "success": "Operazione completata",
+    "error": "Errore",
+    "confirm": "Sei sicuro?",
+    "unknownError": "Errore sconosciuto"
+  },
+  "statistics": {
+    "title": "Statistiche Streaming",
+    "refresh": "Aggiorna",
+    "loading": "Caricamento statistiche...",
+    "general": "Statistiche Generali",
+    "uptime": "Uptime Server",
+    "totalRecordings": "Registrazioni Totali",
+    "totalSnapshots": "Snapshot Totali",
+    "totalSize": "Spazio Totale",
+    "recordings": "Registrazioni",
+    "snapshots": "Snapshot",
+    "filename": "Nome File",
+    "originalSize": "Dimensione Originale",
+    "compressedSize": "Dimensione Compressa",
+    "compression": "Compressione %",
+    "size": "Dimensione",
+    "timestamp": "Data/Ora",
+    "noData": "Nessun dato disponibile"
+  },
+  "ai": {
+    "title": "Controlli AI",
+    "faceDetection": "Rilevamento Volti",
+    "motionDetection": "Rilevamento Movimento",
+    "facesDetected": "Volti rilevati",
+    "unavailable": "Non disponibile",
+    "autoRecord": "Registrazione Automatica",
+    "sensitivity": "Sensibilità",
+    "stopDelay": "Ritardo Stop",
+    "motionActive": "Movimento Rilevato",
+    "noMotion": "Nessun Movimento"
+  }
+}

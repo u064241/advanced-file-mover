@@ -1,0 +1,135 @@
+{
+  "app_title": "Advanced File Mover Pro",
+  "tab_main": "📋 Main",
+  "tab_info": "ℹ️ Info",
+  "tab_menu": "🖱️ Context Menu",
+  "tab_view": "👁️ View",
+
+  "view_title": "View",
+  "always_on_top": "Always on top",
+  "theme_label": "🎨 Theme",
+  "theme_dark_current": "🌙 Dark Theme (Current)",
+  "theme_light_current": "☀️ Light Theme (Current)",
+
+  "language_label": "🌐 Language",
+  "language_hint": "Language applies on next start.",
+
+  "elevation_section": "🔒 Privileges",
+  "auto_elevate": "Auto-elevate (UAC) on startup",
+  "restart_as_admin": "Restart as administrator"
+
+  ,"language_hint_applied": "Language applied."
+  ,"auto_elevate_manual": "Auto-elevate (UAC) on startup (manual launch only)"
+  ,"already_admin": "You are already an administrator."
+
+  ,"status_ready": "Ready"
+  ,"status_ready_cache": "Ready (cache)"
+  ,"status_ready_move": "Ready (Move)"
+  ,"status_ready_copy": "Ready (Copy)"
+  ,"status_cancelled": "❌ Operation cancelled"
+
+  ,"progress_placeholder": "Ready|0%|--- MB/s|ETA:--:--"
+  ,"progress_eta_label": "ETA"
+  ,"progress_elapsed_label": "T"
+
+  ,"op_copy": "copy"
+  ,"op_move": "move"
+  ,"op_copy_upper": "COPY"
+  ,"op_move_upper": "MOVE"
+
+  ,"status_operation_in_progress": "Operation in progress..."
+  ,"status_operation_running": "Operation {op} in progress..."
+  ,"status_operation_running_ramdrive": "Operation {op} in progress... (RamDrive: {letter}:)"
+  ,"status_processing_file": "Processing: {name}..."
+  ,"status_operation_completed": "✅ {op} completed!"
+  ,"status_error_during_operation": "❌ Error during {op}"
+  ,"status_error_generic": "❌ Error: {error}"
+  ,"error_unknown_operation": "Unknown operation: {operation}"
+
+  ,"dlg_select_destination_folder_title": "Select destination folder"
+  ,"dlg_select_files_title": "Select files"
+  ,"dlg_select_folder_title": "Select folder"
+
+  ,"warn_title": "Warning"
+  ,"warn_select_source": "Select at least one source"
+  ,"warn_select_destination": "Select a destination"
+  ,"warn_unsupported_shell_object": "Unsupported system item. Please select a real file or folder on disk."
+
+  ,"menu_status_prefix": "Menu status"
+  ,"menu_error_register": "❌ Register error: {error}"
+  ,"menu_error_unregister": "❌ Unregister error: {error}"
+  ,"menu_error_check_status": "❌ Status check error: {error}"
+
+  ,"main_paths_section": "📂 PATHS"
+  ,"main_source": "Source:"
+  ,"main_destination": "Destination:"
+  ,"main_options_section": "⚙️ OPTIONS"
+  ,"main_ops_section": "🚀 OPERATIONS"
+  ,"main_progress_section": "📊 PROGRESS"
+
+  ,"btn_add_file": "➕ File"
+  ,"btn_add_folder": "➕ Folder"
+  ,"btn_remove": "❌ Remove"
+  ,"btn_remove_all": "🗑️ Remove All"
+  ,"btn_browse": "Browse"
+  ,"btn_copy": "📋 Copy"
+  ,"btn_move": "✂️ Move"
+  ,"btn_cancel": "❌ Cancel"
+  ,"btn_refresh_info": "🔄 Refresh Info"
+
+  ,"opt_use_ramdrive": "Use RamDrive"
+  ,"opt_overwrite": "Overwrite existing files"
+  ,"opt_delete_source": "Delete source (Move)"
+
+  ,"label_buffer_mb": "Buffer (MB):"
+  ,"label_threads": "Threads:"
+  ,"hint_auto_profile": "(Auto profile based on storage)"
+
+  ,"menu_title": "🖱️ Windows Context Menu"
+  ,"menu_description": "Register the Windows context menu to quickly access Copy and Move.\n\n✅ Right-click file/folder → Advanced Copy\n✅ Right-click file/folder → Advanced Move\n\nThe source will be the selected file/folder and the GUI will open a browse dialog to choose the destination."
+  ,"menu_hw_title": "🔧 Hardware Optimization"
+  ,"menu_hw_text": "The system automatically detects the storage type:\n\n🚀 NVMe: Buffer 256MB, 12 threads\n⚡ SSD: Buffer 128MB, 8 threads\n💾 HDD: Buffer 80MB, 2 threads\n🔌 USB: Buffer 64MB, 4 threads\n🌐 NAS: Buffer 32MB, 2 threads\n💾 RamDrive: Buffer 8MB (pure RAM), 16 threads\n\nParameters are automatically adjusted based on the destination path."
+  ,"btn_register_menu": "✅ Register Menu"
+  ,"btn_unregister_menu": "❌ Remove Menu"
+  ,"btn_check_status": "ℹ️ Check Status"
+  ,"menu_status_unknown": "Status: Unknown"
+  ,"menu_registered_ok": "✅ Menu registered successfully! Try right-click on a folder."
+  ,"menu_removed_ok": "✅ Menu removed successfully!"
+
+  ,"info_system_section": "🔧 SYSTEM INFO"
+  ,"info_cpu": "CPU"
+  ,"info_ram_total": "Total RAM"
+  ,"info_ram_available": "Available RAM"
+  ,"info_ram_used_pct": "RAM Used %"
+
+  ,"info_ramdrive_section": "💾 RAMDRIVE"
+  ,"info_status_detected": "Status: ✅ DETECTED"
+  ,"info_status_not_detected": "Status: ❌ NOT DETECTED"
+  ,"info_drive_letter": "Drive"
+  ,"info_space_total": "Total Space"
+  ,"info_space_free": "Free Space"
+  ,"info_space_used_pct": "Used %"
+  ,"info_ramdrive_boost": "🚀 RAMDRIVE PERFORMANCE BOOST: +50-200% faster!"
+
+  ,"info_storage_section": "🗂️ DETECTED STORAGE"
+  ,"info_detect_error": "Detection error"
+
+  ,"info_params_source": "⚙️ AUTO-TUNING (SOURCE)"
+  ,"info_params_dest": "⚙️ AUTO-TUNING (DESTINATION)"
+  ,"info_storage_type": "Storage Type"
+  ,"info_buffer_recommended": "Recommended Buffer"
+  ,"info_buffer_optimal": "Optimal Buffer"
+  ,"info_threads": "Threads"
+  ,"info_threads_optimal": "Optimal Threads"
+  ,"info_error": "Error"
+
+  ,"info_engine_config": "⚙️ ENGINE CONFIG"
+  ,"info_selected_buffer": "Selected Buffer"
+  ,"info_selected_threads": "Selected Threads"
+  ,"yes": "YES"
+  ,"no": "NO"
+
+  ,"info_version": "📝 VERSION"
+  ,"info_rights": "© 2025 - All rights reserved"
+  ,"info_update_error": "Update error"
+}

@@ -1,0 +1,115 @@
+{
+  "app": {
+    "title": "Transmisión de Cámara"
+  },
+  "header": {
+    "user": "Usuario",
+    "admin": "⚙️ Admin",
+    "camera": "📹 Cámara",
+    "logout": "Cerrar sesión"
+  },
+  "streaming": {
+    "rec": "REC",
+    "streamError": "Error de transmisión"
+  },
+  "controls": {
+    "flipH": "Voltear H",
+    "flipV": "Voltear V",
+    "rotateLeft": "Rotar ↶",
+    "rotateRight": "Rotar ↷",
+    "reset": "Reiniciar",
+    "switchCamera": "Cambiar Cámara",
+    "record": "Grabar",
+    "stopRecord": "Detener",
+    "snapshot": "Captura",
+    "download": "Descargar"
+  },
+  "settings": {
+    "fps": "FPS",
+    "quality": "Calidad",
+    "apply": "Aplicar",
+    "cameraSettings": "Propiedades de Cámara",
+    "cameraProperties": "Configuración de Cámara",
+    "resolution": "Resolución",
+    "brightness": "Brillo",
+    "contrast": "Contraste",
+    "saturation": "Saturación",
+    "exposure": "Exposición",
+    "gain": "Ganancia",
+    "ledControl": "Control LED",
+    "ledStatus": "Estado LED",
+    "ledOn": "Encendido",
+    "ledOff": "Apagado",
+    "ledNotSupported": "No soportado"
+  },
+  "common": {
+    "apply": "Aplicar",
+    "reset": "Restablecer Predeterminados"
+  },
+  "admin": {
+    "users": "Configuración",
+    "addUser": "Agregar Usuario",
+    "editUser": "Editar Usuario",
+    "deleteUser": "Eliminar Usuario",
+    "username": "Nombre de usuario",
+    "password": "Contraseña",
+    "role": "Rol",
+    "admin": "Admin",
+    "user": "Usuario",
+    "forceChange": "Forzar cambio",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "search": "Buscar..."
+  },
+  "password": {
+    "change": "Cambiar Contraseña",
+    "old": "Contraseña Actual",
+    "new": "Nueva Contraseña",
+    "confirm": "Confirmar Contraseña",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "mismatch": "Las contraseñas no coinciden",
+    "success": "Contraseña cambiada exitosamente",
+    "error": "Error al cambiar la contraseña"
+  },
+  "messages": {
+    "loading": "Cargando...",
+    "success": "Operación completada",
+    "error": "Error",
+    "confirm": "¿Está seguro?",
+    "unknownError": "Error desconocido"
+  },
+  "statistics": {
+    "title": "Estadísticas de Transmisión",
+    "refresh": "Actualizar",
+    "loading": "Cargando estadísticas...",
+    "general": "Estadísticas Generales",
+    "uptime": "Tiempo de Ejecución",
+    "totalRecordings": "Total de Grabaciones",
+    "totalSnapshots": "Total de Capturas",
+    "totalSize": "Espacio Total",
+    "recordings": "Grabaciones",
+    "snapshots": "Capturas",
+    "filename": "Nombre de Archivo",
+    "originalSize": "Tamaño Original",
+    "compressedSize": "Tamaño Comprimido",
+    "compression": "Compresión %",
+    "size": "Tamaño",
+    "timestamp": "Fecha/Hora",
+    "noData": "Sin datos disponibles"
+  },
+  "ai": {
+    "title": "Controles IA",
+    "faceDetection": "Detección de Rostros",
+    "motionDetection": "Detección de Movimiento",
+    "facesDetected": "Rostros detectados",
+    "unavailable": "No disponible",
+    "autoRecord": "Grabación Automática",
+    "sensitivity": "Sensibilidad",
+    "stopDelay": "Retraso de Parada",
+    "motionActive": "Movimiento Detectado",
+    "noMotion": "Sin Movimiento"
+  }
+}

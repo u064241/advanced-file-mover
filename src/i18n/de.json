@@ -1,0 +1,115 @@
+{
+  "app": {
+    "title": "Kamera-Streaming"
+  },
+  "header": {
+    "user": "Benutzer",
+    "admin": "⚙️ Admin",
+    "camera": "📹 Kamera",
+    "logout": "Abmelden"
+  },
+  "streaming": {
+    "rec": "REC",
+    "streamError": "Streaming-Fehler"
+  },
+  "controls": {
+    "flipH": "Flip H",
+    "flipV": "Flip V",
+    "rotateLeft": "Drehen ↶",
+    "rotateRight": "Drehen ↷",
+    "reset": "Zurücksetzen",
+    "switchCamera": "Kamera Wechseln",
+    "record": "Aufnahme",
+    "stopRecord": "Stopp",
+    "snapshot": "Foto",
+    "download": "Herunterladen"
+  },
+  "settings": {
+    "fps": "FPS",
+    "quality": "Qualität",
+    "apply": "Anwenden",
+    "cameraSettings": "Kamera-Eigenschaften",
+    "cameraProperties": "Kamera-Konfiguration",
+    "resolution": "Auflösung",
+    "brightness": "Helligkeit",
+    "contrast": "Kontrast",
+    "saturation": "Sättigung",
+    "exposure": "Belichtung",
+    "gain": "Verstärkung",
+    "ledControl": "LED-Steuerung",
+    "ledStatus": "LED-Status",
+    "ledOn": "An",
+    "ledOff": "Aus",
+    "ledNotSupported": "Nicht unterstützt"
+  },
+  "common": {
+    "apply": "Anwenden",
+    "reset": "Zurücksetzen"
+  },
+  "admin": {
+    "users": "Einstellungen",
+    "addUser": "Benutzer Hinzufügen",
+    "editUser": "Benutzer Bearbeiten",
+    "deleteUser": "Benutzer Löschen",
+    "username": "Benutzername",
+    "password": "Passwort",
+    "role": "Rolle",
+    "admin": "Admin",
+    "user": "Benutzer",
+    "forceChange": "Erzwinge Änderung",
+    "save": "Speichern",
+    "delete": "Löschen",
+    "cancel": "Abbrechen",
+    "close": "Schließen",
+    "search": "Suche..."
+  },
+  "password": {
+    "change": "Passwort Ändern",
+    "old": "Aktuelles Passwort",
+    "new": "Neues Passwort",
+    "confirm": "Passwort Bestätigen",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "mismatch": "Passwörter stimmen nicht überein",
+    "success": "Passwort erfolgreich geändert",
+    "error": "Fehler beim Ändern des Passworts"
+  },
+  "messages": {
+    "loading": "Wird geladen...",
+    "success": "Vorgang abgeschlossen",
+    "error": "Fehler",
+    "confirm": "Sind Sie sicher?",
+    "unknownError": "Unbekannter Fehler"
+  },
+  "statistics": {
+    "title": "Streaming-Statistiken",
+    "refresh": "Aktualisieren",
+    "loading": "Statistiken werden geladen...",
+    "general": "Allgemeine Statistiken",
+    "uptime": "Server-Laufzeit",
+    "totalRecordings": "Gesamtaufnahmen",
+    "totalSnapshots": "Gesamtfotos",
+    "totalSize": "Gesamtspeicher",
+    "recordings": "Aufnahmen",
+    "snapshots": "Fotos",
+    "filename": "Dateiname",
+    "originalSize": "Ursprüngliche Größe",
+    "compressedSize": "Komprimierte Größe",
+    "compression": "Komprimierung %",
+    "size": "Größe",
+    "timestamp": "Datum/Uhrzeit",
+    "noData": "Keine Daten verfügbar"
+  },
+  "ai": {
+    "title": "KI-Steuerungen",
+    "faceDetection": "Gesichtserkennung",
+    "motionDetection": "Bewegungserkennung",
+    "facesDetected": "Erkannte Gesichter",
+    "unavailable": "Nicht verfügbar",
+    "autoRecord": "Auto-Aufnahme",
+    "sensitivity": "Empfindlichkeit",
+    "stopDelay": "Stopp-Verzögerung",
+    "motionActive": "Bewegung Erkannt",
+    "noMotion": "Keine Bewegung"
+  }
+}

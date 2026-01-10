@@ -1,0 +1,135 @@
+{
+  "app_title": "Advanced File Mover Pro",
+  "tab_main": "📋 Principal",
+  "tab_info": "ℹ️ Info",
+  "tab_menu": "🖱️ Menú contextual",
+  "tab_view": "👁️ Vista",
+
+  "view_title": "Vista",
+  "always_on_top": "Siempre encima",
+  "theme_label": "🎨 Tema",
+  "theme_dark_current": "🌙 Tema oscuro (Actual)",
+  "theme_light_current": "☀️ Tema claro (Actual)",
+
+  "language_label": "🌐 Idioma",
+  "language_hint": "El idioma se aplica al reiniciar.",
+
+  "elevation_section": "🔒 Privilegios",
+  "auto_elevate": "Auto-elevación (UAC) al inicio",
+  "restart_as_admin": "Reiniciar como administrador"
+
+  ,"language_hint_applied": "Idioma aplicado."
+  ,"auto_elevate_manual": "Auto-elevación (UAC) al inicio (solo inicio manual)"
+  ,"already_admin": "Ya eres administrador."
+
+  ,"status_ready": "Listo"
+  ,"status_ready_cache": "Listo (caché)"
+  ,"status_ready_move": "Listo (Mover)"
+  ,"status_ready_copy": "Listo (Copiar)"
+  ,"status_cancelled": "❌ Operación cancelada"
+
+  ,"progress_placeholder": "Listo|0%|--- MB/s|ETA:--:--"
+  ,"progress_eta_label": "ETA"
+  ,"progress_elapsed_label": "T"
+
+  ,"op_copy": "copiar"
+  ,"op_move": "mover"
+  ,"op_copy_upper": "COPIAR"
+  ,"op_move_upper": "MOVER"
+
+  ,"status_operation_in_progress": "Operación en curso..."
+  ,"status_operation_running": "Operación {op} en curso..."
+  ,"status_operation_running_ramdrive": "Operación {op} en curso... (RamDrive: {letter}:)"
+  ,"status_processing_file": "Procesando: {name}..."
+  ,"status_operation_completed": "✅ ¡{op} completado!"
+  ,"status_error_during_operation": "❌ Error durante {op}"
+  ,"status_error_generic": "❌ Error: {error}"
+  ,"error_unknown_operation": "Operación desconocida: {operation}"
+
+  ,"dlg_select_destination_folder_title": "Selecciona la carpeta de destino"
+  ,"dlg_select_files_title": "Selecciona archivos"
+  ,"dlg_select_folder_title": "Selecciona una carpeta"
+
+  ,"warn_title": "Aviso"
+  ,"warn_select_source": "Selecciona al menos una fuente"
+  ,"warn_select_destination": "Selecciona un destino"
+  ,"warn_unsupported_shell_object": "Elemento del sistema no compatible. Selecciona un archivo o carpeta real en el disco."
+
+  ,"menu_status_prefix": "Estado del menú"
+  ,"menu_error_register": "❌ Error de registro: {error}"
+  ,"menu_error_unregister": "❌ Error al eliminar: {error}"
+  ,"menu_error_check_status": "❌ Error al verificar estado: {error}"
+
+  ,"main_paths_section": "📂 RUTAS"
+  ,"main_source": "Origen:"
+  ,"main_destination": "Destino:"
+  ,"main_options_section": "⚙️ OPCIONES"
+  ,"main_ops_section": "🚀 OPERACIONES"
+  ,"main_progress_section": "📊 PROGRESO"
+
+  ,"btn_add_file": "➕ Archivo"
+  ,"btn_add_folder": "➕ Carpeta"
+  ,"btn_remove": "❌ Quitar"
+  ,"btn_remove_all": "🗑️ Quitar todo"
+  ,"btn_browse": "Explorar"
+  ,"btn_copy": "📋 Copiar"
+  ,"btn_move": "✂️ Mover"
+  ,"btn_cancel": "❌ Cancelar"
+  ,"btn_refresh_info": "🔄 Actualizar info"
+
+  ,"opt_use_ramdrive": "Usar RamDrive"
+  ,"opt_overwrite": "Sobrescribir archivos existentes"
+  ,"opt_delete_source": "Eliminar origen (Mover)"
+
+  ,"label_buffer_mb": "Búfer (MB):"
+  ,"label_threads": "Hilos:"
+  ,"hint_auto_profile": "(Auto-perfilado según el almacenamiento)"
+
+  ,"menu_title": "🖱️ Menú contextual de Windows"
+  ,"menu_description": "Registra el menú contextual de Windows para acceder rápidamente a Copiar y Mover.\n\n✅ Clic derecho en archivo/carpeta → Copia avanzada\n✅ Clic derecho en archivo/carpeta → Movimiento avanzado\n\nEl origen será el archivo/carpeta seleccionado y la GUI abrirá un diálogo para elegir el destino."
+  ,"menu_hw_title": "🔧 Optimización de hardware"
+  ,"menu_hw_text": "El sistema detecta automáticamente el tipo de almacenamiento:\n\n🚀 NVMe: Búfer 256MB, 12 hilos\n⚡ SSD: Búfer 128MB, 8 hilos\n💾 HDD: Búfer 80MB, 2 hilos\n🔌 USB: Búfer 64MB, 4 hilos\n🌐 NAS: Búfer 32MB, 2 hilos\n💾 RamDrive: Búfer 8MB (RAM), 16 hilos\n\nLos parámetros se ajustan automáticamente según la ruta de destino."
+  ,"btn_register_menu": "✅ Registrar menú"
+  ,"btn_unregister_menu": "❌ Quitar menú"
+  ,"btn_check_status": "ℹ️ Verificar estado"
+  ,"menu_status_unknown": "Estado: Desconocido"
+  ,"menu_registered_ok": "✅ Menú registrado correctamente. Prueba clic derecho en una carpeta."
+  ,"menu_removed_ok": "✅ Menú eliminado correctamente."
+
+  ,"info_system_section": "🔧 INFORMACIÓN DEL SISTEMA"
+  ,"info_cpu": "CPU"
+  ,"info_ram_total": "RAM total"
+  ,"info_ram_available": "RAM disponible"
+  ,"info_ram_used_pct": "% RAM usada"
+
+  ,"info_ramdrive_section": "💾 RAMDRIVE"
+  ,"info_status_detected": "Estado: ✅ DETECTADO"
+  ,"info_status_not_detected": "Estado: ❌ NO DETECTADO"
+  ,"info_drive_letter": "Unidad"
+  ,"info_space_total": "Espacio total"
+  ,"info_space_free": "Espacio libre"
+  ,"info_space_used_pct": "% usado"
+  ,"info_ramdrive_boost": "🚀 BOOST RAMDRIVE: +50-200% más rápido!"
+
+  ,"info_storage_section": "🗂️ ALMACENAMIENTO DETECTADO"
+  ,"info_detect_error": "Error de detección"
+
+  ,"info_params_source": "⚙️ AUTO-TUNING (ORIGEN)"
+  ,"info_params_dest": "⚙️ AUTO-TUNING (DESTINO)"
+  ,"info_storage_type": "Tipo de almacenamiento"
+  ,"info_buffer_recommended": "Búfer recomendado"
+  ,"info_buffer_optimal": "Búfer óptimo"
+  ,"info_threads": "Hilos"
+  ,"info_threads_optimal": "Hilos óptimos"
+  ,"info_error": "Error"
+
+  ,"info_engine_config": "⚙️ CONFIGURACIÓN DEL MOTOR"
+  ,"info_selected_buffer": "Búfer seleccionado"
+  ,"info_selected_threads": "Hilos seleccionados"
+  ,"yes": "SÍ"
+  ,"no": "NO"
+
+  ,"info_version": "📝 VERSIÓN"
+  ,"info_rights": "© 2025 - Todos los derechos reservados"
+  ,"info_update_error": "Error de actualización"
+}

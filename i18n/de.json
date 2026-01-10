@@ -1,0 +1,135 @@
+{
+  "app_title": "Advanced File Mover Pro",
+  "tab_main": "📋 Start",
+  "tab_info": "ℹ️ Infos",
+  "tab_menu": "🖱️ Kontextmenü",
+  "tab_view": "👁️ Anzeige",
+
+  "view_title": "Anzeige",
+  "always_on_top": "Immer im Vordergrund",
+  "theme_label": "🎨 Design",
+  "theme_dark_current": "🌙 Dunkles Design (Aktuell)",
+  "theme_light_current": "☀️ Helles Design (Aktuell)",
+
+  "language_label": "🌐 Sprache",
+  "language_hint": "Sprache gilt beim nächsten Start.",
+
+  "elevation_section": "🔒 Rechte",
+  "auto_elevate": "Automatisch erhöhen (UAC) beim Start",
+  "restart_as_admin": "Als Administrator neu starten"
+
+  ,"language_hint_applied": "Sprache angewendet."
+  ,"auto_elevate_manual": "Automatisch erhöhen (UAC) beim Start (nur manueller Start)"
+  ,"already_admin": "Du bist bereits Administrator."
+
+  ,"status_ready": "Bereit"
+  ,"status_ready_cache": "Bereit (Cache)"
+  ,"status_ready_move": "Bereit (Verschieben)"
+  ,"status_ready_copy": "Bereit (Kopieren)"
+  ,"status_cancelled": "❌ Vorgang abgebrochen"
+
+  ,"progress_placeholder": "Bereit|0%|--- MB/s|ETA:--:--"
+  ,"progress_eta_label": "ETA"
+  ,"progress_elapsed_label": "T"
+
+  ,"op_copy": "Kopieren"
+  ,"op_move": "Verschieben"
+  ,"op_copy_upper": "KOPIEREN"
+  ,"op_move_upper": "VERSCHIEBEN"
+
+  ,"status_operation_in_progress": "Vorgang läuft..."
+  ,"status_operation_running": "Vorgang {op} läuft..."
+  ,"status_operation_running_ramdrive": "Vorgang {op} läuft... (RamDrive: {letter}:)"
+  ,"status_processing_file": "Verarbeite: {name}..."
+  ,"status_operation_completed": "✅ {op} abgeschlossen!"
+  ,"status_error_during_operation": "❌ Fehler während {op}"
+  ,"status_error_generic": "❌ Fehler: {error}"
+  ,"error_unknown_operation": "Unbekannte Operation: {operation}"
+
+  ,"dlg_select_destination_folder_title": "Zielordner auswählen"
+  ,"dlg_select_files_title": "Dateien auswählen"
+  ,"dlg_select_folder_title": "Ordner auswählen"
+
+  ,"warn_title": "Warnung"
+  ,"warn_select_source": "Wähle mindestens eine Quelle"
+  ,"warn_select_destination": "Wähle ein Ziel"
+  ,"warn_unsupported_shell_object": "Nicht unterstütztes Systemobjekt. Bitte wähle eine echte Datei oder einen echten Ordner auf dem Datenträger."
+
+  ,"menu_status_prefix": "Menüstatus"
+  ,"menu_error_register": "❌ Registrierungsfehler: {error}"
+  ,"menu_error_unregister": "❌ Entfernen-Fehler: {error}"
+  ,"menu_error_check_status": "❌ Statusprüfung-Fehler: {error}"
+
+  ,"main_paths_section": "📂 PFADE"
+  ,"main_source": "Quelle:"
+  ,"main_destination": "Ziel:"
+  ,"main_options_section": "⚙️ OPTIONEN"
+  ,"main_ops_section": "🚀 AKTIONEN"
+  ,"main_progress_section": "📊 FORTSCHRITT"
+
+  ,"btn_add_file": "➕ Datei"
+  ,"btn_add_folder": "➕ Ordner"
+  ,"btn_remove": "❌ Entfernen"
+  ,"btn_remove_all": "🗑️ Alle entfernen"
+  ,"btn_browse": "Durchsuchen"
+  ,"btn_copy": "📋 Kopieren"
+  ,"btn_move": "✂️ Verschieben"
+  ,"btn_cancel": "❌ Abbrechen"
+  ,"btn_refresh_info": "🔄 Infos aktualisieren"
+
+  ,"opt_use_ramdrive": "RamDrive verwenden"
+  ,"opt_overwrite": "Vorhandene Dateien überschreiben"
+  ,"opt_delete_source": "Quelle löschen (Verschieben)"
+
+  ,"label_buffer_mb": "Puffer (MB):"
+  ,"label_threads": "Threads:"
+  ,"hint_auto_profile": "(Automatische Profilierung basierend auf Speicher)"
+
+  ,"menu_title": "🖱️ Windows-Kontextmenü"
+  ,"menu_description": "Registriert das Windows-Kontextmenü für schnellen Zugriff auf Kopieren und Verschieben.\n\n✅ Rechtsklick auf Datei/Ordner → Erweitert kopieren\n✅ Rechtsklick auf Datei/Ordner → Erweitert verschieben\n\nDie Quelle ist die ausgewählte Datei/der ausgewählte Ordner und die GUI öffnet die Auswahl für das Ziel."
+  ,"menu_hw_title": "🔧 Hardware-Optimierung"
+  ,"menu_hw_text": "Das System erkennt den Speichertyp automatisch:\n\n🚀 NVMe: Puffer 256MB, 12 Threads\n⚡ SSD: Puffer 128MB, 8 Threads\n💾 HDD: Puffer 80MB, 2 Threads\n🔌 USB: Puffer 64MB, 4 Threads\n🌐 NAS: Puffer 32MB, 2 Threads\n💾 RamDrive: Puffer 8MB (RAM), 16 Threads\n\nParameter werden automatisch anhand des Zielpfads angepasst."
+  ,"btn_register_menu": "✅ Menü registrieren"
+  ,"btn_unregister_menu": "❌ Menü entfernen"
+  ,"btn_check_status": "ℹ️ Status prüfen"
+  ,"menu_status_unknown": "Status: Unbekannt"
+  ,"menu_registered_ok": "✅ Menü erfolgreich registriert! Probiere Rechtsklick auf einen Ordner."
+  ,"menu_removed_ok": "✅ Menü erfolgreich entfernt!"
+
+  ,"info_system_section": "🔧 SYSTEMINFO"
+  ,"info_cpu": "CPU"
+  ,"info_ram_total": "Gesamter RAM"
+  ,"info_ram_available": "Verfügbarer RAM"
+  ,"info_ram_used_pct": "RAM genutzt %"
+
+  ,"info_ramdrive_section": "💾 RAMDRIVE"
+  ,"info_status_detected": "Status: ✅ ERKANNT"
+  ,"info_status_not_detected": "Status: ❌ NICHT ERKANNT"
+  ,"info_drive_letter": "Laufwerk"
+  ,"info_space_total": "Gesamtspeicher"
+  ,"info_space_free": "Freier Speicher"
+  ,"info_space_used_pct": "Belegt %"
+  ,"info_ramdrive_boost": "🚀 RAMDRIVE-BOOST: +50-200% schneller!"
+
+  ,"info_storage_section": "🗂️ ERKANNTER SPEICHER"
+  ,"info_detect_error": "Erkennungsfehler"
+
+  ,"info_params_source": "⚙️ AUTO-TUNING (QUELLE)"
+  ,"info_params_dest": "⚙️ AUTO-TUNING (ZIEL)"
+  ,"info_storage_type": "Speichertyp"
+  ,"info_buffer_recommended": "Empfohlener Puffer"
+  ,"info_buffer_optimal": "Optimaler Puffer"
+  ,"info_threads": "Threads"
+  ,"info_threads_optimal": "Optimale Threads"
+  ,"info_error": "Fehler"
+
+  ,"info_engine_config": "⚙️ ENGINE-KONFIGURATION"
+  ,"info_selected_buffer": "Gewählter Puffer"
+  ,"info_selected_threads": "Gewählte Threads"
+  ,"yes": "JA"
+  ,"no": "NEIN"
+
+  ,"info_version": "📝 VERSION"
+  ,"info_rights": "© 2025 - Alle Rechte vorbehalten"
+  ,"info_update_error": "Aktualisierungsfehler"
+}

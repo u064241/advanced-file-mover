@@ -1,0 +1,14 @@
+# Advanced File Mover Pro - CustomTkinter Edition
+# Python 3.12 (.venv312)
+
+# System utilities
+psutil>=6.0.0
+
+# UI (CustomTkinter)
+customtkinter>=5.2.0
+
+# Imaging (for HiDPI-safe flag icons)
+pillow>=10.0.0
+
+# Build (optional)
+# pyinstaller

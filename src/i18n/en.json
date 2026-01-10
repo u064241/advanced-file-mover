@@ -1,0 +1,113 @@
+{
+  "app": {
+    "title": "Camera Streaming"
+  },
+  "header": {
+    "user": "User",
+    "admin": "⚙️ Admin",
+    "camera": "📹 Camera",
+    "logout": "Logout"
+  },
+  "streaming": {
+    "rec": "REC",
+    "streamError": "Streaming error"
+  },
+  "controls": {
+    "flipH": "Flip H",
+    "flipV": "Flip V",
+    "rotateLeft": "Rotate ↶",
+    "rotateRight": "Rotate ↷",
+    "reset": "Reset",
+    "switchCamera": "Switch Camera",
+    "record": "Record",
+    "stopRecord": "Stop",
+    "snapshot": "Snapshot",
+    "download": "Download"
+  },
+  "settings": {
+    "fps": "FPS",
+    "quality": "Quality",
+    "apply": "Apply",
+    "cameraSettings": "Camera Properties",
+    "cameraProperties": "Camera Configuration",
+    "resolution": "Resolution",
+    "brightness": "Brightness",
+    "contrast": "Contrast",
+    "saturation": "Saturation",
+    "exposure": "Exposure",
+    "gain": "Gain",
+    "ledControl": "LED Control",
+    "ledStatus": "LED Status",
+    "ledOn": "On",
+    "ledOff": "Off",
+    "ledNotSupported": "Not Supported"
+  },
+  "common": {
+    "apply": "Apply",
+    "reset": "Reset to Defaults"
+  },
+  "admin": {
+    "users": "Settings",
+    "addUser": "Add User",
+    "editUser": "Edit User",
+    "deleteUser": "Delete User",
+    "username": "Username",
+    "password": "Password",
+    "role": "Role",
+    "admin": "Admin",
+    "user": "User",
+    "forceChange": "Force change",
+    "save": "Save",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "close": "Close",
+    "search": "Search..."
+  },
+  "password": {
+    "change": "Change Password",
+    "old": "Current Password",
+    "new": "New Password",
+    "confirm": "Confirm Password",
+    "save": "Save",
+    "cancel": "Cancel",
+    "mismatch": "Passwords do not match",
+    "success": "Password changed successfully",
+    "error": "Error changing password"
+  },
+  "messages": {
+    "loading": "Loading...",
+    "success": "Operation completed",
+    "error": "Error",
+    "confirm": "Are you sure?",
+    "unknownError": "Unknown error"
+  },
+  "statistics": {
+    "title": "Streaming Statistics",
+    "refresh": "Refresh",
+    "loading": "Loading statistics...",
+    "general": "General Statistics",
+    "uptime": "Server Uptime",
+    "totalRecordings": "Total Recordings",
+    "totalSnapshots": "Total Snapshots",
+    "totalSize": "Total Space",
+    "recordings": "Recordings",
+    "snapshots": "Snapshots",
+    "filename": "Filename",
+    "originalSize": "Original Size",
+    "compressedSize": "Compressed Size",
+    "compression": "Compression %",
+    "size": "Size",
+    "timestamp": "Date/Time",
+    "noData": "No data available"  },
+  "ai": {
+    "title": "AI Controls",
+    "faceDetection": "Face Detection",
+    "motionDetection": "Motion Detection",
+    "facesDetected": "Faces detected",
+    "unavailable": "Unavailable",
+    "autoRecord": "Auto-Record",
+    "sensitivity": "Sensitivity",
+    "stopDelay": "Stop Delay",
+    "motionActive": "Motion Detected",
+    "noMotion": "No Motion"  }
+}

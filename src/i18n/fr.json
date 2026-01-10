@@ -1,0 +1,114 @@
+{
+  "app": {
+    "title": "Streaming Caméra"
+  },
+  "header": {
+    "user": "Utilisateur",
+    "admin": "⚙️ Admin",
+    "camera": "📹 Caméra",
+    "logout": "Déconnexion"
+  },
+  "streaming": {
+    "rec": "REC",
+    "streamError": "Erreur de streaming"
+  },
+  "controls": {
+    "flipH": "Retourner H",
+    "flipV": "Retourner V",
+    "rotateLeft": "Tourner ↶",
+    "rotateRight": "Tourner ↷",
+    "reset": "Réinitialiser",
+    "switchCamera": "Changer Caméra",
+    "record": "Enregistrer",
+    "stopRecord": "Arrêter",
+    "snapshot": "Capture",
+    "download": "Télécharger"
+  },
+  "settings": {
+    "fps": "IPS",
+    "quality": "Qualité",
+    "apply": "Appliquer",
+    "cameraSettings": "Propriétés de la Caméra",
+    "cameraProperties": "Configuration Caméra",
+    "resolution": "Résolution",
+    "brightness": "Luminosité",
+    "contrast": "Contraste",
+    "saturation": "Saturation",
+    "exposure": "Exposition",
+    "gain": "Gain",
+    "ledControl": "Commande LED",
+    "ledStatus": "État LED",
+    "ledOn": "Allumé",
+    "ledOff": "Éteint",
+    "ledNotSupported": "Non supporté"
+  },
+  "common": {
+    "apply": "Appliquer",
+    "reset": "Réinitialiser"
+  },
+  "admin": {
+    "users": "Paramètres",
+    "addUser": "Ajouter Utilisateur",
+    "editUser": "Modifier Utilisateur",
+    "deleteUser": "Supprimer Utilisateur",
+    "username": "Nom d'utilisateur",
+    "password": "Mot de passe",
+    "role": "Rôle",
+    "admin": "Admin",
+    "user": "Utilisateur",
+    "forceChange": "Forcer changement",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "cancel": "Annuler",
+    "close": "Fermer",
+    "search": "Rechercher..."
+  },
+  "password": {
+    "change": "Changer Mot de Passe",
+    "old": "Mot de Passe Actuel",
+    "new": "Nouveau Mot de Passe",
+    "confirm": "Confirmer Mot de Passe",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "mismatch": "Les mots de passe ne correspondent pas",
+    "success": "Mot de passe changé avec succès",
+    "error": "Erreur lors du changement de mot de passe"
+  },
+  "messages": {
+    "loading": "Chargement...",
+    "success": "Opération terminée",
+    "error": "Erreur",
+    "confirm": "Êtes-vous sûr ?",
+    "unknownError": "Erreur inconnue"  },
+  "statistics": {
+    "title": "Statistiques Streaming",
+    "refresh": "Actualiser",
+    "loading": "Chargement des statistiques...",
+    "general": "Statistiques Générales",
+    "uptime": "Uptime Serveur",
+    "totalRecordings": "Enregistrements Totaux",
+    "totalSnapshots": "Captures Totales",
+    "totalSize": "Espace Total",
+    "recordings": "Enregistrements",
+    "snapshots": "Captures",
+    "filename": "Nom du Fichier",
+    "originalSize": "Taille Originale",
+    "compressedSize": "Taille Compressée",
+    "compression": "Compression %",
+    "size": "Taille",
+    "timestamp": "Date/Heure",
+    "noData": "Aucune donnée disponible"
+  },
+  "ai": {
+    "title": "Contrôles IA",
+    "faceDetection": "Détection de Visages",
+    "motionDetection": "Détection de Mouvement",
+    "facesDetected": "Visages détectés",
+    "unavailable": "Indisponible",
+    "autoRecord": "Enregistrement Auto",
+    "sensitivity": "Sensibilité",
+    "stopDelay": "Délai d'Arrêt",
+    "motionActive": "Mouvement Détecté",
+    "noMotion": "Aucun Mouvement"
+  }
+}
