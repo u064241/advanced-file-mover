@@ -24,6 +24,7 @@ from src.file_operations import FileOperationEngine
 from src.ramdrive_handler import RamDriveManager
 from src.utils import format_bytes, format_time
 from src.storage_detector import StorageDetector
+from src.update_checker import check_for_update_async
 from registry.context_menu import ContextMenuRegistrar
 
 # Imposta l'aspetto di CustomTkinter
@@ -230,6 +231,9 @@ class AdvancedFileMoverCustomTkinter:
 
         # UI - Crea l'interfaccia PRIMA della detection (non bloccare UI)
         self.create_widgets()
+        
+        # Start async update check after UI is created
+        self._start_update_check()
         
         # Early detection thread: scansiona tutti i drive in background per accuratezza massima
         def early_storage_detection():
@@ -2421,6 +2425,76 @@ class AdvancedFileMoverCustomTkinter:
         self.config_manager.set('delete_source', self.delete_source_enabled.get())
         
         self.root.destroy()
+
+    def _start_update_check(self):
+        """Start async update check in background"""
+        try:
+            config_path = str(self.config_manager.config_path)
+            check_for_update_async(
+                config_path,
+                on_update_available=self._on_update_available,
+                on_error=self._on_update_error
+            )
+        except Exception as e:
+            # Silently fail if update check module not available
+            pass
+
+    def _on_update_available(self, version, release_notes):
+        """Called when update is available"""
+        try:
+            def show_update_dialog():
+                title = self._t('update_available_title', 'Aggiornamento disponibile')
+                message = f"Versione {version} disponibile.\n\nNote di rilascio:\n{release_notes}\n\nDesideri aggiornare adesso?"
+                
+                result = messagebox.askyesno(title, message)
+                if result:
+                    # Start download and installation (blocking)
+                    from src.update_checker import check_and_update
+                    try:
+                        self._show_update_progress()
+                        success, msg = check_and_update(
+                            str(self.config_manager.config_path),
+                            on_download_start=self._on_download_start,
+                            on_download_complete=self._on_download_complete
+                        )
+                        if success:
+                            messagebox.showinfo("Aggiornamento", "L'installer è stato avviato. L'applicazione si chiuderà.")
+                            self.root.quit()
+                        else:
+                            messagebox.showerror("Errore", f"Aggiornamento fallito: {msg}")
+                    except Exception as e:
+                        messagebox.showerror("Errore", f"Errore durante l'aggiornamento: {str(e)}")
+            
+            # Schedule in main thread
+            self.root.after(100, show_update_dialog)
+        except Exception as e:
+            pass
+
+    def _on_update_error(self, error_msg):
+        """Called when update check fails"""
+        # Silently log errors to avoid bothering the user
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Update check error: {error_msg}")
+
+    def _show_update_progress(self):
+        """Show progress dialog while downloading update"""
+        pass  # Can be enhanced with actual progress bar
+
+    def _on_download_start(self):
+        """Called when download starts"""
+        try:
+            self.status_label.configure(text=self._t('downloading_update', 'Download aggiornamento...'))
+        except:
+            pass
+
+    def _on_download_complete(self, success):
+        """Called when download completes"""
+        if success:
+            try:
+                self.status_label.configure(text=self._t('update_ready', 'Aggiornamento pronto'))
+            except:
+                pass
 
 
 def main() -> int:

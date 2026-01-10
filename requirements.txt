@@ -4,6 +4,9 @@
 # System utilities
 psutil>=6.0.0
 
+# HTTP requests (for update checking)
+requests>=2.31.0
+
 # UI (CustomTkinter)
 customtkinter>=5.2.0
 
