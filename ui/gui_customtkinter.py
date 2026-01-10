@@ -1231,6 +1231,11 @@ class AdvancedFileMoverCustomTkinter:
         self._i18n_register(self.refresh_info_btn, 'btn_refresh_info', "🔄 Aggiorna Informazioni")
         self.refresh_info_btn.pack(pady=5)
         
+        # Bottone check updates
+        self.check_updates_btn = ctk.CTkButton(frame, text=self._t('btn_check_updates', "🚀 Controlla Aggiornamenti"), command=self._manual_check_updates, fg_color="#2E7D32")
+        self._i18n_register(self.check_updates_btn, 'btn_check_updates', "🚀 Controlla Aggiornamenti")
+        self.check_updates_btn.pack(pady=5)
+        
         # Carica informazioni iniziali in modo async per non bloccare avvio
         self.root.after(100, self.update_info)
     
@@ -1377,7 +1382,8 @@ class AdvancedFileMoverCustomTkinter:
             # === VERSION ===
             self.info_text.insert('end', self._t('info_version', "📝 VERSIONE") + "\n")
             self.info_text.insert('end', "═" * 50 + "\n")
-            self.info_text.insert('end', "Advanced File Mover Pro v2.0 (CustomTkinter Edition)\n")
+            app_version = self.config_manager.get('version', '1.0.0')
+            self.info_text.insert('end', f"Advanced File Mover Pro v{app_version} (CustomTkinter Edition)\n")
             self.info_text.insert('end', self._t('info_rights', "© 2025 - Tutti i diritti riservati") + "\n")
             
             self.info_text.configure(state='disabled')
@@ -2495,6 +2501,54 @@ class AdvancedFileMoverCustomTkinter:
                 self.status_label.configure(text=self._t('update_ready', 'Aggiornamento pronto'))
             except:
                 pass
+
+    def _manual_check_updates(self):
+        """Manual check for updates - called from button"""
+        try:
+            # Disable button while checking
+            self.check_updates_btn.configure(state='disabled')
+            self.check_updates_btn.configure(text=self._t('checking_updates', '⏳ Controllo in corso...'))
+            self.root.update()
+            
+            from src.update_checker import get_latest_release_info, compare_versions, get_local_version
+            
+            local_version = get_local_version(str(self.config_manager.config_path))
+            release_info = get_latest_release_info()
+            
+            if not release_info:
+                messagebox.showwarning(
+                    self._t('update_check_title', 'Controllo Aggiornamenti'),
+                    self._t('update_check_failed', 'Impossibile verificare gli aggiornamenti. Verifica la connessione internet.')
+                )
+                self.check_updates_btn.configure(state='normal')
+                self.check_updates_btn.configure(text=self._t('btn_check_updates', '🚀 Controlla Aggiornamenti'))
+                return
+            
+            remote_version = release_info['version']
+            cmp_result = compare_versions(local_version, remote_version)
+            
+            if cmp_result == 0:
+                messagebox.showinfo(
+                    self._t('update_check_title', 'Controllo Aggiornamenti'),
+                    self._t('already_latest', f'Stai già usando la versione più recente (v{local_version})')
+                )
+            elif cmp_result > 0:
+                messagebox.showinfo(
+                    self._t('update_check_title', 'Controllo Aggiornamenti'),
+                    self._t('version_newer_local', f'Stai usando una versione più recente (v{local_version}) rispetto a quella su GitHub (v{remote_version})')
+                )
+            else:
+                # Update available
+                self._on_update_available(remote_version, release_info.get('release_notes', ''))
+        
+        except Exception as e:
+            messagebox.showerror(
+                self._t('error_title', 'Errore'),
+                f"Errore durante il controllo degli aggiornamenti: {str(e)}"
+            )
+        finally:
+            self.check_updates_btn.configure(state='normal')
+            self.check_updates_btn.configure(text=self._t('btn_check_updates', '🚀 Controlla Aggiornamenti'))
 
 
 def main() -> int:
