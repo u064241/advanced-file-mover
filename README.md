@@ -1,6 +1,6 @@
 # Advanced File Mover Pro
 
-**[📖 English Documentation](docs/README_EN.md)** | **[📖 Documentazione Italiana](docs/README.md)**
+**[📖 English Documentation](docs/README_EN.md)**
 
 ---
 
@@ -20,4 +20,4 @@ Utility Windows per copiare/spostare file e cartelle con progress, auto‑tuning
 
 ---
 
-👉 **[View full documentation / Vedi documentazione completa →](docs/README_EN.md)**
+👉 **[View full documentation**
