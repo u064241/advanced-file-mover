@@ -42,6 +42,7 @@ The application automatically checks for updates on startup:
 - ✅ Version synced from `config.json`
 
 When an update is found:
+
 1. Dialog with release notes
 2. Automatic download of Setup.exe from GitHub Release
 3. Silent installer execution
@@ -100,7 +101,7 @@ To create a classic `Setup.exe` with installation folder selection, the simplest
 
 Note: when using `-Setup`, if Setup compilation succeeds the script automatically removes `dist/` (for cleanup).
 
-2) Alternatively, if you want to keep `dist/` (for testing/debugging), just do:
+1) Alternatively, if you want to keep `dist/` (for testing/debugging), just do:
 
 ```powershell
 .\build.ps1 -Clean
