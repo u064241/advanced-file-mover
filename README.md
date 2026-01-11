@@ -10,7 +10,7 @@ Utility Windows per copiare/spostare file e cartelle con progress, auto‑tuning
 
 ---
 
-## Features / Caratteristiche
+## Features
 
 ✨ **Auto-Update from GitHub** - Automatic update check and silent installation  
 ✨ **Context Menu Integration** - Quick access from Explorer (Shift + right-click)  
