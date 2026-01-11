@@ -177,6 +177,35 @@ if ($LASTEXITCODE -eq 0) {
     # (Opzionale) Compila installer Inno Setup
     if ($Setup) {
         Write-Host "`n[4/4] 📦 Compilazione Setup.exe (Inno Setup)..." -ForegroundColor $Yellow
+        
+        # Sincronizza versione da config.json agli altri file
+        Write-Host "     🔄 Sincronizzazione versioni..." -ForegroundColor $Cyan
+        
+        # Leggi versione da config.json
+        try {
+            $ConfigJson = Get-Content 'config.json' -Raw | ConvertFrom-Json
+            $AppVersion = $ConfigJson.version
+            Write-Host "     📋 Versione letta da config.json: $AppVersion" -ForegroundColor $Cyan
+        } catch {
+            Write-Host "     ⚠️ Errore lettura config.json, uso default 1.0.0" -ForegroundColor $Yellow
+            $AppVersion = "1.0.0"
+        }
+        
+        # Aggiorna AdvancedFileMover.iss
+        $IssFile = 'installer/AdvancedFileMover.iss'
+        if (Test-Path $IssFile) {
+            try {
+                $IssContent = Get-Content $IssFile -Raw
+                # Rimpiazza la versione nel file .iss (pattern: #define MyAppVersion "X.Y.Z")
+                $IssContent = $IssContent -replace '#define MyAppVersion ".*?"', "#define MyAppVersion `"$AppVersion`""
+                Set-Content $IssFile -Value $IssContent -Encoding UTF8
+                Write-Host "     ✓ Versione aggiornata in AdvancedFileMover.iss: $AppVersion" -ForegroundColor $Green
+            } catch {
+                Write-Host "     ❌ Errore aggiornamento AdvancedFileMover.iss: $_" -ForegroundColor $Red
+            }
+        } else {
+            Write-Host "     ⚠️ File AdvancedFileMover.iss non trovato" -ForegroundColor $Yellow
+        }
 
         $IssFile = Join-Path $PSScriptRoot 'installer\AdvancedFileMover.iss'
         if (-not (Test-Path $IssFile)) {
