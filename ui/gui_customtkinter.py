@@ -68,7 +68,29 @@ class ConfigManager:
         if self.config_path.exists():
             try:
                 with open(self.config_path, 'r', encoding='utf-8') as f:
-                    return json.load(f)
+                    user_config = json.load(f)
+                
+                # Sync version from bundled config (auto-update version field)
+                try:
+                    bundled_config_path = self._get_bundled_config_path()
+                    if bundled_config_path.exists():
+                        with open(bundled_config_path, 'r', encoding='utf-8') as f:
+                            bundled_config = json.load(f)
+                        
+                        bundled_version = bundled_config.get('version', '1.0.0')
+                        user_version = user_config.get('version', '0.0.0')
+                        
+                        # If bundled version is different, update it
+                        if bundled_version != user_version:
+                            user_config['version'] = bundled_version
+                            # Save immediately to persist version update
+                            self.config = user_config
+                            self.save_config()
+                except Exception:
+                    # Silently fail version sync if bundled config is not available
+                    pass
+                
+                return user_config
             except:
                 return self.get_default_config()
 

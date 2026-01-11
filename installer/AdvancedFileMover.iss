@@ -5,7 +5,7 @@
 ; Nota: versione letta automaticamente da config.json durante build.ps1
 
 #ifndef MyAppVersion
-  #define MyAppVersion "1.0.0"
+  #define MyAppVersion "1.0.1"
 #endif
 
 [Setup]
