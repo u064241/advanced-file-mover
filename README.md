@@ -6,8 +6,6 @@
 
 Windows utility for copying/moving files and folders with progress, auto-tuning (buffer/threads), Explorer context menu integration, and **auto-update from GitHub**.
 
-Utility Windows per copiare/spostare file e cartelle con progress, auto‑tuning (buffer/thread), integrazione nel menu contestuale di Explorer e **auto-update da GitHub**.
-
 ---
 
 ## Features
