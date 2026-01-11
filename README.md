@@ -1,4 +1,4 @@
-# Advanced File Mover Pro (CustomTkinter)
+# Advanced File Mover Pro
 
 Utility Windows per copiare/spostare file e cartelle con progress, auto‑tuning (buffer/thread) e integrazione nel menu contestuale di Explorer.
 
