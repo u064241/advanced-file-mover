@@ -19,5 +19,3 @@ Utility Windows per copiare/spostare file e cartelle con progress, auto‑tuning
 ✨ **Multi-Language** - Italian, English, French, Spanish, German  
 
 ---
-
-👉 **[View full documentation**
