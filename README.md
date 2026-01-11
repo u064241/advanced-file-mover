@@ -1,55 +1,40 @@
 # Advanced File Mover Pro
 
-Utility Windows per copiare/spostare file e cartelle con progress, auto‑tuning (buffer/thread), integrazione nel menu contestuale di Explorer e **auto-update da GitHub**.
+Utility Windows per copiare/spostare file e cartelle con progress, auto‑tuning (buffer/thread) e integrazione nel menu contestuale di Explorer.
 
-## Requisiti
+## Requirements
 
 - Windows 7+
 - Python 3.12 in `.venv312`
-- Dipendenze: vedi `requirements.txt` (include `pillow` per le bandiere HiDPI, `requests` per auto-update)
+- Dipendenze: vedi `requirements.txt` (include `pillow` per le bandiere HiDPI)
 
-## Dati utente (config + cache)
+## User Data (config + cache)
 
-- Configurazione utente: `%LOCALAPPDATA%\AdvancedFileMover\config.json`
-- Cache rilevamento storage: `%LOCALAPPDATA%\AdvancedFileMover\.storage_cache.json`
+- User configuration: `%LOCALAPPDATA%\AdvancedFileMover\config.json`
+- Storage detection cache: `%LOCALAPPDATA%\AdvancedFileMover\.storage_cache.json`
 
 Al primo avvio, se `config.json` non esiste in LocalAppData, viene creato automaticamente.
-Se esiste un `config.json` "template" vicino all'EXE (es. installazione), viene usato come base e poi salvato in LocalAppData.
+Se esiste un `config.json` “template” vicino all’EXE (es. installazione), viene usato come base e poi salvato in LocalAppData.
 
-## Avvio rapido (GUI)
+## Quick Start (GUI)
 
-### Opzione consigliata: PowerShell
+### Recommended Option: PowerShell
 
-Dalla cartella `ADVANCED_FILE_MOVER`:
+From the `ADVANCED_FILE_MOVER` folder:
 
 ```powershell
 .\run_gui.ps1
 ```
 
-### Opzione alternativa: comando diretto
+### Alternative Option: Direct command
 
 ```powershell
 C:\SOURCECODE\.venv312\Scripts\python.exe .\ui\gui_customtkinter.py
 ```
 
-## Auto-Update da GitHub
-
-L'applicazione verifica automaticamente gli aggiornamenti all'avvio:
-
-- ✅ Controllo asincrono in background (non blocca l'app)
-- ✅ Bottone manuale **"Controlla Aggiornamenti"** nella tab Info
-- ✅ Download e installazione automatici (setup silenzioso)
-- ✅ Versione sincronizzata da `config.json`
-
-Quando trovato un aggiornamento:
-1. Dialog con note di rilascio
-2. Download automatico del Setup.exe da GitHub Release
-3. Esecuzione installer in silenzioso
-4. Restart automatico dell'app
-
 ## Versioning
 
-La versione dell'applicazione è gestita centralmente in `config.json`:
+The application version is managed centrally in `config.json`:
 
 ```json
 {
@@ -60,74 +45,63 @@ La versione dell'applicazione è gestita centralmente in `config.json`:
 
 ### Sincronizzazione automatica
 
-Quando esegui `.\build.ps1 -Setup`:
+### Automatic Synchronization
+
+When you run `.\build.ps1 -Setup`:
 
 - `build.ps1` legge la versione da `config.json`
-- Aggiorna automaticamente `installer/AdvancedFileMover.iss`
-- La passa a Inno Setup
-- L'output Setup avrà il nome: `AdvancedFileMover_{versione}_Setup.exe` (es. `AdvancedFileMover_1.0.2_Setup.exe`)
+- La passa a Inno Setup (file `.iss`)
+- L'output Setup avrà il nome: `AdvancedFileMover_{versione}_Setup.exe` (es. `AdvancedFileMover_1.0.0_Setup.exe`)
 - La versione appare anche nel Control Panel di Windows
 
-**Per aggiornare la versione**: modifica il campo `version` in `config.json` prima di eseguire il build.
+**To update the version**: modify the `version` field in `config.json` before running the build.
 
 ## Build EXE (PyInstaller)
 
 ```powershell
-# build standard
+# standard build
 .\build.ps1
 
-# build con --clean
+# build with --clean
 .\build.ps1 -Clean
 ```
 
 - Spec: `gui_customtkinter.spec`
 - Output: `dist/AdvancedFileMoverPro.exe`
 
-Nota: la build copia anche risorse runtime in `dist/`:
+Note: the build also copies runtime resources to `dist/`:
 
-- `dist/i18n/*.json` (traduzioni)
-- `dist/assets/flags/*.png` (bandiere lingua)
+- `dist/i18n/*.json` (translations)
+- `dist/assets/flags/*.png` (language flags)
 
 ## Installer (Setup.exe)
 
-Per creare un `Setup.exe` classico con scelta cartella di installazione, l'opzione più semplice è **Inno Setup**.
+To create a classic `Setup.exe` with installation folder selection, the simplest option is **Inno Setup**.
 
-1) Compila direttamente EXE + Setup:
+1) Compile directly EXE + Setup:
 
 ```powershell
 .\build.ps1 -Clean -Setup
 ```
 
-Nota: quando usi `-Setup`, se la compilazione del Setup va a buon fine lo script rimuove automaticamente `dist/` (per pulizia).
+Note: when using `-Setup`, if Setup compilation succeeds the script automatically removes `dist/` (for cleanup).
 
-2) In alternativa, se vuoi mantenere `dist/` (per test/debug), fai solo:
+1) In alternativa, se vuoi mantenere `dist/` (per test/debug), fai solo:
 
 ```powershell
 .\build.ps1 -Clean
 ```
 
-Poi compila lo script Inno Setup:
+Then compile the Inno Setup script:
 
 - Script: `installer\AdvancedFileMover.iss`
-- Aprilo con Inno Setup e premi **Compile**, oppure usa `ISCC.exe`.
+- Open it with Inno Setup and press **Compile**, or use `ISCC.exe`.
 
-L'installer esegue a fine installazione:
+The installer runs at the end of installation:
 
 - `AdvancedFileMoverPro.exe --register-context-menu`
 
 Così il menu contestuale punta alla posizione esatta dell'eseguibile installato.
-
-## Rilascio su GitHub
-
-Per creare una nuova release:
-
-1. Aggiorna versione in `config.json`
-2. Esegui `.\build.ps1 -Setup` (sincronizza automaticamente versioni)
-3. Crea tag e push: `git tag -a vX.Y.Z -m "Release vX.Y.Z" && git push origin vX.Y.Z`
-4. Carica `installer/Output/AdvancedFileMover_X.Y.Z_Setup.exe` come asset nella release su GitHub
-5. Pubblica la release
-
-Gli utenti riceveranno notifica di aggiornamento automaticamente!
 
 ## Menu contestuale (Explorer)
 
@@ -137,62 +111,66 @@ Nota: il menu è in modalità **Extended** → compare solo con **Shift + tasto 
 
 ### Modalità consigliata (EXE)
 
+Nota: se hai eseguito `\.\build.ps1 -Setup`, la cartella `dist/` viene rimossa a fine procedura.
+In quel caso, per registrare il menu a mano usa l'EXE installato (in `{app}`) oppure rifai un build senza `-Setup`.
+
 ```powershell
-# registra menu contestuale (HKCU)
+# register context menu (HKCU)
 dist\AdvancedFileMoverPro.exe --register-context-menu
 
-# rimuove
+# unregister
 dist\AdvancedFileMoverPro.exe --unregister-context-menu
 ```
 
-### Modalità alternativa (script)
+### Alternative Mode (script)
 
 ```powershell
-# registra (HKCU)
+# register (HKCU)
 C:\SOURCECODE\.venv312\Scripts\python.exe .\registry\context_menu.py --register
 
-# rimuove
+# unregister
 C:\SOURCECODE\.venv312\Scripts\python.exe .\registry\context_menu.py --unregister
 
-# per HKLM (tutti gli utenti) richiede admin
+# for HKLM (all users) requires admin
 C:\SOURCECODE\.venv312\Scripts\python.exe .\registry\context_menu.py --register --admin
 ```
 
+Se `dist/AdvancedFileMoverPro.exe` esiste, il menu usa l’EXE; altrimenti lancia la GUI via `pythonw.exe` su `ui/gui_customtkinter.py`.
+
 ## Lingue / i18n
 
-- Le traduzioni stanno in `i18n/*.json`
-- Le bandiere stanno in `src/assets/flags/*.png`
-- Il cambio lingua è dinamico e si applica all'intera GUI
+- Le traduzioni stanno in `i18n/*.json`.
+- Le bandiere stanno in `src/assets/flags/*.png`.
+- Il cambio lingua è dinamico e si applica all’intera GUI.
 
-## Test
+## Testing
 
 ```powershell
 cd .\TEST
 C:\SOURCECODE\.venv312\Scripts\python.exe .\run_all_tests.py
 ```
 
-## Struttura progetto (essenziale)
+## Project Structure (essential)
 
 - `ui/gui_customtkinter.py`: GUI principale
 - `src/file_operations.py`: motore copia/sposta + progress
-- `src/update_checker.py`: auto-update da GitHub
 - `src/ramdrive_handler.py` / `src/storage_detector.py`: rilevamento storage + auto‑tuning
 - `registry/context_menu.py`: installazione/rimozione menu contestuale
 
 ## Troubleshooting
 
-### Usa sempre `.venv312`
+### Always use `.venv312`
 
-Evita `py`/`python` "di sistema" se puntano a versioni diverse.
+Evita `py`/`python` “di sistema” se puntano a versioni diverse.
 
-Verifica rapida:
+Quick verification:
 
 ```powershell
 C:\SOURCECODE\.venv312\Scripts\python.exe --version
 C:\SOURCECODE\.venv312\Scripts\python.exe -c "import customtkinter, psutil; print('✓ GUI deps OK')"
 ```
 
-### Pulizia cache Python
+### Clean Python cache
 
 ```powershell
 taskkill /F /IM python.exe
