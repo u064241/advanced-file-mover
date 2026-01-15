@@ -195,9 +195,9 @@ class ContextMenuRegistrar:
             # MUIVerb per il nome visualizzato
             winreg.SetValueEx(sub_key, "MUIVerb", 0, winreg.REG_SZ, label)
 
-            # Abilita multi-selezione (usa %V nel command)
+            # Abilita multi-selezione (usa "%V" nel command per passare tutti i file insieme)
             try:
-                winreg.SetValueEx(sub_key, "MultiSelectModel", 0, winreg.REG_SZ, "Player")
+                winreg.SetValueEx(sub_key, "MultiSelectModel", 0, winreg.REG_SZ, "Document")
             except Exception:
                 pass
             
@@ -224,9 +224,9 @@ class ContextMenuRegistrar:
                     python_dir = os.path.dirname(sys.executable)
                     python_exe = os.path.join(python_dir, 'pythonw.exe')
 
-                command = f'"{python_exe}" "{gui_script}" --from-context-menu {operation} %V'
+                command = f'"{python_exe}" "{gui_script}" --from-context-menu {operation} "%V"'
             else:
-                command = f'"{str(gui_exe.resolve())}" --from-context-menu {operation} %V'
+                command = f'"{str(gui_exe.resolve())}" --from-context-menu {operation} "%V"'
             
             winreg.SetValueEx(command_key, "", 0, winreg.REG_SZ, command)
             
@@ -272,9 +272,9 @@ class ContextMenuRegistrar:
                     python_dir = os.path.dirname(sys.executable)
                     python_exe = os.path.join(python_dir, 'pythonw.exe')
 
-                command = f'"{python_exe}" "{gui_script}" --from-context-menu {operation} %V'
+                command = f'"{python_exe}" "{gui_script}" --from-context-menu {operation} "%V"'
             else:
-                command = f'"{str(gui_exe.resolve())}" --from-context-menu {operation} %V'
+                command = f'"{str(gui_exe.resolve())}" --from-context-menu {operation} "%V"'
             
             winreg.SetValueEx(command_key, "", 0, winreg.REG_SZ, command)
             
@@ -352,9 +352,9 @@ class ContextMenuRegistrar:
             sub_key = winreg.CreateKey(shell_key, sub_name)
             winreg.SetValueEx(sub_key, "", 0, winreg.REG_SZ, label)
 
-            # Abilita multi-selezione (usa %V nel command)
+            # Abilita multi-selezione (usa "%V" nel command per passare tutti i file insieme)
             try:
-                winreg.SetValueEx(sub_key, "MultiSelectModel", 0, winreg.REG_SZ, "Player")
+                winreg.SetValueEx(sub_key, "MultiSelectModel", 0, winreg.REG_SZ, "Document")
             except Exception:
                 pass
             
@@ -379,9 +379,9 @@ class ContextMenuRegistrar:
                 if not os.path.exists(python_exe):
                     python_dir = os.path.dirname(sys.executable)
                     python_exe = os.path.join(python_dir, 'pythonw.exe')
-                command = f'"{python_exe}" "{gui_script}" --from-context-menu {operation} %V'
+                command = f'"{python_exe}" "{gui_script}" --from-context-menu {operation} "%V"'
             else:
-                command = f'"{str(gui_exe.resolve())}" --from-context-menu {operation} %V'
+                command = f'"{str(gui_exe.resolve())}" --from-context-menu {operation} "%V"'
             
             winreg.SetValueEx(command_key, "", 0, winreg.REG_SZ, command)
             
