@@ -5,7 +5,7 @@ Windows utility for copying/moving files and folders with progress, auto-tuning 
 ## Requirements
 
 - Windows 7+
-- Python 3.12 in `.venv312`
+- Python 3.12
 - Dependencies: see `requirements.txt` (includes `pillow` for HiDPI flag icons, `requests` for auto-update)
 
 ## User Data (config + cache)
