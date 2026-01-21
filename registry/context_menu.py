@@ -226,7 +226,7 @@ class ContextMenuRegistrar:
 
                 command = f'"{python_exe}" "{gui_script}" --from-context-menu {operation} "%V"'
             else:
-                command = f'"{str(gui_exe.resolve())}" --from-context-menu {operation} "%V"'
+                command = f'"{str(gui_exe.resolve())}" --from-context-menu {operation} "%V" --single-instance'
             
             winreg.SetValueEx(command_key, "", 0, winreg.REG_SZ, command)
             
@@ -274,7 +274,7 @@ class ContextMenuRegistrar:
 
                 command = f'"{python_exe}" "{gui_script}" --from-context-menu {operation} "%V"'
             else:
-                command = f'"{str(gui_exe.resolve())}" --from-context-menu {operation} "%V"'
+                command = f'"{str(gui_exe.resolve())}" --from-context-menu {operation} "%V" --single-instance'
             
             winreg.SetValueEx(command_key, "", 0, winreg.REG_SZ, command)
             
