@@ -41,4 +41,14 @@ exe = EXE(
     icon='icon/super_icon.ico',
 )
 
-# Niente COLLECT - onefile crea singolo exe
+# COLLECT per one-dir (cartella con file sciolti, più veloce da eseguire)
+coll = COLLECT(
+    exe,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    name='AdvancedFileMoverPro',
+)
