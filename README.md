@@ -12,18 +12,6 @@ Professional Windows utility for copying/moving files and folders with real-time
 
 ---
 
-## ✨ Key Features
-
-🚀 **Auto-Update from GitHub** - Automatic update check and silent installation  
-📂 **Context Menu Integration** - Quick access from Explorer (Shift + right-click)  
-⚡ **Intelligent Auto-Tuning** - Optimizes buffer and threads based on storage type (SSD/HDD/USB)  
-📊 **Progress Tracking** - Real-time progress with cancellation option  
-🌍 **Multi-Language** - Italian, English, French, Spanish, German  
-🎯 **Professional Installer** - One-dir distribution for blazing fast startup (<1s from context menu)  
-🔧 **Multi-Selection** - Single instance management for multiple selections
-
----
-
 ## 📦 Installation
 
 ### Download Release
@@ -157,7 +145,7 @@ Distributed under MIT License. See `LICENSE` for more information.
 
 ## 👤 Author
 
-**u064241**
+### u064241
 
 - GitHub: [@u064241](https://github.com/u064241)
 - Repository: [advanced-file-mover](https://github.com/u064241/advanced-file-mover)
