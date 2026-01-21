@@ -242,8 +242,8 @@ Avoid system `py`/`python` if they point to different versions.
 Quick verification:
 
 ```powershell
-.venv312\Scripts\python.exe --version
-.venv312\Scripts\python.exe -c "import customtkinter, psutil; print('✓ GUI deps OK')"
+python.exe --version
+python.exe -c "import customtkinter, psutil; print('✓ GUI deps OK')"
 ```
 
 ### Clean Python cache
