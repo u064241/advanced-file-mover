@@ -29,7 +29,7 @@ From the `ADVANCED_FILE_MOVER` folder:
 ### Alternative Option: Direct command
 
 ```powershell
-C:\SOURCECODE\.venv312\Scripts\python.exe .\ui\gui_customtkinter.py
+python.exe .\ui\gui_customtkinter.py
 ```
 
 ## Auto-Update from GitHub
