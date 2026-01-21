@@ -275,20 +275,7 @@ Distributed under MIT License. See `LICENSE` for more information.
 
 ## 👤 Author
 
-**u064241**
-
-- GitHub: [@u064241](https://github.com/u064241)
-- Repository: [advanced-file-mover](https://github.com/u064241/advanced-file-mover)
-
----
-
-## 🙏 Acknowledgments
-
-- [CustomTkinter](https://github.com/TomSchimansky/CustomTkinter) - Modern GUI framework
-- [PyInstaller](https://www.pyinstaller.org/) - Packaging
-- [Inno Setup](https://jrsoftware.org/isinfo.php) - Windows installer
-
----
+### u064241
 
 - GitHub: [@u064241](https://github.com/u064241)
 - Repository: [advanced-file-mover](https://github.com/u064241/advanced-file-mover)
