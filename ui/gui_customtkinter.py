@@ -2480,14 +2480,24 @@ class AdvancedFileMoverCustomTkinter:
                     from src.update_checker import check_and_update
                     try:
                         self._show_update_progress()
+                        
+                        # Define callback to close app cleanly before installer runs
+                        def close_app_for_update():
+                            """Close the application to allow installer to replace exe"""
+                            try:
+                                self.root.quit()
+                            except:
+                                pass
+                        
                         success, msg = check_and_update(
                             str(self.config_manager.config_path),
                             on_download_start=self._on_download_start,
-                            on_download_complete=self._on_download_complete
+                            on_download_complete=self._on_download_complete,
+                            on_close_app=close_app_for_update
                         )
                         if success:
                             messagebox.showinfo("Aggiornamento", "L'installer è stato avviato. L'applicazione si chiuderà.")
-                            self.root.quit()
+                            # Note: on_close_app callback already handled app closure
                         else:
                             messagebox.showerror("Errore", f"Aggiornamento fallito: {msg}")
                     except Exception as e:
