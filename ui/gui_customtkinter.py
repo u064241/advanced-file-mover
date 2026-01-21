@@ -2728,6 +2728,7 @@ def _parse_launch_args(argv):
         return out
 
     from_context_menu = False
+    single_instance = '--single-instance' in args  # Evita multiple istanze dal context menu
     operation_type = None
     sources_raw = []
 
