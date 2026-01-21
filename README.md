@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](https://www.microsoft.com/windows)
 
-**[🇮🇹 Documentazione Italiana](docs/README_IT.md)**
+**[📖 Extended Documentation](docs/README_EN.md)**
 
 ---
 
@@ -29,17 +29,20 @@ Professional Windows utility for copying/moving files and folders with real-time
 ### Download Release
 
 Download the latest version from [Releases](https://github.com/u064241/advanced-file-mover/releases/latest):
-```
+
+```text
 AdvancedFileMover_1.0.6_Setup.exe
 ```
 
 ### Automatic Installation
+
 1. Run `AdvancedFileMover_1.0.6_Setup.exe`
 2. Follow the installation wizard
 3. Context menu will be automatically registered
 4. Launch the app from Start Menu or via context menu (Shift + right-click)
 
 ### Requirements
+
 - Windows 10/11 (64-bit)
 - .NET Framework (included in Windows)
 - Administrator rights for installation
@@ -49,6 +52,7 @@ AdvancedFileMover_1.0.6_Setup.exe
 ## 🚀 Usage
 
 ### Context Menu (Quick Method)
+
 1. Select one or more files/folders in Explorer
 2. **Shift + Right-Click** → You'll see **"Advanced File Mover"**
 3. Choose:
@@ -56,6 +60,7 @@ AdvancedFileMover_1.0.6_Setup.exe
    - **Move [Advanced]** → Move with optimization
 
 ### GUI Interface
+
 1. Launch from Start Menu: **"Advanced File Mover Pro"**
 2. Select source (file/folder)
 3. Select destination
@@ -67,6 +72,7 @@ AdvancedFileMover_1.0.6_Setup.exe
 ## 🔧 Build from Source
 
 ### Prerequisites
+
 ```powershell
 # Python 3.12
 # Virtual environment
@@ -81,6 +87,7 @@ pip install -r requirements.txt
 ```
 
 ### Complete Build
+
 ```powershell
 cd C:\SOURCECODE\PYTHON\ADVANCED_FILE_MOVER
 
@@ -92,6 +99,7 @@ cd C:\SOURCECODE\PYTHON\ADVANCED_FILE_MOVER
 ```
 
 ### PyInstaller Only Build
+
 ```powershell
 pyinstaller --clean gui_customtkinter.spec
 
@@ -103,21 +111,26 @@ pyinstaller --clean gui_customtkinter.spec
 ## 🔄 Changelog
 
 ### v1.0.6 (Latest)
+
 - 🐛 **Fix**: Auto-update properly closes app before installer runs
 - 🐛 **Fix**: Resolved "file in use" error during updates
 
 ### v1.0.5
+
 - 📦 Switched to installer-based distribution (one-dir)
 - 🚀 **5-10x faster** startup from context menu (<1s vs 5-10s)
 - ✅ Fix: Context menu multi-selection (no multiple instances)
 
 ### v1.0.3
+
 - ✅ Fix: Multi-selection context menu with MultiSelectModel "Document"
 
 ### v1.0.2
+
 - ✨ Auto-update system implemented
 
 ### v1.0.1
+
 - 🎨 CustomTkinter GUI interface
 - 📂 Context menu integration
 - ⚡ Auto-tuning buffer/threads
