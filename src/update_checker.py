@@ -134,23 +134,43 @@ def download_installer(download_url: str, download_path: str) -> bool:
         return False
 
 
-def install_and_restart(installer_path: str) -> bool:
+def install_and_restart(installer_path: str, on_close_app=None) -> bool:
     """
     Execute installer and restart application
     Works on Windows with .exe files
+    
+    Args:
+        installer_path: Path to the installer executable
+        on_close_app: Callback to close the current application cleanly
     """
     try:
         logger.info(f"Starting installer: {installer_path}")
         
+        # Signal the application to close cleanly BEFORE running installer
+        if on_close_app:
+            logger.info("Requesting application to close...")
+            on_close_app()
+            # Give app time to close (Tkinter needs time to cleanup)
+            import time
+            time.sleep(1)
+        
         # Execute installer silently (depends on installer configuration)
-        # For Inno Setup: /SILENT /NORESTART
-        subprocess.Popen(
-            [installer_path, "/SILENT", "/NORESTART"],
+        # For Inno Setup: /SILENT /NORESTART /ALLUSERS
+        process = subprocess.Popen(
+            [installer_path, "/SILENT", "/NORESTART", "/ALLUSERS"],
             shell=False,
             creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
         )
         
-        logger.info("Installer started, exiting application")
+        # Wait for installer to complete (max 5 minutes)
+        logger.info("Waiting for installer to complete...")
+        try:
+            process.wait(timeout=300)
+            logger.info("Installer completed successfully")
+        except subprocess.TimeoutExpired:
+            logger.warning("Installer timeout (300s), continuing anyway")
+        
+        logger.info("Installation complete, exiting application")
         return True
     except Exception as e:
         logger.error(f"Error executing installer: {e}")
@@ -168,6 +188,7 @@ def check_and_update(
     on_update_available=None,
     on_download_start=None,
     on_download_complete=None,
+    on_close_app=None,
     on_error=None
 ) -> Tuple[bool, Optional[str]]:
     """
@@ -178,6 +199,7 @@ def check_and_update(
         on_update_available: Callback when update is found
         on_download_start: Callback when download starts
         on_download_complete: Callback when download completes
+        on_close_app: Callback to close application before installing
         on_error: Callback for errors
     
     Returns:
@@ -222,8 +244,8 @@ def check_and_update(
         if not success:
             return False, "Failed to download installer"
         
-        # Execute installer
-        install_success = install_and_restart(installer_path)
+        # Execute installer (with app close callback)
+        install_success = install_and_restart(installer_path, on_close_app=on_close_app)
         
         if install_success:
             return True, f"Update to {remote_version} started"
