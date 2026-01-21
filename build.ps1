@@ -109,6 +109,7 @@ if ($Clean) {
     $BuildArgs = @('--clean') + $BuildArgs
     Write-Host "     Flag --clean attivato`n" -ForegroundColor $Cyan
 }
+Write-Host "     Modalità: One-Dir (cartella con file sciolti)`n" -ForegroundColor $Cyan
 
 & $PythonExe -m PyInstaller @BuildArgs
 
