@@ -2616,6 +2616,12 @@ def main() -> int:
     except Exception:
         return 1
 
+    # Controllo single-instance: se richiesto e c'è già un'istanza attiva, termina silenziosamente
+    if '--single-instance' in argv:
+        if not _check_single_instance():
+            # C'è già un'istanza in esecuzione, termina senza errori
+            return 0
+
     sources, operation_type, from_context_menu = _parse_launch_args(argv)
 
     # Blocca selezioni su oggetti shell virtuali (Cestino / Questo PC / Rete, ecc.)
@@ -2909,6 +2915,56 @@ def _is_running_as_admin() -> bool:
         return bool(ctypes.windll.shell32.IsUserAnAdmin())
     except Exception:
         return False
+
+
+def _check_single_instance() -> bool:
+    """Verifica se esiste già un'istanza dell'applicazione.
+    
+    Ritorna True se questa è l'unica istanza, False se ce n'è già una attiva.
+    Usa un mutex di sistema Windows per la sincronizzazione.
+    """
+    if sys.platform != 'win32':
+        return True
+    
+    try:
+        import ctypes
+        from ctypes import wintypes
+        
+        # Nome univoco del mutex per questa applicazione
+        MUTEX_NAME = 'Global\\AdvancedFileMover_SingleInstance_Mutex'
+        
+        # Funzioni Win32 API
+        kernel32 = ctypes.windll.kernel32
+        
+        # CreateMutexW
+        kernel32.CreateMutexW.argtypes = [
+            wintypes.LPVOID,   # lpMutexAttributes
+            wintypes.BOOL,     # bInitialOwner
+            wintypes.LPCWSTR   # lpName
+        ]
+        kernel32.CreateMutexW.restype = wintypes.HANDLE
+        
+        # GetLastError
+        kernel32.GetLastError.argtypes = []
+        kernel32.GetLastError.restype = wintypes.DWORD
+        
+        # Crea il mutex
+        mutex_handle = kernel32.CreateMutexW(None, True, MUTEX_NAME)
+        
+        # ERROR_ALREADY_EXISTS = 183
+        if kernel32.GetLastError() == 183:
+            # Il mutex esiste già = altra istanza in esecuzione
+            if mutex_handle:
+                kernel32.CloseHandle(mutex_handle)
+            return False
+        
+        # Questa è la prima istanza - il mutex viene tenuto aperto
+        # fino alla terminazione del processo (verrà rilasciato automaticamente)
+        return True
+        
+    except Exception:
+        # In caso di errore, permetti l'avvio
+        return True
 
 
 def _relaunch_elevated(argv) -> bool:

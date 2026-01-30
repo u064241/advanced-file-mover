@@ -13,5 +13,5 @@ customtkinter>=5.2.0
 # Imaging (for HiDPI-safe flag icons)
 pillow>=10.0.0
 
-# Build (optional)
-# pyinstaller
+# Build tool
+pyinstaller>=6.0.0
