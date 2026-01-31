@@ -11,6 +11,7 @@
 [Setup]
 AppName=Advanced File Mover Pro
 AppVersion={#MyAppVersion}
+AppVersionName=Advanced File Mover Pro v{#MyAppVersion}
 OutputBaseFilename=AdvancedFileMover_{#MyAppVersion}_Setup
 DefaultDirName={autopf}\Advanced File Mover Pro
 DefaultGroupName=Advanced File Mover Pro

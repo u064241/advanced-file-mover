@@ -151,8 +151,9 @@ def install_and_restart(installer_path: str, on_close_app=None) -> bool:
             logger.info("Requesting application to close...")
             on_close_app()
             # Give app time to close (Tkinter needs time to cleanup)
+            # Increased from 1 to 3 seconds to ensure complete termination
             import time
-            time.sleep(1)
+            time.sleep(3)
         
         # Execute installer silently (depends on installer configuration)
         # For Inno Setup: /SILENT /NORESTART /ALLUSERS
