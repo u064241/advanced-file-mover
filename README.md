@@ -79,7 +79,7 @@ cd C:\SOURCECODE\PYTHON\ADVANCED_FILE_MOVER
 .\build.ps1 -Clean -Setup
 
 # Output:
-# installer\Output\AdvancedFileMover_1.0.6_Setup.exe
+# installer\Output\AdvancedFileMover_1.0.7_Setup.exe
 ```
 
 ### PyInstaller Only Build
@@ -94,7 +94,12 @@ pyinstaller --clean gui_customtkinter.spec
 
 ## 🔄 Changelog
 
-### v1.0.6 (Latest)
+### v1.0.7 (Latest)
+
+- 🐛 **Fix**: Single-instance mutex for context menu (prevent multiple windows on multi-select)
+- 📦 **Update**: PyInstaller added to requirements.txt
+
+### v1.0.6
 
 - 🐛 **Fix**: Auto-update properly closes app before installer runs
 - 🐛 **Fix**: Resolved "file in use" error during updates
@@ -156,7 +161,7 @@ The application version is managed centrally in `config.json`:
 
 ```json
 {
- "version": "1.0.6",
+ "version": "1.0.7",
  ...
 }
 ```
@@ -168,7 +173,7 @@ When you run `.\build.ps1 -Setup`:
 - `build.ps1` reads the version from `config.json`
 - Automatically updates `installer/AdvancedFileMover.iss`
 - Passes it to Inno Setup
-- Output Setup will be named: `AdvancedFileMover_{version}_Setup.exe` (e.g., `AdvancedFileMover_1.0.6_Setup.exe`)
+- Output Setup will be named: `AdvancedFileMover_{version}_Setup.exe` (e.g., `AdvancedFileMover_1.0.7_Setup.exe`)
 - Version also appears in Windows Control Panel
 
 **To update the version**: modify the `version` field in `config.json` before running the build.
