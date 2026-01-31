@@ -2488,19 +2488,28 @@ class AdvancedFileMoverCustomTkinter:
                         
                         # Define callback to close app cleanly before installer runs
                         def close_app_for_update():
-                            """Close the application to allow installer to replace exe"""
+                            """Close the application and immediately exit process to free exe lock"""
                             try:
                                 # Force immediate window destruction
                                 self.root.destroy()
                             except:
                                 pass
                             
-                            # Force Python process termination
+                            # Give minimal time for cleanup
+                            import time
+                            time.sleep(0.1)
+                            
+                            # Force immediate Python process termination with os._exit
+                            # This ensures the .exe file is not locked by the Python process
                             try:
-                                import sys
-                                sys.exit(0)
+                                import os
+                                os._exit(0)  # Force hard exit without cleanup
                             except:
-                                pass
+                                try:
+                                    import sys
+                                    sys.exit(0)
+                                except:
+                                    pass
                         
                         success, msg = check_and_update(
                             str(self.config_manager.config_path),
