@@ -1,6 +1,6 @@
 # Advanced File Mover Pro
 
-[![Version](https://img.shields.io/badge/version-1.0.9-blue.svg)](https://github.com/u064241/advanced-file-mover/releases/latest)
+[![Version](https://img.shields.io/badge/version-1.0.10-blue.svg)](https://github.com/u064241/advanced-file-mover/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](https://www.microsoft.com/windows)
 
@@ -94,7 +94,13 @@ pyinstaller --clean gui_customtkinter.spec
 
 ## 🔄 Changelog
 
-### v1.0.9 (Latest)
+### v1.0.10 (Latest)
+
+- 🐛 **Fix**: Config loading now merges with defaults to ensure window_size always present
+- 🐛 **Fix**: Installer uses DETACHED_PROCESS flag to avoid file lock issues
+- ✅ **Resolved**: "File is in use" error during updates
+
+### v1.0.9
 
 - 🐛 **Fix**: Force kill app process with taskkill before installer runs
 - 🐛 **Fix**: Changed installer flag from /ALLUSERS to /CLOSEAPPLICATIONS for better handling
