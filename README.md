@@ -1,6 +1,6 @@
 # Advanced File Mover Pro
 
-[![Version](https://img.shields.io/badge/version-1.0.10-blue.svg)](https://github.com/u064241/advanced-file-mover/releases/latest)
+[![Version](https://img.shields.io/badge/version-1.0.11-blue.svg)](https://github.com/u064241/advanced-file-mover/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](https://www.microsoft.com/windows)
 
@@ -94,7 +94,13 @@ pyinstaller --clean gui_customtkinter.spec
 
 ## 🔄 Changelog
 
-### v1.0.10 (Latest)
+### v1.0.11 (Latest)
+
+- 🐛 **Fix**: Use os._exit() for immediate process termination during update
+- 🐛 **Fix**: Use cmd /c start /b for complete process detachment
+- ✅ **Resolved**: Installer hanging when old process locks exe file
+
+### v1.0.10
 
 - 🐛 **Fix**: Config loading now merges with defaults to ensure window_size always present
 - 🐛 **Fix**: Installer uses DETACHED_PROCESS flag to avoid file lock issues
