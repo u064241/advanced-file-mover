@@ -152,7 +152,20 @@ def install_and_restart(installer_path: str, on_close_app=None) -> bool:
             on_close_app()
             # Minimal sleep to let Tkinter cleanup
             import time
-            time.sleep(0.2)
+            time.sleep(0.5)
+        
+        # Force kill any remaining AdvancedFileMoverPro processes to release exe lock
+        try:
+            logger.info("Force killing any remaining AdvancedFileMoverPro.exe processes...")
+            subprocess.run(
+                ["taskkill", "/F", "/IM", "AdvancedFileMoverPro.exe"],
+                capture_output=True,
+                timeout=3
+            )
+            import time
+            time.sleep(0.5)
+        except Exception as e:
+            logger.debug(f"taskkill output: {e}")
         
         # Launch installer completely detached from parent process
         # Using cmd /c start /b ensures the installer runs independently
@@ -160,7 +173,7 @@ def install_and_restart(installer_path: str, on_close_app=None) -> bool:
         
         try:
             # Use Windows cmd with 'start /b' to run completely detached
-            # /b = no new window, /i = inherit environment
+            # Add /CLOSEAPPLICATIONS so Inno Setup handles any remaining apps
             cmd = f'start /b /i "" "{installer_path}" /SILENT /NORESTART /CLOSEAPPLICATIONS'
             
             subprocess.Popen(
