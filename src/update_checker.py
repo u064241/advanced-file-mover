@@ -151,14 +151,26 @@ def install_and_restart(installer_path: str, on_close_app=None) -> bool:
             logger.info("Requesting application to close...")
             on_close_app()
             # Give app time to close (Tkinter needs time to cleanup)
-            # Increased from 1 to 3 seconds to ensure complete termination
             import time
-            time.sleep(3)
+            time.sleep(1)
+            
+            # Force kill any remaining AdvancedFileMoverPro.exe processes
+            # This ensures the installer can replace the .exe file
+            try:
+                logger.info("Force killing any remaining AdvancedFileMoverPro processes...")
+                subprocess.run(
+                    ["taskkill", "/F", "/IM", "AdvancedFileMoverPro.exe"],
+                    capture_output=True,
+                    timeout=5
+                )
+                time.sleep(1)
+            except Exception as e:
+                logger.warning(f"Could not force kill process: {e}")
         
         # Execute installer silently (depends on installer configuration)
-        # For Inno Setup: /SILENT /NORESTART /ALLUSERS
+        # For Inno Setup: /SILENT /NORESTART /CLOSEAPPLICATIONS
         process = subprocess.Popen(
-            [installer_path, "/SILENT", "/NORESTART", "/ALLUSERS"],
+            [installer_path, "/SILENT", "/NORESTART", "/CLOSEAPPLICATIONS"],
             shell=False,
             creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
         )
