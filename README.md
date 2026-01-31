@@ -1,6 +1,6 @@
 # Advanced File Mover Pro
 
-[![Version](https://img.shields.io/badge/version-1.0.11-blue.svg)](https://github.com/u064241/advanced-file-mover/releases/latest)
+[![Version](https://img.shields.io/badge/version-1.0.12-blue.svg)](https://github.com/u064241/advanced-file-mover/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](https://www.microsoft.com/windows)
 
@@ -94,7 +94,14 @@ pyinstaller --clean gui_customtkinter.spec
 
 ## 🔄 Changelog
 
-### v1.0.11 (Latest)
+### v1.0.12 (Latest)
+
+- 🐛 **Fix**: Single-instance mutex now persists in global variable, preventing duplicate AdvancedFileMoverPro.exe processes
+- 🐛 **Fix**: ConfigManager.set() now calls save_config() immediately, ensuring window_size persists on app close
+- ✅ **Resolved**: Multiple process instances blocking updates
+- ✅ **Resolved**: Window geometry not saving between sessions
+
+### v1.0.11
 
 - 🐛 **Fix**: Use os._exit() for immediate process termination during update
 - 🐛 **Fix**: Use cmd /c start /b for complete process detachment
