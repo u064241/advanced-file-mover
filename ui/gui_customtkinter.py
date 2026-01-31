@@ -159,6 +159,7 @@ class ConfigManager:
     def set(self, key, value):
         self.config[key] = value
         self.save_config()
+        self.save_config()
 
 
 class AdvancedFileMoverCustomTkinter:
@@ -2939,12 +2940,18 @@ def _is_running_as_admin() -> bool:
         return False
 
 
+# Variabile globale per mantenere il mutex della single-instance
+_GLOBAL_MUTEX_HANDLE = None
+
+
 def _check_single_instance() -> bool:
     """Verifica se esiste già un'istanza dell'applicazione.
     
     Ritorna True se questa è l'unica istanza, False se ce n'è già una attiva.
     Usa un mutex di sistema Windows per la sincronizzazione.
     """
+    global _GLOBAL_MUTEX_HANDLE
+    
     if sys.platform != 'win32':
         return True
     
@@ -2980,8 +2987,9 @@ def _check_single_instance() -> bool:
                 kernel32.CloseHandle(mutex_handle)
             return False
         
-        # Questa è la prima istanza - il mutex viene tenuto aperto
-        # fino alla terminazione del processo (verrà rilasciato automaticamente)
+        # Questa è la prima istanza - SALVA il mutex_handle GLOBALMENTE
+        # così il mutex rimane aperto fino alla terminazione del processo
+        _GLOBAL_MUTEX_HANDLE = mutex_handle
         return True
         
     except Exception:
