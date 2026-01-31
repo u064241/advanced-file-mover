@@ -15,12 +15,12 @@ Professional Windows utility for copying/moving files and folders with real-time
 Download the latest version from [Releases](https://github.com/u064241/advanced-file-mover/releases/latest):
 
 ```text
-AdvancedFileMover_1.0.9_Setup.exe
+AdvancedFileMover_1.0.12_Setup.exe
 ```
 
 ### Automatic Installation
 
-1. Run `AdvancedFileMover_1.0.9_Setup.exe`
+1. Run `AdvancedFileMover_1.0.12_Setup.exe`
 2. Follow the installation wizard
 3. Context menu will be automatically registered
 4. Launch the app from Start Menu or via context menu (Shift + right-click)
@@ -30,6 +30,18 @@ AdvancedFileMover_1.0.9_Setup.exe
 - Windows 10/11 (64-bit)
 - .NET Framework (included in Windows)
 - Administrator rights for installation
+
+### Upgrade from v1.0.11 to v1.0.12
+
+⚠️ **Important**: v1.0.11 has a bug that may prevent auto-updates. Follow these steps:
+
+1. **Close the application completely** (Ctrl+Q or close window)
+2. **Open Task Manager** (Ctrl+Shift+Esc) and verify no `AdvancedFileMoverPro.exe` processes are running
+3. **Manually run** `AdvancedFileMover_1.0.12_Setup.exe`
+4. **Follow the installer wizard** to completion
+5. **Launch the new version** - auto-updates will work correctly from v1.0.12 onwards
+
+Once upgraded, subsequent updates will work automatically via the built-in auto-update feature.
 
 ---
 
@@ -79,7 +91,7 @@ cd C:\SOURCECODE\PYTHON\ADVANCED_FILE_MOVER
 .\build.ps1 -Clean -Setup
 
 # Output:
-# installer\Output\AdvancedFileMover_1.0.9_Setup.exe
+# installer\Output\AdvancedFileMover_1.0.12_Setup.exe
 ```
 
 ### PyInstaller Only Build
