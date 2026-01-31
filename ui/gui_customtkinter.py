@@ -2485,7 +2485,15 @@ class AdvancedFileMoverCustomTkinter:
                         def close_app_for_update():
                             """Close the application to allow installer to replace exe"""
                             try:
-                                self.root.quit()
+                                # Force immediate window destruction
+                                self.root.destroy()
+                            except:
+                                pass
+                            
+                            # Force Python process termination
+                            try:
+                                import sys
+                                sys.exit(0)
                             except:
                                 pass
                         
