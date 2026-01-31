@@ -20,6 +20,7 @@ SolidCompression=yes
 WizardStyle=modern
 PrivilegesRequired=admin
 SetupIconFile={#SourcePath}\..\dist\Icon\super_icon.ico
+CloseApplications=yes
 
 [Files]
 Source: "{#SourcePath}\..\dist\AdvancedFileMoverPro.exe"; DestDir: "{app}"; Flags: ignoreversion
@@ -43,6 +44,8 @@ Filename: "{app}\AdvancedFileMoverPro.exe"; Parameters: "--register-context-menu
 [UninstallRun]
 ; Rimuove il menu contestuale prima della disinstallazione
 Filename: "{app}\AdvancedFileMoverPro.exe"; Parameters: "--unregister-context-menu"; Flags: waituntilterminated; RunOnceId: "UnregisterContextMenu"
+
+
 
 
 
