@@ -1,6 +1,6 @@
 # Advanced File Mover Pro
 
-[![Version](https://img.shields.io/badge/version-1.0.7-blue.svg)](https://github.com/u064241/advanced-file-mover/releases/latest)
+[![Version](https://img.shields.io/badge/version-1.0.8-blue.svg)](https://github.com/u064241/advanced-file-mover/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](https://www.microsoft.com/windows)
 
@@ -15,12 +15,12 @@ Professional Windows utility for copying/moving files and folders with real-time
 Download the latest version from [Releases](https://github.com/u064241/advanced-file-mover/releases/latest):
 
 ```text
-AdvancedFileMover_1.0.7_Setup.exe
+AdvancedFileMover_1.0.8_Setup.exe
 ```
 
 ### Automatic Installation
 
-1. Run `AdvancedFileMover_1.0.7_Setup.exe`
+1. Run `AdvancedFileMover_1.0.8_Setup.exe`
 2. Follow the installation wizard
 3. Context menu will be automatically registered
 4. Launch the app from Start Menu or via context menu (Shift + right-click)
@@ -79,7 +79,7 @@ cd C:\SOURCECODE\PYTHON\ADVANCED_FILE_MOVER
 .\build.ps1 -Clean -Setup
 
 # Output:
-# installer\Output\AdvancedFileMover_1.0.7_Setup.exe
+# installer\Output\AdvancedFileMover_1.0.8_Setup.exe
 ```
 
 ### PyInstaller Only Build
@@ -94,7 +94,13 @@ pyinstaller --clean gui_customtkinter.spec
 
 ## 🔄 Changelog
 
-### v1.0.7 (Latest)
+### v1.0.8 (Latest)
+
+- 🐛 **Fix**: Registry DisplayName now shows "v1.0.8" instead of "version 1.0.8"
+- 🐛 **Fix**: Improved app termination during update (destroy + sys.exit for immediate closure)
+- ⏱️ **Enhancement**: Increased wait time from 1s to 3s to ensure complete app shutdown before installer runs
+
+### v1.0.7
 
 - 🐛 **Fix**: Single-instance mutex for context menu (prevent multiple windows on multi-select)
 - 📦 **Update**: PyInstaller added to requirements.txt
@@ -161,7 +167,7 @@ The application version is managed centrally in `config.json`:
 
 ```json
 {
- "version": "1.0.7",
+ "version": "1.0.8",
  ...
 }
 ```
@@ -173,7 +179,7 @@ When you run `.\build.ps1 -Setup`:
 - `build.ps1` reads the version from `config.json`
 - Automatically updates `installer/AdvancedFileMover.iss`
 - Passes it to Inno Setup
-- Output Setup will be named: `AdvancedFileMover_{version}_Setup.exe` (e.g., `AdvancedFileMover_1.0.7_Setup.exe`)
+- Output Setup will be named: `AdvancedFileMover_{version}_Setup.exe` (e.g., `AdvancedFileMover_1.0.8_Setup.exe`)
 - Version also appears in Windows Control Panel
 
 **To update the version**: modify the `version` field in `config.json` before running the build.
