@@ -150,50 +150,49 @@ def install_and_restart(installer_path: str, on_close_app=None) -> bool:
         if on_close_app:
             logger.info("Requesting application to close...")
             on_close_app()
-            # Give app time to close (Tkinter needs time to cleanup)
+            # Give Tkinter time to cleanup (reduced to minimal)
             import time
-            time.sleep(1)
-            
-            # Force kill any remaining AdvancedFileMoverPro.exe processes
-            # This ensures the installer can replace the .exe file
-            try:
-                logger.info("Force killing any remaining AdvancedFileMoverPro processes...")
-                subprocess.run(
-                    ["taskkill", "/F", "/IM", "AdvancedFileMoverPro.exe"],
-                    capture_output=True,
-                    timeout=5
-                )
-                time.sleep(1)
-            except Exception as e:
-                logger.warning(f"Could not force kill process: {e}")
+            time.sleep(0.5)
         
-        # Execute installer silently (depends on installer configuration)
-        # For Inno Setup: /SILENT /NORESTART /CLOSEAPPLICATIONS
-        process = subprocess.Popen(
-            [installer_path, "/SILENT", "/NORESTART", "/CLOSEAPPLICATIONS"],
-            shell=False,
-            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
-        )
+        # Execute installer with detach flag so it doesn't depend on parent process
+        # Use CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW to fully detach
+        logger.info(f"Launching installer with detached process...")
         
-        # Wait for installer to complete (max 5 minutes)
-        logger.info("Waiting for installer to complete...")
         try:
-            process.wait(timeout=300)
-            logger.info("Installer completed successfully")
-        except subprocess.TimeoutExpired:
-            logger.warning("Installer timeout (300s), continuing anyway")
+            # On Windows, use DETACHED_PROCESS flag to fully separate from parent
+            DETACHED_PROCESS = 0x00000008
+            CREATE_NEW_PROCESS_GROUP = 0x00000200
+            CREATE_NO_WINDOW = 0x08000000
+            
+            process = subprocess.Popen(
+                [installer_path, "/SILENT", "/NORESTART", "/CLOSEAPPLICATIONS"],
+                creationflags=DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW,
+                shell=False,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+            logger.info(f"Installer process started (PID: {process.pid})")
+            
+            # Don't wait for installer - it will run independently
+            # Exit this process immediately to release all file locks
+            import time
+            time.sleep(0.5)
+            
+        except Exception as e:
+            logger.error(f"Error launching installer: {e}")
+            # Fallback: try direct execution
+            try:
+                os.startfile(installer_path)
+            except Exception as e2:
+                logger.error(f"Error opening installer: {e2}")
+                return False
         
-        logger.info("Installation complete, exiting application")
+        logger.info("Installation started successfully, application will exit")
         return True
+        
     except Exception as e:
         logger.error(f"Error executing installer: {e}")
-        # Fallback: ask user to run installer manually
-        try:
-            os.startfile(installer_path)
-            return True
-        except Exception as e2:
-            logger.error(f"Error opening installer: {e2}")
-            return False
+        return False
 
 
 def check_and_update(

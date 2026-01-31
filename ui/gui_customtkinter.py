@@ -65,10 +65,15 @@ class ConfigManager:
     
     def load_config(self):
         """Carica la configurazione da JSON"""
+        default = self.get_default_config()
+        
         if self.config_path.exists():
             try:
                 with open(self.config_path, 'r', encoding='utf-8') as f:
                     user_config = json.load(f)
+                
+                # Merge con default config per assicurare che tutti i campi siano presenti
+                merged_config = {**default, **user_config}
                 
                 # Sync version from bundled config (auto-update version field)
                 try:
@@ -78,21 +83,21 @@ class ConfigManager:
                             bundled_config = json.load(f)
                         
                         bundled_version = bundled_config.get('version', '1.0.0')
-                        user_version = user_config.get('version', '0.0.0')
+                        user_version = merged_config.get('version', '0.0.0')
                         
                         # If bundled version is different, update it
                         if bundled_version != user_version:
-                            user_config['version'] = bundled_version
+                            merged_config['version'] = bundled_version
                             # Save immediately to persist version update
-                            self.config = user_config
+                            self.config = merged_config
                             self.save_config()
                 except Exception:
                     # Silently fail version sync if bundled config is not available
                     pass
                 
-                return user_config
+                return merged_config
             except:
-                return self.get_default_config()
+                return default
 
         # Primo avvio: prova a migrare da config "bundled" (vicino all'exe/progetto)
         try:
