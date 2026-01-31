@@ -150,33 +150,28 @@ def install_and_restart(installer_path: str, on_close_app=None) -> bool:
         if on_close_app:
             logger.info("Requesting application to close...")
             on_close_app()
-            # Give Tkinter time to cleanup (reduced to minimal)
+            # Minimal sleep to let Tkinter cleanup
             import time
-            time.sleep(0.5)
+            time.sleep(0.2)
         
-        # Execute installer with detach flag so it doesn't depend on parent process
-        # Use CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW to fully detach
-        logger.info(f"Launching installer with detached process...")
+        # Launch installer completely detached from parent process
+        # Using cmd /c start /b ensures the installer runs independently
+        logger.info(f"Launching installer with cmd start...")
         
         try:
-            # On Windows, use DETACHED_PROCESS flag to fully separate from parent
-            DETACHED_PROCESS = 0x00000008
-            CREATE_NEW_PROCESS_GROUP = 0x00000200
-            CREATE_NO_WINDOW = 0x08000000
+            # Use Windows cmd with 'start /b' to run completely detached
+            # /b = no new window, /i = inherit environment
+            cmd = f'start /b /i "" "{installer_path}" /SILENT /NORESTART /CLOSEAPPLICATIONS'
             
-            process = subprocess.Popen(
-                [installer_path, "/SILENT", "/NORESTART", "/CLOSEAPPLICATIONS"],
-                creationflags=DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW,
-                shell=False,
+            subprocess.Popen(
+                cmd,
+                shell=True,
                 stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
+                stderr=subprocess.DEVNULL,
+                creationflags=0x00000008  # DETACHED_PROCESS
             )
-            logger.info(f"Installer process started (PID: {process.pid})")
             
-            # Don't wait for installer - it will run independently
-            # Exit this process immediately to release all file locks
-            import time
-            time.sleep(0.5)
+            logger.info("Installer launched successfully")
             
         except Exception as e:
             logger.error(f"Error launching installer: {e}")
@@ -187,7 +182,7 @@ def install_and_restart(installer_path: str, on_close_app=None) -> bool:
                 logger.error(f"Error opening installer: {e2}")
                 return False
         
-        logger.info("Installation started successfully, application will exit")
+        logger.info("Installation started, exiting application immediately")
         return True
         
     except Exception as e:
