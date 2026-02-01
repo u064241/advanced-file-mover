@@ -2371,13 +2371,13 @@ class AdvancedFileMoverCustomTkinter:
         min_height = 907
         
         size = self.config_manager.get('window_size', {'width': min_width, 'height': min_height})
-        window_width = max(size['width'], min_width)
-        window_height = max(size['height'], min_height)
+        window_width = size.get('width', min_width)
+        window_height = size.get('height', min_height)
         
-        print(f"[DEBUG] restore_window_state: config_size={size}, final={window_width}x{window_height}")
+        print(f"[DEBUG] restore_window_state: config_size={size}, loaded={window_width}x{window_height}")
         print(f"[DEBUG] Config path: {self.config_manager.config_path}")
         
-        # Imposta dimensione minima finestra
+        # Imposta dimensione minima finestra (impedisce resize sotto minimo)
         self.root.minsize(min_width, min_height)
         
         # Imposta solo le dimensioni inizialmente (posizione sarà impostata da _center_window)

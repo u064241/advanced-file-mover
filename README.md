@@ -1,6 +1,6 @@
 # Advanced File Mover Pro
 
-[![Version](https://img.shields.io/badge/version-1.0.13-blue.svg)](https://github.com/u064241/advanced-file-mover/releases/latest)
+[![Version](https://img.shields.io/badge/version-1.0.14-blue.svg)](https://github.com/u064241/advanced-file-mover/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](https://www.microsoft.com/windows)
 
@@ -106,7 +106,14 @@ pyinstaller --clean gui_customtkinter.spec
 
 ## 🔄 Changelog
 
-### v1.0.13 (Latest)
+### v1.0.14 (Latest)
+
+- 🐛 **CRITICAL FIX**: Window geometry no longer forced to minimum size - restored dimensions now persist correctly
+- 🐛 **Fix**: Removed max() constraint in restore_window_state() that was overriding saved dimensions
+- 🧪 **Debug**: Extensive logging added to track config loading and window state changes
+- ✅ **Resolved**: Window resizing not being saved between sessions (root cause was minsize override)
+
+### v1.0.13
 
 - 🐛 **Fix**: Window geometry now validates dimensions before saving (prevents invalid 1x1 values)
 - 🐛 **Fix**: Added diagnostic logging to context menu argument parsing for debugging multi-file selection
