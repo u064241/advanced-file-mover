@@ -67,13 +67,19 @@ class ConfigManager:
         """Carica la configurazione da JSON"""
         default = self.get_default_config()
         
+        print(f"[DEBUG] load_config: config_path={self.config_path}, exists={self.config_path.exists()}")
+        
         if self.config_path.exists():
             try:
                 with open(self.config_path, 'r', encoding='utf-8') as f:
                     user_config = json.load(f)
                 
+                print(f"[DEBUG] user_config loaded: window_size={user_config.get('window_size')}")
+                
                 # Merge con default config per assicurare che tutti i campi siano presenti
                 merged_config = {**default, **user_config}
+                
+                print(f"[DEBUG] merged_config: window_size={merged_config.get('window_size')}")
                 
                 # Sync version from bundled config (auto-update version field)
                 try:
@@ -158,7 +164,6 @@ class ConfigManager:
     
     def set(self, key, value):
         self.config[key] = value
-        self.save_config()
         self.save_config()
 
 
@@ -2369,6 +2374,9 @@ class AdvancedFileMoverCustomTkinter:
         window_width = max(size['width'], min_width)
         window_height = max(size['height'], min_height)
         
+        print(f"[DEBUG] restore_window_state: config_size={size}, final={window_width}x{window_height}")
+        print(f"[DEBUG] Config path: {self.config_manager.config_path}")
+        
         # Imposta dimensione minima finestra
         self.root.minsize(min_width, min_height)
         
@@ -2447,10 +2455,27 @@ class AdvancedFileMoverCustomTkinter:
     
     def _on_closing(self):
         """Salva stato e chiude l'app"""
+        # Salva dimensione finestra (con controllo per valori invalidi)
+        width = self.root.winfo_width()
+        height = self.root.winfo_height()
+        
+        # Debug: stampa dimensioni lette
+        print(f"[DEBUG] _on_closing: width={width}, height={height}")
+        
+        # Se i valori sono invalidi (es: 1), usa i valori da config precedente
+        if width < 600 or height < 500:
+            current_size = self.config_manager.get('window_size', {})
+            width = current_size.get('width', 602)
+            height = current_size.get('height', 584)
+            print(f"[DEBUG] Dimensioni invalide, uso precedenti: {width}x{height}")
+        
+        print(f"[DEBUG] Salvo window_size: {width}x{height}")
         self.config_manager.set('window_size', {
-            'width': self.root.winfo_width(),
-            'height': self.root.winfo_height()
+            'width': width,
+            'height': height
         })
+        print(f"[DEBUG] Config salvato in: {self.config_manager.config_path}")
+        
         # window_position non viene più salvata - la finestra si posiziona dinamicamente all'avvio
         self.config_manager.set('buffer_size', int(self.buffer_size.get()))
         self.config_manager.set('threads', int(self.threads.get()))
@@ -2705,6 +2730,15 @@ def _parse_launch_args(argv):
     import re
 
     args = list(argv[1:]) if argv else []
+    
+    # DEBUG: Log dei argomenti ricevuti
+    try:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.debug(f"[_parse_launch_args] argv: {argv}")
+        logger.debug(f"[_parse_launch_args] args: {args}")
+    except:
+        pass
 
     def _split_packed_arg(a: str):
         """Alcuni comandi del menu contestuale possono passare più path in un unico argomento.
@@ -2824,6 +2858,14 @@ def _parse_launch_args(argv):
     # Heuristica: se arrivano sorgenti + op, è avvio dal menu contestuale
     if sources and operation_type:
         from_context_menu = True
+    
+    # DEBUG: Log dei risultati
+    try:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.debug(f"[_parse_launch_args] PARSED - sources: {sources}, operation: {operation_type}, from_context_menu: {from_context_menu}")
+    except:
+        pass
 
     return sources, operation_type, from_context_menu
 

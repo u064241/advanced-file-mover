@@ -1,6 +1,6 @@
 # Advanced File Mover Pro
 
-[![Version](https://img.shields.io/badge/version-1.0.12-blue.svg)](https://github.com/u064241/advanced-file-mover/releases/latest)
+[![Version](https://img.shields.io/badge/version-1.0.13-blue.svg)](https://github.com/u064241/advanced-file-mover/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](https://www.microsoft.com/windows)
 
@@ -15,12 +15,12 @@ Professional Windows utility for copying/moving files and folders with real-time
 Download the latest version from [Releases](https://github.com/u064241/advanced-file-mover/releases/latest):
 
 ```text
-AdvancedFileMover_1.0.12_Setup.exe
+AdvancedFileMover_1.0.13_Setup.exe
 ```
 
 ### Automatic Installation
 
-1. Run `AdvancedFileMover_1.0.12_Setup.exe`
+1. Run `AdvancedFileMover_1.0.13_Setup.exe`
 2. Follow the installation wizard
 3. Context menu will be automatically registered
 4. Launch the app from Start Menu or via context menu (Shift + right-click)
@@ -37,7 +37,7 @@ AdvancedFileMover_1.0.12_Setup.exe
 
 1. **Close the application completely** (Ctrl+Q or close window)
 2. **Open Task Manager** (Ctrl+Shift+Esc) and verify no `AdvancedFileMoverPro.exe` processes are running
-3. **Manually run** `AdvancedFileMover_1.0.12_Setup.exe`
+3. **Manually run** `AdvancedFileMover_1.0.13_Setup.exe`
 4. **Follow the installer wizard** to completion
 5. **Launch the new version** - auto-updates will work correctly from v1.0.12 onwards
 
@@ -91,7 +91,7 @@ cd C:\SOURCECODE\PYTHON\ADVANCED_FILE_MOVER
 .\build.ps1 -Clean -Setup
 
 # Output:
-# installer\Output\AdvancedFileMover_1.0.12_Setup.exe
+# installer\Output\AdvancedFileMover_1.0.13_Setup.exe
 ```
 
 ### PyInstaller Only Build
@@ -106,7 +106,14 @@ pyinstaller --clean gui_customtkinter.spec
 
 ## 🔄 Changelog
 
-### v1.0.12 (Latest)
+### v1.0.13 (Latest)
+
+- 🐛 **Fix**: Window geometry now validates dimensions before saving (prevents invalid 1x1 values)
+- 🐛 **Fix**: Added diagnostic logging to context menu argument parsing for debugging multi-file selection
+- 📊 **Debug**: Enhanced logging to track correct file count from context menu multi-selection
+- ✅ **Improved**: Better error handling for window size edge cases
+
+### v1.0.12
 
 - 🐛 **Fix**: Single-instance mutex now persists in global variable, preventing duplicate AdvancedFileMoverPro.exe processes
 - 🐛 **Fix**: ConfigManager.set() now calls save_config() immediately, ensuring window_size persists on app close
