@@ -20,7 +20,7 @@ AdvancedFileMover_1.0.13_Setup.exe
 
 ### Automatic Installation
 
-1. Run `AdvancedFileMover_1.0.13_Setup.exe`
+1. Run `AdvancedFileMover_1.0.12_Setup.exe`
 2. Follow the installation wizard
 3. Context menu will be automatically registered
 4. Launch the app from Start Menu or via context menu (Shift + right-click)
@@ -105,20 +105,6 @@ pyinstaller --clean gui_customtkinter.spec
 ---
 
 ## 🔄 Changelog
-
-### v1.0.14 (Latest)
-
-- 🐛 **CRITICAL FIX**: Window geometry no longer forced to minimum size - restored dimensions now persist correctly
-- 🐛 **Fix**: Removed max() constraint in restore_window_state() that was overriding saved dimensions
-- 🧪 **Debug**: Extensive logging added to track config loading and window state changes
-- ✅ **Resolved**: Window resizing not being saved between sessions (root cause was minsize override)
-
-### v1.0.13
-
-- 🐛 **Fix**: Window geometry now validates dimensions before saving (prevents invalid 1x1 values)
-- 🐛 **Fix**: Added diagnostic logging to context menu argument parsing for debugging multi-file selection
-- 📊 **Debug**: Enhanced logging to track correct file count from context menu multi-selection
-- ✅ **Improved**: Better error handling for window size edge cases
 
 ### v1.0.12
 
