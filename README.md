@@ -15,7 +15,7 @@ Professional Windows utility for copying/moving files and folders with real-time
 Download the latest version from [Releases](https://github.com/u064241/advanced-file-mover/releases/latest):
 
 ```text
-AdvancedFileMover_1.0.13_Setup.exe
+AdvancedFileMover_1.0.12_Setup.exe
 ```
 
 ### Automatic Installation
@@ -37,7 +37,7 @@ AdvancedFileMover_1.0.13_Setup.exe
 
 1. **Close the application completely** (Ctrl+Q or close window)
 2. **Open Task Manager** (Ctrl+Shift+Esc) and verify no `AdvancedFileMoverPro.exe` processes are running
-3. **Manually run** `AdvancedFileMover_1.0.13_Setup.exe`
+3. **Manually run** `AdvancedFileMover_1.0.12_Setup.exe`
 4. **Follow the installer wizard** to completion
 5. **Launch the new version** - auto-updates will work correctly from v1.0.12 onwards
 
@@ -91,7 +91,7 @@ cd C:\SOURCECODE\PYTHON\ADVANCED_FILE_MOVER
 .\build.ps1 -Clean -Setup
 
 # Output:
-# installer\Output\AdvancedFileMover_1.0.13_Setup.exe
+# installer\Output\AdvancedFileMover_1.0.12_Setup.exe
 ```
 
 ### PyInstaller Only Build
