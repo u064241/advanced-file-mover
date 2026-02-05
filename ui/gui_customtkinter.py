@@ -66,21 +66,15 @@ class ConfigManager:
     def load_config(self):
         """Carica la configurazione da JSON"""
         default = self.get_default_config()
-        
-        print(f"[DEBUG] load_config: config_path={self.config_path}, exists={self.config_path.exists()}")
-        
+
         if self.config_path.exists():
             try:
                 with open(self.config_path, 'r', encoding='utf-8') as f:
                     user_config = json.load(f)
-                
-                print(f"[DEBUG] user_config loaded: window_size={user_config.get('window_size')}")
-                
+
                 # Merge con default config per assicurare che tutti i campi siano presenti
                 merged_config = {**default, **user_config}
-                
-                print(f"[DEBUG] merged_config: window_size={merged_config.get('window_size')}")
-                
+
                 # Sync version from bundled config (auto-update version field)
                 try:
                     bundled_config_path = self._get_bundled_config_path()
@@ -141,6 +135,7 @@ class ConfigManager:
             self.config_path.parent.mkdir(parents=True, exist_ok=True)
             with open(self.config_path, 'w', encoding='utf-8') as f:
                 json.dump(self.config, f, indent=2, ensure_ascii=False)
+                f.flush()  # Forza scrittura immediata su disco
         except Exception as e:
             print(f"Errore nel salvataggio della configurazione: {e}")
     
@@ -177,6 +172,10 @@ class AdvancedFileMoverCustomTkinter:
         launched_from_context_menu=False,
     ):
         self.root = root
+        
+        # Flag per bloccare il resize automatico durante l'inizializzazione
+        self._lock_window_size = False
+        
         # Carica configurazione
         self.config_manager = ConfigManager()
 
@@ -361,6 +360,18 @@ class AdvancedFileMoverCustomTkinter:
         # Centra finestra dopo che tutto è caricato
         self.root.after(100, self._center_window)
         
+        # Imposta dimensioni finali e blocca il resize
+        def finalize_window():
+            if hasattr(self, '_desired_width') and hasattr(self, '_desired_height'):
+                # Imposta le dimensioni definitive
+                self.root.geometry(f"{self._desired_width}x{self._desired_height}+{self.root.winfo_x()}+{self.root.winfo_y()}")
+            # Sblocca il resize manuale dell'utente
+            self.root.resizable(True, True)
+            self._lock_window_size = False
+        
+        self.root.after(200, finalize_window)
+    
+    
         # Auto-tuning buffer e thread in base alla destination storage
         self._auto_tune_parameters()
 
@@ -548,41 +559,49 @@ class AdvancedFileMoverCustomTkinter:
         self._flag_images = {}
 
         # Se disponibile, usa Pillow + CTkImage per scaling corretto su HighDPI
+        pil_available = False
         try:
             from PIL import Image
+            pil_available = True
+        except ImportError:
+            # PIL not available, will use fallback
+            pil_available = False
 
-            flags_dir = self._get_flags_dir()
-            for code in ('it', 'en', 'fr', 'de', 'es'):
-                p = flags_dir / f'{code}.png'
-                try:
-                    if not p.exists():
+        if pil_available:
+            try:
+                flags_dir = self._get_flags_dir()
+                for code in ('it', 'en', 'fr', 'de', 'es'):
+                    p = flags_dir / f'{code}.png'
+                    try:
+                        if not p.exists():
+                            continue
+                    except Exception:
                         continue
-                except Exception:
-                    continue
 
-                try:
-                    im = Image.open(p)
                     try:
-                        im = im.convert('RGBA')
+                        from PIL import Image
+                        im = Image.open(p)
+                        try:
+                            im = im.convert('RGBA')
+                        except Exception:
+                            pass
+
+                        # Dimensione target (piccola, leggibile in UI)
+                        size = (28, 18)
+                        try:
+                            im2 = im.resize(size, Image.Resampling.LANCZOS)
+                        except Exception:
+                            im2 = im.resize(size)
+
+                        self._flag_images[code] = ctk.CTkImage(light_image=im2, dark_image=im2, size=size)
                     except Exception:
-                        pass
+                        continue
 
-                    # Dimensione target (piccola, leggibile in UI)
-                    size = (28, 18)
-                    try:
-                        im2 = im.resize(size, Image.Resampling.LANCZOS)
-                    except Exception:
-                        im2 = im.resize(size)
+                return
+            except Exception:
+                pass
 
-                    self._flag_images[code] = ctk.CTkImage(light_image=im2, dark_image=im2, size=size)
-                except Exception:
-                    continue
-
-            return
-        except Exception:
-            pass
-
-        # Fallback: tk.PhotoImage
+        # Fallback: tk.PhotoImage (no PIL required)
         try:
             flags_dir = self._get_flags_dir()
             for code in ('it', 'en', 'fr', 'de', 'es'):
@@ -939,7 +958,6 @@ class AdvancedFileMoverCustomTkinter:
 
         def _apply():
             try:
-                # Non interrompere l'operazione con popup; mostra in status per debug rapido
                 self.status_label.configure(text=str(message))
             except Exception:
                 pass
@@ -955,6 +973,9 @@ class AdvancedFileMoverCustomTkinter:
         self.root.grid_rowconfigure(0, weight=1)
         self.root.grid_rowconfigure(1, weight=0)
         self.root.grid_columnconfigure(0, weight=1)
+        
+        # Disabilita propagazione resize dai widget figli (mantiene dimensioni salvate)
+        self.root.grid_propagate(False)
 
         # Notebook per tabs
         self.notebook = ctk.CTkTabview(self.root)
@@ -993,7 +1014,7 @@ class AdvancedFileMoverCustomTkinter:
         
         # Footer con status bar
         footer_frame = ctk.CTkFrame(self.root, fg_color="transparent")
-        footer_frame.grid(row=1, column=0, sticky='ew', padx=10, pady=(0, 10))
+        footer_frame.grid(row=1, column=0, sticky='ew', padx=10, pady=(0, 3))
         footer_frame.grid_propagate(False)  # Blocca altezza del footer
         footer_frame.configure(height=50)   # Altezza fissa
         
@@ -1016,15 +1037,15 @@ class AdvancedFileMoverCustomTkinter:
         """Tab principale: gestione file e cartelle"""
         # Sezione Percorsi
         paths_frame = ctk.CTkFrame(self.main_tab)
-        paths_frame.pack(fill='x', padx=10, pady=5)
+        paths_frame.pack(fill='x', padx=10, pady=2)
         
         self.paths_label = ctk.CTkLabel(paths_frame, text=self._t('main_paths_section', "📂 PERCORSI"), font=("Segoe UI", 12, "bold"))
         self._i18n_register(self.paths_label, 'main_paths_section', "📂 PERCORSI")
-        self.paths_label.pack(anchor='w', padx=10, pady=(10, 5))
+        self.paths_label.pack(anchor='w', padx=10, pady=(5, 2))
         
         # Inner frame con grid layout
         paths_inner = ctk.CTkFrame(paths_frame)
-        paths_inner.pack(fill='both', expand=True, padx=10, pady=10)
+        paths_inner.pack(fill='x', padx=10, pady=5)
         
         # Sorgente
         self.src_label = ctk.CTkLabel(paths_inner, text=self._t('main_source', "Sorgente:"))
@@ -1040,7 +1061,7 @@ class AdvancedFileMoverCustomTkinter:
         
         self.source_listbox = tk.Listbox(
             src_frame,
-            height=6,
+            height=2,
             bg=listbox_bg,
             fg=listbox_fg,
             selectbackground="#0078d4",
@@ -1089,14 +1110,14 @@ class AdvancedFileMoverCustomTkinter:
         
         # Sezione Opzioni
         options_frame = ctk.CTkFrame(self.main_tab)
-        options_frame.pack(fill='x', padx=10, pady=5)
+        options_frame.pack(fill='x', padx=10, pady=2)
         
         self.options_label = ctk.CTkLabel(options_frame, text=self._t('main_options_section', "⚙️ OPZIONI"), font=("Segoe UI", 12, "bold"))
         self._i18n_register(self.options_label, 'main_options_section', "⚙️ OPZIONI")
-        self.options_label.pack(anchor='w', padx=10, pady=(10, 5))
+        self.options_label.pack(anchor='w', padx=10, pady=(5, 2))
         
         opts_inner = ctk.CTkFrame(options_frame)
-        opts_inner.pack(fill='x', padx=10, pady=10)
+        opts_inner.pack(fill='x', padx=10, pady=5)
         
         self.ramdrive_checkbox = ctk.CTkCheckBox(opts_inner, text=self._t('opt_use_ramdrive', "Usa RamDrive"), variable=self.ramdrive_enabled)
         self._i18n_register(self.ramdrive_checkbox, 'opt_use_ramdrive', "Usa RamDrive")
@@ -1131,14 +1152,14 @@ class AdvancedFileMoverCustomTkinter:
         
         # Sezione Operazioni
         ops_frame = ctk.CTkFrame(self.main_tab)
-        ops_frame.pack(fill='x', padx=10, pady=5)
+        ops_frame.pack(fill='x', padx=10, pady=2)
         
         self.ops_label = ctk.CTkLabel(ops_frame, text=self._t('main_ops_section', "🚀 OPERAZIONI"), font=("Segoe UI", 12, "bold"))
         self._i18n_register(self.ops_label, 'main_ops_section', "🚀 OPERAZIONI")
-        self.ops_label.pack(anchor='w', padx=10, pady=(10, 5))
+        self.ops_label.pack(anchor='w', padx=10, pady=(5, 2))
         
         ops_inner = ctk.CTkFrame(ops_frame)
-        ops_inner.pack(fill='both', expand=True, padx=10, pady=10)
+        ops_inner.pack(fill='x', padx=10, pady=5)
         
         # Frame interno per centrare i bottoni
         buttons_frame = ctk.CTkFrame(ops_inner, fg_color="transparent")
@@ -1158,14 +1179,14 @@ class AdvancedFileMoverCustomTkinter:
         
         # Sezione Progresso
         progress_frame = ctk.CTkFrame(self.main_tab)
-        progress_frame.pack(fill='both', expand=True, padx=10, pady=5)
+        progress_frame.pack(fill='x', padx=10, pady=2)
         
         self.progress_section_label = ctk.CTkLabel(progress_frame, text=self._t('main_progress_section', "📊 PROGRESSO"), font=("Segoe UI", 12, "bold"))
         self._i18n_register(self.progress_section_label, 'main_progress_section', "📊 PROGRESSO")
         self.progress_section_label.pack(anchor='w', padx=10, pady=(10, 5))
         
         prog_inner = ctk.CTkFrame(progress_frame)
-        prog_inner.pack(fill='both', expand=True, padx=10, pady=10)
+        prog_inner.pack(fill='x', padx=6, pady=6)
 
         # Progress bar (solo visiva) + label unica con dettagli
         self.progress_bar = ctk.CTkProgressBar(prog_inner, height=20, mode='determinate')
@@ -1173,11 +1194,9 @@ class AdvancedFileMoverCustomTkinter:
         self.progress_bar.pack(fill='x', pady=(5, 8))
 
         # Riga dettagli: label principale + contatore file separato (i/n)
-        # Usa grid per evitare sovrapposizioni con testo lungo.
+        # Layout: label centrata su tutta la riga + contatore posizionato a destra
         self.progress_details_row = ctk.CTkFrame(prog_inner, fg_color="transparent")
-        self.progress_details_row.pack(fill='x', pady=8)
-        self.progress_details_row.grid_columnconfigure(0, weight=1)
-        self.progress_details_row.grid_columnconfigure(1, weight=0)
+        self.progress_details_row.pack(fill='x', pady=4)
 
         # Label unica con tutto: nome file | percentuale | MB/s | ETA
         self.progress_label = ctk.CTkLabel(
@@ -1190,7 +1209,7 @@ class AdvancedFileMoverCustomTkinter:
             anchor='center',
             justify='center'
         )
-        self.progress_label.grid(row=0, column=0, sticky='ew', padx=(0, 10))
+        self.progress_label.pack(fill='x', expand=True, padx=2)
 
         # Contatore file (stabile, non incluso nel testo principale)
         self.file_counter_label = ctk.CTkLabel(
@@ -1202,7 +1221,7 @@ class AdvancedFileMoverCustomTkinter:
             anchor='e',
             justify='right'
         )
-        self.file_counter_label.grid(row=0, column=1, sticky='e', padx=(10, 0))
+        self.file_counter_label.place(relx=1.0, rely=0.5, anchor='e', x=0)
 
         # Adatta il wrap alla larghezza disponibile, così il testo non invade il contatore
         def _resize_progress_wrap(event):
@@ -1220,9 +1239,8 @@ class AdvancedFileMoverCustomTkinter:
         except Exception:
             pass
 
-        # Nascondi finché non parte una copia/sposta
+        # Mostra sempre la progress UI (non nasconderla all'avvio)
         self._progress_ui_visible = True
-        self._hide_progress_ui()
 
     def _show_progress_ui(self):
         if getattr(self, '_progress_ui_visible', False):
@@ -2366,16 +2384,17 @@ class AdvancedFileMoverCustomTkinter:
     
     def restore_window_state(self):
         """Ripristina stato finestra"""
-        # Dimensione minima hardcoded
-        min_width = 958
-        min_height = 907
+        # Dimensione minima ragionevole (non troppo grande!)
+        min_width = 600
+        min_height = 500
         
-        size = self.config_manager.get('window_size', {'width': min_width, 'height': min_height})
-        window_width = size.get('width', min_width)
-        window_height = size.get('height', min_height)
+        # Dimensione di default se non c'è config salvato
+        default_width = 958
+        default_height = 907
         
-        print(f"[DEBUG] restore_window_state: config_size={size}, loaded={window_width}x{window_height}")
-        print(f"[DEBUG] Config path: {self.config_manager.config_path}")
+        size = self.config_manager.get('window_size', {'width': default_width, 'height': default_height})
+        window_width = size.get('width', default_width)
+        window_height = size.get('height', default_height)
         
         # Imposta dimensione minima finestra (impedisce resize sotto minimo)
         self.root.minsize(min_width, min_height)
@@ -2383,17 +2402,28 @@ class AdvancedFileMoverCustomTkinter:
         # Imposta solo le dimensioni inizialmente (posizione sarà impostata da _center_window)
         self.root.geometry(f"{window_width}x{window_height}")
         
+        # Salva le dimensioni per _center_window (evita che update_idletasks le modifichi)
+        self._desired_width = window_width
+        self._desired_height = window_height
+        
+        # Il resize sarà bloccato da finalize_window() dopo il caricamento
+        self._lock_window_size = False
+        
         on_top = self.config_manager.get('always_on_top', False)
         self.root.attributes('-topmost', on_top)
         self.always_on_top_var.set(on_top)
     
     def _center_window(self):
         """Centra la finestra sullo schermo dove si trova il mouse (multi-monitor)"""
-        self.root.update_idletasks()
-        
-        # Ottieni dimensioni reali della finestra
-        window_width = self.root.winfo_width()
-        window_height = self.root.winfo_height()
+        # Usa le dimensioni desiderate (salvate in restore_window_state)
+        if hasattr(self, '_desired_width') and hasattr(self, '_desired_height'):
+            window_width = self._desired_width
+            window_height = self._desired_height
+        else:
+            # Fallback: calcola dimensioni necessarie
+            self.root.update_idletasks()
+            window_width = self.root.winfo_width()
+            window_height = self.root.winfo_height()
         
         try:
             if sys.platform == 'win32':
@@ -2455,26 +2485,33 @@ class AdvancedFileMoverCustomTkinter:
     
     def _on_closing(self):
         """Salva stato e chiude l'app"""
-        # Salva dimensione finestra (con controllo per valori invalidi)
-        width = self.root.winfo_width()
-        height = self.root.winfo_height()
-        
-        # Debug: stampa dimensioni lette
-        print(f"[DEBUG] _on_closing: width={width}, height={height}")
+        # Salva dimensione finestra corrente (resize manuale abilitato)
+        try:
+            self.root.update_idletasks()
+            # Usa geometry() per ottenere dimensioni reali
+            geometry = self.root.geometry()
+            # Formato: "WIDTHxHEIGHT+X+Y"
+            size_part = geometry.split('+')[0]
+            width, height = map(int, size_part.split('x'))
+        except Exception:
+            # Fallback: usa winfo
+            try:
+                width = self.root.winfo_width()
+                height = self.root.winfo_height()
+            except Exception:
+                width = 900
+                height = 720
         
         # Se i valori sono invalidi (es: 1), usa i valori da config precedente
         if width < 600 or height < 500:
             current_size = self.config_manager.get('window_size', {})
-            width = current_size.get('width', 602)
-            height = current_size.get('height', 584)
-            print(f"[DEBUG] Dimensioni invalide, uso precedenti: {width}x{height}")
+            width = current_size.get('width', 900)
+            height = current_size.get('height', 720)
         
-        print(f"[DEBUG] Salvo window_size: {width}x{height}")
         self.config_manager.set('window_size', {
             'width': width,
             'height': height
         })
-        print(f"[DEBUG] Config salvato in: {self.config_manager.config_path}")
         
         # window_position non viene più salvata - la finestra si posiziona dinamicamente all'avvio
         self.config_manager.set('buffer_size', int(self.buffer_size.get()))
@@ -2558,10 +2595,8 @@ class AdvancedFileMoverCustomTkinter:
 
     def _on_update_error(self, error_msg):
         """Called when update check fails"""
-        # Silently log errors to avoid bothering the user
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.debug(f"Update check error: {error_msg}")
+        # Silently ignore errors to avoid bothering the user
+        pass
 
     def _show_update_progress(self):
         """Show progress dialog while downloading update"""
@@ -2687,8 +2722,8 @@ def main() -> int:
     try:
         if from_context_menu and operation_type in ('copy', 'move') and sys.platform == 'win32':
             if not _is_running_as_admin():
-                _relaunch_elevated(argv)
-                return 0
+                if _relaunch_elevated(argv):
+                    return 0
     except Exception:
         pass
 
@@ -2705,8 +2740,8 @@ def main() -> int:
                 if enabled:
                     argv2 = list(argv)
                     argv2.append('--no-auto-elevate')
-                    _relaunch_elevated(argv2)
-                    return 0
+                    if _relaunch_elevated(argv2):
+                        return 0
     except Exception:
         pass
 
@@ -2731,15 +2766,6 @@ def _parse_launch_args(argv):
 
     args = list(argv[1:]) if argv else []
     
-    # DEBUG: Log dei argomenti ricevuti
-    try:
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.debug(f"[_parse_launch_args] argv: {argv}")
-        logger.debug(f"[_parse_launch_args] args: {args}")
-    except:
-        pass
-
     def _split_packed_arg(a: str):
         """Alcuni comandi del menu contestuale possono passare più path in un unico argomento.
 
@@ -2859,14 +2885,6 @@ def _parse_launch_args(argv):
     if sources and operation_type:
         from_context_menu = True
     
-    # DEBUG: Log dei risultati
-    try:
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.debug(f"[_parse_launch_args] PARSED - sources: {sources}, operation: {operation_type}, from_context_menu: {from_context_menu}")
-    except:
-        pass
-
     return sources, operation_type, from_context_menu
 
 
