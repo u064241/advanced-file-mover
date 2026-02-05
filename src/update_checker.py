@@ -165,7 +165,7 @@ def install_and_restart(installer_path: str, on_close_app=None) -> bool:
             import time
             time.sleep(0.5)
         except Exception as e:
-            logger.debug(f"taskkill output: {e}")
+            pass
         
         # Launch installer completely detached from parent process
         # Using cmd /c start /b ensures the installer runs independently
@@ -286,13 +286,41 @@ def check_for_update_async(
     on_error=None
 ) -> threading.Thread:
     """
-    Run update check in background thread
+    Run update check in background thread (only check, no download)
     
     Returns:
         Thread object (already started)
     """
     def _check():
-        check_and_update(config_path, on_update_available=on_update_available, on_error=on_error)
+        try:
+            local_version = get_local_version(config_path)
+            logger.info(f"Local version: {local_version}")
+            
+            release_info = get_latest_release_info()
+            if not release_info:
+                if on_error:
+                    on_error("Could not fetch release information")
+                return
+            
+            remote_version = release_info["version"]
+            logger.info(f"Remote version: {remote_version}")
+            
+            cmp_result = compare_versions(local_version, remote_version)
+            
+            if cmp_result < 0:
+                # Update available
+                logger.info(f"Update available: {remote_version}")
+                if on_update_available:
+                    on_update_available(remote_version, release_info.get("release_notes", ""))
+            else:
+                # No update needed
+                msg = "No update available" if cmp_result == 0 else "Local version is newer"
+                logger.info(msg)
+        except Exception as e:
+            error_msg = f"Update check failed: {str(e)}"
+            logger.error(error_msg)
+            if on_error:
+                on_error(error_msg)
     
     thread = threading.Thread(target=_check, daemon=True)
     thread.start()

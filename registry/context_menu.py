@@ -195,9 +195,9 @@ class ContextMenuRegistrar:
             # MUIVerb per il nome visualizzato
             winreg.SetValueEx(sub_key, "MUIVerb", 0, winreg.REG_SZ, label)
 
-            # Abilita multi-selezione (usa "%V" nel command per passare tutti i file insieme)
+            # Abilita multi-selezione: invoca il comando UNA VOLTA con TUTTI i file
             try:
-                winreg.SetValueEx(sub_key, "MultiSelectModel", 0, winreg.REG_SZ, "Document")
+                winreg.SetValueEx(sub_key, "MultiSelectModel", 0, winreg.REG_SZ, "Player")
             except Exception:
                 pass
             
@@ -213,7 +213,7 @@ class ContextMenuRegistrar:
             
             winreg.SetValueEx(sub_key, "Icon", 0, winreg.REG_SZ, str(icon_path.resolve()))
             
-            # Comando per la sub-voce
+            # Comando per la sub-voce: usa PowerShell per passare TUTTI i file selezionati
             command_key = winreg.CreateKey(sub_key, "command")
             gui_exe = self._resolve_gui_exe()
 
@@ -224,9 +224,11 @@ class ContextMenuRegistrar:
                     python_dir = os.path.dirname(sys.executable)
                     python_exe = os.path.join(python_dir, 'pythonw.exe')
 
-                command = f'"{python_exe}" "{gui_script}" --from-context-menu {operation} "%V"'
+                # Usa PowerShell per passare tutti i file (uno per argomento)
+                command = f'powershell.exe -Command "& ""{python_exe}"" ""{gui_script}"" --from-context-menu {operation} $args" %*'
             else:
-                command = f'"{str(gui_exe.resolve())}" --from-context-menu {operation} "%V" --single-instance'
+                # Usa PowerShell per passare tutti i file (uno per argomento)
+                command = f'powershell.exe -Command "& ""{str(gui_exe.resolve())}"" --from-context-menu {operation} --single-instance $args" %*'
             
             winreg.SetValueEx(command_key, "", 0, winreg.REG_SZ, command)
             
@@ -272,9 +274,11 @@ class ContextMenuRegistrar:
                     python_dir = os.path.dirname(sys.executable)
                     python_exe = os.path.join(python_dir, 'pythonw.exe')
 
-                command = f'"{python_exe}" "{gui_script}" --from-context-menu {operation} "%V"'
+                # Usa PowerShell per passare tutti i file (uno per argomento)
+                command = f'powershell.exe -Command "& ""{python_exe}"" ""{gui_script}"" --from-context-menu {operation} $args" %*'
             else:
-                command = f'"{str(gui_exe.resolve())}" --from-context-menu {operation} "%V" --single-instance'
+                # Usa PowerShell per passare tutti i file (uno per argomento)
+                command = f'powershell.exe -Command "& ""{str(gui_exe.resolve())}"" --from-context-menu {operation} --single-instance $args" %*'
             
             winreg.SetValueEx(command_key, "", 0, winreg.REG_SZ, command)
             
