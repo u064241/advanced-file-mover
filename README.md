@@ -1,6 +1,6 @@
 # Advanced File Mover Pro
 
-[![Version](https://img.shields.io/badge/version-1.0.15-blue.svg)](https://github.com/u064241/advanced-file-mover/releases/latest)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/u064241/advanced-file-mover/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](https://www.microsoft.com/windows)
 
@@ -15,12 +15,12 @@ Professional Windows utility for copying/moving files and folders with real-time
 Download the latest version from [Releases](https://github.com/u064241/advanced-file-mover/releases/latest):
 
 ```text
-AdvancedFileMover_1.0.15_Setup.exe
+AdvancedFileMover_1.0.0_Setup.exe
 ```
 
 ### Automatic Installation
 
-1. Run `AdvancedFileMover_1.0.15_Setup.exe`
+1. Run `AdvancedFileMover_1.0.0_Setup.exe`
 2. Follow the installation wizard
 3. Context menu will be automatically registered
 4. Launch the app from Start Menu or via context menu (Shift + right-click)
@@ -83,7 +83,7 @@ cd C:\SOURCECODE\PYTHON\ADVANCED_FILE_MOVER
 .\build.ps1 -Clean -Setup
 
 # Output:
-# installer\Output\AdvancedFileMover_1.0.15_Setup.exe
+# installer\Output\AdvancedFileMover_1.0.0_Setup.exe
 ```
 
 ### PyInstaller Only Build
@@ -98,80 +98,27 @@ pyinstaller --clean gui_customtkinter.spec
 
 ## 🔄 Changelog
 
-### v1.0.15
+### v1.0.0
 
 - 🎯 **Feature**: Native drag & drop support (tkinterdnd2) - drop files directly on source listbox
 - 🎯 **Feature**: Admin drag & drop - works even when app runs with elevated privileges
-- 🎨 **UI**: Simplified progress bar - text above, clean visualization
-- 🎨 **UI**: Compact layout - reduced padding throughout interface (padx: 10→5, pady adjusted)
-- 🎨 **UI**: Non-resizable window - removed maximize button for cleaner UX
-- 🎨 **UI**: High-contrast progress text - black/white instead of gray (visible in all themes)
-- 🎨 **UI**: Compact Info tab - vertical layout without excessive separators
-- 🎨 **UI**: Elastic source listbox - min 80px height, expands vertically
+- 🎯 **Feature**: Multi-file context menu via IPC (Named Pipe + file-based) - single instance aggregates all selected files
+- 🎯 **Feature**: Auto-update from GitHub with launcher script (no file lock issues)
+- 🎨 **UI**: CustomTkinter modern interface with dark/light theme toggle
+- 🎨 **UI**: Compact layout with simplified progress bar (text above, clean visualization)
+- 🎨 **UI**: Non-resizable window (900×720) for consistent UX
+- 🎨 **UI**: High-contrast progress text with speed (MB/s) and ETA display
+- 🎨 **UI**: Multi-language support (IT, EN, FR, DE, ES) with flag icons
+- 🎨 **UI**: Elastic source listbox with minimum 80px height
+- ⚡ **Performance**: Auto-tuning buffer/threads based on storage type (NVMe/SSD/HDD/USB/NAS/RamDrive)
 - ⚡ **Performance**: Faster startup with background tab loading
-- 🔧 **Fix**: Progress text color now adapts to theme (light/dark)
-- 🔧 **Fix**: Storage display uses compact format (C:SSD | D:HDD...)
-- 🧹 **Cleanup**: Removed auto-tuning parameters from Info tab (cleaner)
-
-### v1.0.12
-
-- 🐛 **Fix**: Single-instance mutex now persists in global variable, preventing duplicate AdvancedFileMoverPro.exe processes
-- 🐛 **Fix**: ConfigManager.set() now calls save_config() immediately, ensuring window_size persists on app close
-- ✅ **Resolved**: Multiple process instances blocking updates
-- ✅ **Resolved**: Window geometry not saving between sessions
-
-### v1.0.11
-
-- 🐛 **Fix**: Use os._exit() for immediate process termination during update
-- 🐛 **Fix**: Use cmd /c start /b for complete process detachment
-- ✅ **Resolved**: Installer hanging when old process locks exe file
-
-### v1.0.10
-
-- 🐛 **Fix**: Config loading now merges with defaults to ensure window_size always present
-- 🐛 **Fix**: Installer uses DETACHED_PROCESS flag to avoid file lock issues
-- ✅ **Resolved**: "File is in use" error during updates
-
-### v1.0.9
-
-- 🐛 **Fix**: Force kill app process with taskkill before installer runs
-- 🐛 **Fix**: Changed installer flag from /ALLUSERS to /CLOSEAPPLICATIONS for better handling
-- ✅ **Resolved**: "Setup was unable to automatically close all applications" error
-
-### v1.0.8
-
-- 🐛 **Fix**: Registry DisplayName now shows "v1.0.8" instead of "version 1.0.8" (AppVerName)
-- 🐛 **Fix**: Improved app termination during update (destroy + sys.exit for immediate closure)
-
-### v1.0.7
-
-- 🐛 **Fix**: Single-instance mutex for context menu (prevent multiple windows on multi-select)
-- 📦 **Update**: PyInstaller added to requirements.txt
-
-### v1.0.6
-
-- 🐛 **Fix**: Auto-update properly closes app before installer runs
-- 🐛 **Fix**: Resolved "file in use" error during updates
-
-### v1.0.5
-
-- 📦 Switched to installer-based distribution (one-dir)
-- 🚀 **5-10x faster** startup from context menu (<1s vs 5-10s)
-- ✅ Fix: Context menu multi-selection (no multiple instances)
-
-### v1.0.3
-
-- ✅ Fix: Multi-selection context menu with MultiSelectModel "Document"
-
-### v1.0.2
-
-- ✨ Auto-update system implemented
-
-### v1.0.1
-
-- 🎨 CustomTkinter GUI interface
-- 📂 Context menu integration
-- ⚡ Auto-tuning buffer/threads
+- 🔧 **Engine**: Multi-threaded copy/move with configurable buffer size
+- 🔧 **Engine**: RamDrive detection and acceleration support
+- 🔧 **Engine**: Single-instance mutex with IPC for context menu integration
+- 📂 **Context Menu**: Windows Explorer integration (Shift + right-click)
+- 📂 **Context Menu**: Submenu with Copy [Advanced] and Move [Advanced]
+- 📦 **Installer**: Inno Setup-based Windows installer
+- 📦 **Build**: PyInstaller one-dir packaging with automatic version sync
 
 ---
 
