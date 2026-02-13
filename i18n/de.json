@@ -132,4 +132,6 @@
   ,"info_version": "📝 VERSION"
   ,"info_rights": "© 2025 - Alle Rechte vorbehalten"
   ,"info_update_error": "Aktualisierungsfehler"
+  ,"ctx_copy_label": "Kopieren [Erweitert]"
+  ,"ctx_move_label": "Verschieben [Erweitert]"
 }

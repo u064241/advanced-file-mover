@@ -323,7 +323,7 @@ if ($Release -and $Setup) {
             }
 
             # 3) Crea o aggiorna la release GitHub
-            $ExistingRelease = gh release view $TagName 2>$null
+            gh release view $TagName 2>$null
             if ($LASTEXITCODE -eq 0) {
                 # Release esiste già: carica/sovrascrivi il binario
                 Write-Host "     📦 Release $TagName esiste, aggiorno il binario..." -ForegroundColor $Cyan
