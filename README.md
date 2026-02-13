@@ -112,6 +112,7 @@ pyinstaller --clean gui_customtkinter.spec
 - 🎨 **UI**: Elastic source listbox with minimum 80px height
 - ⚡ **Performance**: Auto-tuning buffer/threads based on storage type (NVMe/SSD/HDD/USB/NAS/RamDrive)
 - ⚡ **Performance**: Faster startup with background tab loading
+- ⚡ **Performance**: Auto-detect USB/device insert/removal (drive polling) with automatic Info tab refresh
 - 🔧 **Engine**: Multi-threaded copy/move with configurable buffer size
 - 🔧 **Engine**: RamDrive detection and acceleration support
 - 🔧 **Engine**: Single-instance mutex with IPC for context menu integration

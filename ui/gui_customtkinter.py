@@ -614,6 +614,9 @@ class AdvancedFileMoverCustomTkinter:
             self._lock_window_size = False
         
         self.root.after(200, finalize_window)
+
+        # Registra listener WM_DEVICECHANGE per rilevare inserimento/rimozione periferiche
+        self.root.after(300, self._setup_device_change_listener)
     
     
         # Auto-tuning buffer e thread in base alla destination storage
@@ -625,6 +628,57 @@ class AdvancedFileMoverCustomTkinter:
         
         # Salva stato al chiusura
         self.root.protocol("WM_DELETE_WINDOW", self._on_closing)
+
+    def _setup_device_change_listener(self):
+        """Rileva inserimento/rimozione periferiche (USB, ecc.) tramite polling
+        delle lettere drive disponibili e aggiorna automaticamente il tab Informazioni."""
+        try:
+            # Snapshot iniziale dei drive presenti
+            self._known_drives = self._get_drive_letters()
+        except Exception:
+            self._known_drives = set()
+
+        def _check_drives():
+            try:
+                current = self._get_drive_letters()
+                if current != self._known_drives:
+                    self._known_drives = current
+                    # Invalida la cache storage così il re-scan rileva i nuovi drive
+                    try:
+                        self.ramdrive_manager._drives_scanned = False
+                        self.ramdrive_manager._all_drives_cache.clear()
+                        # Rimuovi dalla classification_cache le lettere non più presenti
+                        for letter in list(self.ramdrive_manager._classification_cache.keys()):
+                            if letter not in current:
+                                del self.ramdrive_manager._classification_cache[letter]
+                    except Exception:
+                        pass
+                    try:
+                        self.update_info()
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+            # Controlla ogni 3 secondi (leggero, nessun impatto su CPU)
+            try:
+                self.root.after(3000, _check_drives)
+            except Exception:
+                pass
+
+        self.root.after(3000, _check_drives)
+
+    @staticmethod
+    def _get_drive_letters() -> set:
+        """Restituisce il set delle lettere drive attualmente montate."""
+        drives = set()
+        try:
+            bitmask = ctypes.windll.kernel32.GetLogicalDrives()
+            for i in range(26):
+                if bitmask & (1 << i):
+                    drives.add(chr(ord('A') + i))
+        except Exception:
+            pass
+        return drives
 
     def _i18n_register(self, widget, key: str, default: str):
         """Registra un widget a cui applicare le traduzioni dinamiche."""
@@ -1555,11 +1609,6 @@ class AdvancedFileMoverCustomTkinter:
         # Usa un colore che si adatta al tema (grigio scuro in dark, grigio chiaro in light)
         self.info_text = ctk.CTkTextbox(frame, wrap='word', state='disabled', fg_color=("gray85", "gray20"))
         self.info_text.pack(fill='both', expand=True, pady=5)
-        
-        # Bottone refresh
-        self.refresh_info_btn = ctk.CTkButton(frame, text=self._t('btn_refresh_info', "🔄 Aggiorna Informazioni"), command=self.update_info)
-        self._i18n_register(self.refresh_info_btn, 'btn_refresh_info', "🔄 Aggiorna Informazioni")
-        self.refresh_info_btn.pack(pady=5)
         
         # Bottone check updates
         self.check_updates_btn = ctk.CTkButton(frame, text=self._t('btn_check_updates', "🚀 Controlla Aggiornamenti"), command=self._manual_check_updates, fg_color="#2E7D32")
