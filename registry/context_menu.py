@@ -195,9 +195,11 @@ class ContextMenuRegistrar:
             # MUIVerb per il nome visualizzato
             winreg.SetValueEx(sub_key, "MUIVerb", 0, winreg.REG_SZ, label)
 
-            # Abilita multi-selezione: invoca il comando UNA VOLTA con TUTTI i file
+            # Rimuove eventuale MultiSelectModel residuo (ora usiamo IPC Named Pipe)
             try:
-                winreg.SetValueEx(sub_key, "MultiSelectModel", 0, winreg.REG_SZ, "Player")
+                winreg.DeleteValue(sub_key, "MultiSelectModel")
+            except FileNotFoundError:
+                pass
             except Exception:
                 pass
             
@@ -213,7 +215,9 @@ class ContextMenuRegistrar:
             
             winreg.SetValueEx(sub_key, "Icon", 0, winreg.REG_SZ, str(icon_path.resolve()))
             
-            # Comando per la sub-voce: usa PowerShell per passare TUTTI i file selezionati
+            # Comando per la sub-voce: usa "%1" (token standard Windows shell verb)
+            # Con --single-instance e IPC Named Pipe, la prima istanza avvia l'app,
+            # le successive inviano il file via pipe all'istanza esistente.
             command_key = winreg.CreateKey(sub_key, "command")
             gui_exe = self._resolve_gui_exe()
 
@@ -224,11 +228,9 @@ class ContextMenuRegistrar:
                     python_dir = os.path.dirname(sys.executable)
                     python_exe = os.path.join(python_dir, 'pythonw.exe')
 
-                # Usa PowerShell per passare tutti i file (uno per argomento)
-                command = f'powershell.exe -Command "& ""{python_exe}"" ""{gui_script}"" --from-context-menu {operation} $args" %*'
+                command = f'"{python_exe}" "{gui_script}" --from-context-menu {operation} --single-instance "%1"'
             else:
-                # Usa PowerShell per passare tutti i file (uno per argomento)
-                command = f'powershell.exe -Command "& ""{str(gui_exe.resolve())}"" --from-context-menu {operation} --single-instance $args" %*'
+                command = f'"{str(gui_exe.resolve())}" --from-context-menu {operation} --single-instance "%1"'
             
             winreg.SetValueEx(command_key, "", 0, winreg.REG_SZ, command)
             
@@ -264,7 +266,7 @@ class ContextMenuRegistrar:
             
             winreg.SetValueEx(key, "Icon", 0, winreg.REG_SZ, str(icon_path.resolve()))
             
-            # Comando
+            # Comando: usa "%1" (token standard Windows shell verb)
             command_key = winreg.CreateKey(key, "command")
             
             if not gui_exe.exists():
@@ -274,11 +276,9 @@ class ContextMenuRegistrar:
                     python_dir = os.path.dirname(sys.executable)
                     python_exe = os.path.join(python_dir, 'pythonw.exe')
 
-                # Usa PowerShell per passare tutti i file (uno per argomento)
-                command = f'powershell.exe -Command "& ""{python_exe}"" ""{gui_script}"" --from-context-menu {operation} $args" %*'
+                command = f'"{python_exe}" "{gui_script}" --from-context-menu {operation} --single-instance "%1"'
             else:
-                # Usa PowerShell per passare tutti i file (uno per argomento)
-                command = f'powershell.exe -Command "& ""{str(gui_exe.resolve())}"" --from-context-menu {operation} --single-instance $args" %*'
+                command = f'"{str(gui_exe.resolve())}" --from-context-menu {operation} --single-instance "%1"'
             
             winreg.SetValueEx(command_key, "", 0, winreg.REG_SZ, command)
             
@@ -506,10 +506,6 @@ class ContextMenuRegistrar:
                 winreg.CloseKey(key)
             except FileNotFoundError:
                 status += f"❌ Unità → Menu non registrato\n"
-            
-            status += "\n" + "="*47 + "\n"
-            status += f"📝 Nota: Submenu stile PowerShell 7\n"
-            status += "   Click su 'Advanced File Mover' → Copia/Sposta\n"
             
             return status
         

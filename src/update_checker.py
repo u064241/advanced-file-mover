@@ -136,68 +136,61 @@ def download_installer(download_url: str, download_path: str) -> bool:
 
 def install_and_restart(installer_path: str, on_close_app=None) -> bool:
     """
-    Execute installer and restart application
-    Works on Windows with .exe files
-    
-    Args:
-        installer_path: Path to the installer executable
-        on_close_app: Callback to close the current application cleanly
+    Execute installer and restart application.
+    Creates a .cmd launcher script that:
+      1. Waits for the current process to exit (releasing the exe lock)
+      2. Launches the Inno Setup installer
+    Then signals the app to close itself.
     """
     try:
         logger.info(f"Starting installer: {installer_path}")
-        
-        # Signal the application to close cleanly BEFORE running installer
+
+        # Get current process PID so the launcher can wait for it to exit
+        current_pid = os.getpid()
+
+        # Create a temporary .cmd script that waits for this process to exit,
+        # then runs the installer.  This ensures the exe is not locked.
+        temp_dir = tempfile.gettempdir()
+        launcher_path = os.path.join(temp_dir, "AdvancedFileMover_update_launcher.cmd")
+
+        launcher_script = (
+            '@echo off\r\n'
+            f'echo Attendo chiusura del processo (PID {current_pid})...\r\n'
+            f':WAIT_LOOP\r\n'
+            f'tasklist /FI "PID eq {current_pid}" 2>NUL | find "{current_pid}" >NUL\r\n'
+            f'if not errorlevel 1 (\r\n'
+            f'    timeout /t 1 /nobreak >NUL\r\n'
+            f'    goto WAIT_LOOP\r\n'
+            f')\r\n'
+            f'echo Processo terminato, avvio installer...\r\n'
+            f'start "" "{installer_path}" /NORESTART\r\n'
+            f'del "%~f0"\r\n'
+        )
+
+        with open(launcher_path, 'w', encoding='utf-8') as f:
+            f.write(launcher_script)
+
+        logger.info(f"Launcher script created: {launcher_path}")
+
+        # Launch the .cmd script completely detached from this process
+        CREATE_NO_WINDOW = 0x08000000
+        subprocess.Popen(
+            f'cmd /c "{launcher_path}"',
+            shell=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            creationflags=CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP,
+        )
+
+        logger.info("Launcher script started, requesting app close...")
+
+        # Now close the application – this releases the exe lock
+        # and the launcher script will detect the process exit.
         if on_close_app:
-            logger.info("Requesting application to close...")
             on_close_app()
-            # Minimal sleep to let Tkinter cleanup
-            import time
-            time.sleep(0.5)
-        
-        # Force kill any remaining AdvancedFileMoverPro processes to release exe lock
-        try:
-            logger.info("Force killing any remaining AdvancedFileMoverPro.exe processes...")
-            subprocess.run(
-                ["taskkill", "/F", "/IM", "AdvancedFileMoverPro.exe"],
-                capture_output=True,
-                timeout=3
-            )
-            import time
-            time.sleep(0.5)
-        except Exception as e:
-            pass
-        
-        # Launch installer completely detached from parent process
-        # Using cmd /c start /b ensures the installer runs independently
-        logger.info(f"Launching installer with cmd start...")
-        
-        try:
-            # Use Windows cmd with 'start /b' to run completely detached
-            # Add /CLOSEAPPLICATIONS so Inno Setup handles any remaining apps
-            cmd = f'start /b /i "" "{installer_path}" /SILENT /NORESTART /CLOSEAPPLICATIONS'
-            
-            subprocess.Popen(
-                cmd,
-                shell=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                creationflags=0x00000008  # DETACHED_PROCESS
-            )
-            
-            logger.info("Installer launched successfully")
-            
-        except Exception as e:
-            logger.error(f"Error launching installer: {e}")
-            # Fallback: try direct execution
-            try:
-                os.startfile(installer_path)
-            except Exception as e2:
-                logger.error(f"Error opening installer: {e2}")
-                return False
-        
-        logger.info("Installation started, exiting application immediately")
+
         return True
-        
+
     except Exception as e:
         logger.error(f"Error executing installer: {e}")
         return False

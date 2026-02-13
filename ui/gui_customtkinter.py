@@ -100,6 +100,178 @@ except:
     def enable_drag_drop_for_elevated():
         return False
 
+# ── IPC per aggregazione file dal context menu ──────────────
+# Approccio ibrido: file condiviso + Named Pipe per massima robustezza.
+# 1. Le istanze secondarie scrivono i path in un file condiviso (temp)
+# 2. L'istanza principale poll il file condiviso periodicamente via root.after()
+# 3. Il Named Pipe è un canale aggiuntivo per latenza minima
+
+import tempfile
+
+_IPC_DIR = Path(tempfile.gettempdir()) / 'AdvancedFileMover_IPC'
+_IPC_PENDING_FILE = _IPC_DIR / 'pending_files.txt'
+_IPC_LOCK_FILE = _IPC_DIR / 'pending_files.lock'
+PIPE_NAME = r'\\.\pipe\AdvancedFileMover_IPC'
+_IPC_PIPE_THREAD = None
+
+def _ipc_send_file(file_path: str, operation: str) -> bool:
+    """Invia un file all'istanza principale scrivendo nel file condiviso.
+    Tenta anche il Named Pipe per latenza minima."""
+    if sys.platform != 'win32':
+        return False
+    
+    sent = False
+    
+    # Metodo 1: File condiviso (sempre affidabile)
+    try:
+        _IPC_DIR.mkdir(parents=True, exist_ok=True)
+        msg = f"{operation}|{file_path}\n"
+        # Usa 'a' (append) - thread-safe su Windows per writes < 4KB
+        with open(_IPC_PENDING_FILE, 'a', encoding='utf-8') as f:
+            f.write(msg)
+        sent = True
+    except Exception:
+        pass
+    
+    # Metodo 2: Named Pipe (per latenza minima se il listener è pronto)
+    try:
+        import ctypes
+        from ctypes import wintypes
+        kernel32 = ctypes.windll.kernel32
+        GENERIC_WRITE = 0x40000000
+        OPEN_EXISTING = 3
+        INVALID_HANDLE_VALUE = ctypes.c_void_p(-1).value
+        
+        # Retry con delay breve per dare tempo al pipe listener di partire
+        for attempt in range(5):
+            handle = kernel32.CreateFileW(
+                PIPE_NAME, GENERIC_WRITE, 0, None,
+                OPEN_EXISTING, 0, None
+            )
+            if handle != INVALID_HANDLE_VALUE:
+                msg = f"{operation}|{file_path}\n".encode('utf-8')
+                written = wintypes.DWORD(0)
+                kernel32.WriteFile(handle, msg, len(msg), ctypes.byref(written), None)
+                kernel32.CloseHandle(handle)
+                sent = True
+                break
+            import time; time.sleep(0.3)
+    except Exception:
+        pass
+    
+    return sent
+
+def _ipc_start_listener(app_instance):
+    """Avvia il listener IPC:
+    - Named Pipe in thread background (per latenza minima)
+    - Polling file condiviso via root.after() (affidabile)"""
+    if sys.platform != 'win32':
+        return
+    
+    # === Named Pipe listener (background thread) ===
+    def _pipe_listener():
+        import ctypes
+        from ctypes import wintypes
+        kernel32 = ctypes.windll.kernel32
+        
+        PIPE_ACCESS_INBOUND = 0x00000001
+        PIPE_TYPE_BYTE = 0x00000000
+        PIPE_READMODE_BYTE = 0x00000000
+        PIPE_WAIT = 0x00000000
+        PIPE_UNLIMITED_INSTANCES = 255
+        INVALID_HANDLE_VALUE = ctypes.c_void_p(-1).value
+        BUFFER_SIZE = 4096
+        
+        while True:
+            try:
+                handle = kernel32.CreateNamedPipeW(
+                    PIPE_NAME,
+                    PIPE_ACCESS_INBOUND,
+                    PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
+                    PIPE_UNLIMITED_INSTANCES,
+                    BUFFER_SIZE, BUFFER_SIZE,
+                    0, None
+                )
+                if handle == INVALID_HANDLE_VALUE:
+                    import time; time.sleep(0.5)
+                    continue
+                
+                connected = kernel32.ConnectNamedPipe(handle, None)
+                if connected or kernel32.GetLastError() == 535:
+                    buf = ctypes.create_string_buffer(BUFFER_SIZE)
+                    read = wintypes.DWORD(0)
+                    total_data = b''
+                    while True:
+                        success = kernel32.ReadFile(handle, buf, BUFFER_SIZE, ctypes.byref(read), None)
+                        if read.value > 0:
+                            total_data += buf.raw[:read.value]
+                        if not success or read.value < BUFFER_SIZE:
+                            break
+                    
+                    kernel32.DisconnectNamedPipe(handle)
+                    kernel32.CloseHandle(handle)
+                    
+                    if total_data:
+                        _process_ipc_messages(total_data.decode('utf-8', errors='replace').strip(), app_instance)
+                else:
+                    kernel32.CloseHandle(handle)
+            except Exception:
+                import time; time.sleep(0.5)
+    
+    global _IPC_PIPE_THREAD
+    _IPC_PIPE_THREAD = threading.Thread(target=_pipe_listener, daemon=True)
+    _IPC_PIPE_THREAD.start()
+    
+    # === File condiviso polling (via Tk event loop) ===
+    def _poll_pending_files():
+        try:
+            if _IPC_PENDING_FILE.exists() and _IPC_PENDING_FILE.stat().st_size > 0:
+                # Leggi e svuota atomicamente
+                try:
+                    with open(_IPC_PENDING_FILE, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                    # Svuota il file
+                    with open(_IPC_PENDING_FILE, 'w', encoding='utf-8') as f:
+                        f.write('')
+                    
+                    if content.strip():
+                        _process_ipc_messages(content.strip(), app_instance)
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        
+        # Ripeti ogni 500ms
+        try:
+            if app_instance and hasattr(app_instance, 'root'):
+                app_instance.root.after(500, _poll_pending_files)
+        except Exception:
+            pass
+    
+    # Avvia il primo poll dopo 300ms
+    try:
+        if app_instance and hasattr(app_instance, 'root'):
+            app_instance.root.after(300, _poll_pending_files)
+    except Exception:
+        pass
+
+def _process_ipc_messages(text: str, app_instance):
+    """Processa messaggi IPC ricevuti (da pipe o file condiviso)."""
+    if not text or not app_instance:
+        return
+    
+    paths_to_add = []
+    for line in text.split('\n'):
+        line = line.strip()
+        if '|' in line:
+            op, path = line.split('|', 1)
+            path = path.strip().strip('"')
+            if path:
+                paths_to_add.append(path)
+    
+    if paths_to_add and hasattr(app_instance, 'root'):
+        app_instance.root.after(0, lambda ps=list(paths_to_add): app_instance._add_source_paths(ps))
+
 # ConfigManager per salvare/caricare configurazione
 class ConfigManager:
     def __init__(self, config_path='config.json'):
@@ -432,12 +604,12 @@ class AdvancedFileMoverCustomTkinter:
         # Centra finestra dopo che tutto è caricato
         self.root.after(100, self._center_window)
         
-        # Imposta dimensioni finali e disabilita il resize (rimuove il pulsante di massimizzazione)
+        # Imposta dimensioni finali e blocca il resize
         def finalize_window():
             if hasattr(self, '_desired_width') and hasattr(self, '_desired_height'):
                 # Imposta le dimensioni definitive
                 self.root.geometry(f"{self._desired_width}x{self._desired_height}+{self.root.winfo_x()}+{self.root.winfo_y()}")
-            # Disabilita il resize (rimuove il pulsante di massimizzazione dalla barra titolo)
+            # Blocca il resize (rimuove il pulsante di massimizzazione dalla barra titolo)
             self.root.resizable(False, False)
             self._lock_window_size = False
         
@@ -1293,30 +1465,36 @@ class AdvancedFileMoverCustomTkinter:
         
         # Sezione Progresso
         progress_frame = ctk.CTkFrame(self.main_tab)
-        progress_frame.pack(fill='x', padx=5, pady=1)
+        progress_frame.pack(fill='x', padx=5, pady=(2, 3))
         
         self.progress_section_label = ctk.CTkLabel(progress_frame, text=self._t('main_progress_section', "📊 PROGRESSO"), font=("Segoe UI", 12, "bold"))
         self._i18n_register(self.progress_section_label, 'main_progress_section', "📊 PROGRESSO")
         self.progress_section_label.pack(anchor='w', padx=5, pady=(2, 1))
         
         prog_inner = ctk.CTkFrame(progress_frame)
-        prog_inner.pack(fill='x', padx=5, pady=2)
+        prog_inner.pack(fill='x', padx=5, pady=(2, 8))
 
         # Progress text (sopra la barra)
         self.progress_label = ctk.CTkLabel(
             prog_inner,
             text="Pronto | 0% | --- MB/s | ETA:--:--",
             text_color=("#000000", "#FFFFFF"),
-            font=("Segoe UI", 10),
+            font=("Segoe UI", 13, "bold"),
             anchor='center',
             justify='center'
         )
-        self.progress_label.pack(fill='x', pady=(2, 2))
+        self.progress_label.pack(fill='x', pady=(3, 3))
 
         # Progress bar (semplice, senza testo sovrapposto)
-        self.progress_bar = ctk.CTkProgressBar(prog_inner, height=18, mode='determinate')
+        self.progress_bar = ctk.CTkProgressBar(
+            prog_inner, 
+            height=26, 
+            mode='determinate',
+            progress_color=("#1f6aa5", "#1f6aa5"),
+            border_width=1
+        )
         self.progress_bar.set(0.0)
-        self.progress_bar.pack(fill='x', pady=0)
+        self.progress_bar.pack(fill='x', pady=(2, 3))
 
         # Compatibilità: file_counter_label è None (disabilitato per spazio)
         self.file_counter_label = None
@@ -1462,6 +1640,22 @@ class AdvancedFileMoverCustomTkinter:
             ]
             self.info_text.insert('end', " | ".join(config_items) + "\n")
             
+            # === HARDWARE OPTIMIZATION ===
+            self.info_text.insert('end', "\n" + self._t('menu_hw_title', "🔧 Ottimizzazione Hardware") + "\n")
+            hw_lines = [
+                self._t('hw_auto_detect', "Il sistema riconosce automaticamente il tipo di storage:"),
+                "",
+                "🚀 NVMe: Buffer 256MB, 12 Thread",
+                "⚡ SSD: Buffer 128MB, 8 Thread",
+                "💾 HDD: Buffer 80MB, 2 Thread",
+                "🔌 USB: Buffer 64MB, 4 Thread",
+                "🌐 NAS: Buffer 32MB, 2 Thread",
+                "💾 RamDrive: Buffer 8MB (RAM pura), 16 Thread",
+                "",
+                self._t('hw_auto_params', "I parametri vengono regolati automaticamente in base al percorso di destinazione."),
+            ]
+            self.info_text.insert('end', "\n".join(hw_lines) + "\n")
+
             # === VERSION ===
             self.info_text.insert('end', "\n📝 Advanced File Mover Pro v")
             app_version = self.config_manager.get('version', '1.0.0')
@@ -1505,39 +1699,6 @@ class AdvancedFileMoverCustomTkinter:
                             "✅ Tasto destro su file/cartella → Sposta Avanzato\n\n"
                             "La sorgente sarà il file/cartella selezionato e la GUI aprirà il browsing per scegliere la destinazione.")
         info_label.pack(anchor='w', padx=5, pady=5)
-        
-        # Hardware
-        hardware_frame = ctk.CTkFrame(frame)
-        hardware_frame.pack(fill='x', padx=5, pady=5)
-        
-        hardware_title = ctk.CTkLabel(hardware_frame, text=self._t('menu_hw_title', "🔧 Ottimizzazione Hardware"), font=("Segoe UI", 11, "bold"))
-        self._i18n_register(hardware_title, 'menu_hw_title', "🔧 Ottimizzazione Hardware")
-        hardware_title.pack(anchor='w', padx=5, pady=(5, 2))
-        
-        # Testo hardware (senza RamDrive info per non bloccare avvio)
-        hardware_text = self._t(
-            'menu_hw_text',
-            "Il sistema riconosce automaticamente il tipo di storage:\n\n"
-            "🚀 NVMe: Buffer 256MB, 12 Thread\n"
-            "⚡ SSD: Buffer 128MB, 8 Thread\n"
-            "💾 HDD: Buffer 80MB, 2 Thread\n"
-            "🔌 USB: Buffer 64MB, 4 Thread\n"
-            "🌐 NAS: Buffer 32MB, 2 Thread\n"
-            "💾 RamDrive: Buffer 8MB (RAM pura), 16 Thread\n\n"
-            "I parametri vengono regolati automaticamente in base al percorso di destinazione.",
-        )
-        
-        hardware_label = ctk.CTkLabel(hardware_frame, text=hardware_text, justify='left', wraplength=550)
-        self._i18n_register(hardware_label, 'menu_hw_text',
-                            "Il sistema riconosce automaticamente il tipo di storage:\n\n"
-                            "🚀 NVMe: Buffer 256MB, 12 Thread\n"
-                            "⚡ SSD: Buffer 128MB, 8 Thread\n"
-                            "💾 HDD: Buffer 80MB, 2 Thread\n"
-                            "🔌 USB: Buffer 64MB, 4 Thread\n"
-                            "🌐 NAS: Buffer 32MB, 2 Thread\n"
-                            "💾 RamDrive: Buffer 8MB (RAM pura), 16 Thread\n\n"
-                            "I parametri vengono regolati automaticamente in base al percorso di destinazione.")
-        hardware_label.pack(anchor='w', padx=5, pady=(0, 5))
         
         # Buttons
         buttons_frame = ctk.CTkFrame(frame)
@@ -2272,8 +2433,9 @@ class AdvancedFileMoverCustomTkinter:
                     # Non auto-chiudere e non nascondere la UI di progress: lascia tutto visibile.
                     self._auto_close_after_id = None
             else:
-                # Uso diretto: non auto-chiudere. Nascondi la UI dopo un breve tempo.
-                self.root.after(3000, self._hide_progress_ui)
+                # Uso diretto: mantieni la progress UI visibile
+                # self.root.after(3000, self._hide_progress_ui)  # Commentato: mantieni sempre visibile
+                pass
     
     def _update_progress(self, percentage, text):
         """Aggiorna la label progress in modo thread-safe con velocità e ETA"""
@@ -2383,7 +2545,7 @@ class AdvancedFileMoverCustomTkinter:
         if not safe_text:
             safe_text = file_name
 
-        status_text = f"{safe_text}|{percentage}%|{speed_mb:.1f} MB/s|{eta_label}:{eta_str}"
+        status_text = f"{safe_text} | {percentage}% |  {speed_mb:.1f} MB/s | {eta_label}: {eta_str}"
         try:
             self._set_progress_text(status_text, percentage)
         except Exception:
@@ -2456,9 +2618,9 @@ class AdvancedFileMoverCustomTkinter:
         min_width = 600
         min_height = 500
         
-        # Dimensione di default se non c'è config salvato
-        default_width = 958
-        default_height = 907
+        # Dimensione di default se non c'è config salvato (usa quelle dal config.json)
+        default_width = 900
+        default_height = 720
         
         size = self.config_manager.get('window_size', {'width': default_width, 'height': default_height})
         window_width = size.get('width', default_width)
@@ -2617,30 +2779,18 @@ class AdvancedFileMoverCustomTkinter:
                     try:
                         self._show_update_progress()
                         
-                        # Define callback to close app cleanly before installer runs
+                        # Define callback to close app cleanly after launcher script is started
                         def close_app_for_update():
-                            """Close the application and immediately exit process to free exe lock"""
+                            """Close the application and exit process to free exe lock"""
                             try:
-                                # Force immediate window destruction
                                 self.root.destroy()
                             except:
                                 pass
-                            
-                            # Give minimal time for cleanup
+                            # Force hard exit so the .exe file lock is released
+                            # The launcher .cmd is already running and will wait for this PID to disappear
                             import time
-                            time.sleep(0.1)
-                            
-                            # Force immediate Python process termination with os._exit
-                            # This ensures the .exe file is not locked by the Python process
-                            try:
-                                import os
-                                os._exit(0)  # Force hard exit without cleanup
-                            except:
-                                try:
-                                    import sys
-                                    sys.exit(0)
-                                except:
-                                    pass
+                            time.sleep(0.2)
+                            os._exit(0)
                         
                         success, msg = check_and_update(
                             str(self.config_manager.config_path),
@@ -2648,10 +2798,8 @@ class AdvancedFileMoverCustomTkinter:
                             on_download_complete=self._on_download_complete,
                             on_close_app=close_app_for_update
                         )
-                        if success:
-                            messagebox.showinfo("Aggiornamento", "L'installer è stato avviato. L'applicazione si chiuderà.")
-                            # Note: on_close_app callback already handled app closure
-                        else:
+                        # If we reach here, on_close_app was NOT called (error path)
+                        if not success:
                             messagebox.showerror("Errore", f"Aggiornamento fallito: {msg}")
                     except Exception as e:
                         messagebox.showerror("Errore", f"Errore durante l'aggiornamento: {str(e)}")
@@ -2767,11 +2915,27 @@ def main() -> int:
     except Exception:
         return 1
 
-    # Controllo single-instance: se richiesto e c'è già un'istanza attiva, termina silenziosamente
+    # Controllo single-instance: se richiesto e c'è già un'istanza attiva,
+    # invia i file via IPC (file condiviso + Named Pipe) e termina silenziosamente.
     if '--single-instance' in argv:
         if not _check_single_instance():
-            # C'è già un'istanza in esecuzione, termina senza errori
+            # C'è già un'istanza in esecuzione: invia file via IPC
+            try:
+                sources_ipc, op_ipc, _ = _parse_launch_args(argv)
+                if sources_ipc and op_ipc:
+                    for src in sources_ipc:
+                        _ipc_send_file(src, op_ipc)
+            except Exception:
+                pass
             return 0
+        else:
+            # Siamo l'istanza principale: pulisci eventuali file pendenti residui
+            try:
+                _IPC_DIR.mkdir(parents=True, exist_ok=True)
+                if _IPC_PENDING_FILE.exists():
+                    _IPC_PENDING_FILE.write_text('', encoding='utf-8')
+            except Exception:
+                pass
 
     sources, operation_type, from_context_menu = _parse_launch_args(argv)
 
@@ -2826,6 +2990,10 @@ def main() -> int:
         operation_type=operation_type,
         launched_from_context_menu=from_context_menu,
     )
+    
+    # Avvia listener IPC per ricevere file da altre istanze (context menu)
+    _ipc_start_listener(app)
+    
     root.minsize(602, 720)  # Dimensione minima finestra
     root.mainloop()
     return 0
