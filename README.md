@@ -1,6 +1,6 @@
 # Advanced File Mover Pro
 
-[![Version](https://img.shields.io/badge/version-1.0.14-blue.svg)](https://github.com/u064241/advanced-file-mover/releases/latest)
+[![Version](https://img.shields.io/badge/version-1.0.15-blue.svg)](https://github.com/u064241/advanced-file-mover/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](https://www.microsoft.com/windows)
 
@@ -15,12 +15,12 @@ Professional Windows utility for copying/moving files and folders with real-time
 Download the latest version from [Releases](https://github.com/u064241/advanced-file-mover/releases/latest):
 
 ```text
-AdvancedFileMover_1.0.12_Setup.exe
+AdvancedFileMover_1.0.15_Setup.exe
 ```
 
 ### Automatic Installation
 
-1. Run `AdvancedFileMover_1.0.12_Setup.exe`
+1. Run `AdvancedFileMover_1.0.15_Setup.exe`
 2. Follow the installation wizard
 3. Context menu will be automatically registered
 4. Launch the app from Start Menu or via context menu (Shift + right-click)
@@ -31,17 +31,9 @@ AdvancedFileMover_1.0.12_Setup.exe
 - .NET Framework (included in Windows)
 - Administrator rights for installation
 
-### Upgrade from v1.0.11 to v1.0.12
+### First Time Installation
 
-⚠️ **Important**: v1.0.11 has a bug that may prevent auto-updates. Follow these steps:
-
-1. **Close the application completely** (Ctrl+Q or close window)
-2. **Open Task Manager** (Ctrl+Shift+Esc) and verify no `AdvancedFileMoverPro.exe` processes are running
-3. **Manually run** `AdvancedFileMover_1.0.12_Setup.exe`
-4. **Follow the installer wizard** to completion
-5. **Launch the new version** - auto-updates will work correctly from v1.0.12 onwards
-
-Once upgraded, subsequent updates will work automatically via the built-in auto-update feature.
+Run the installer and follow the wizard. The app will be registered in the Windows context menu automatically.
 
 ---
 
@@ -70,10 +62,10 @@ Once upgraded, subsequent updates will work automatically via the built-in auto-
 ### Prerequisites
 
 ```powershell
-# Python 3.12
+# Python 3.12+
 # Virtual environment
-python -m venv .venv312
-.venv312\Scripts\Activate.ps1
+python -m venv .venv
+.venv\Scripts\Activate.ps1
 
 # Install dependencies
 pip install -r requirements.txt
@@ -91,7 +83,7 @@ cd C:\SOURCECODE\PYTHON\ADVANCED_FILE_MOVER
 .\build.ps1 -Clean -Setup
 
 # Output:
-# installer\Output\AdvancedFileMover_1.0.12_Setup.exe
+# installer\Output\AdvancedFileMover_1.0.15_Setup.exe
 ```
 
 ### PyInstaller Only Build
@@ -105,6 +97,21 @@ pyinstaller --clean gui_customtkinter.spec
 ---
 
 ## 🔄 Changelog
+
+### v1.0.15
+
+- 🎯 **Feature**: Native drag & drop support (tkinterdnd2) - drop files directly on source listbox
+- 🎯 **Feature**: Admin drag & drop - works even when app runs with elevated privileges
+- 🎨 **UI**: Simplified progress bar - text above, clean visualization
+- 🎨 **UI**: Compact layout - reduced padding throughout interface (padx: 10→5, pady adjusted)
+- 🎨 **UI**: Non-resizable window - removed maximize button for cleaner UX
+- 🎨 **UI**: High-contrast progress text - black/white instead of gray (visible in all themes)
+- 🎨 **UI**: Compact Info tab - vertical layout without excessive separators
+- 🎨 **UI**: Elastic source listbox - min 80px height, expands vertically
+- ⚡ **Performance**: Faster startup with background tab loading
+- 🔧 **Fix**: Progress text color now adapts to theme (light/dark)
+- 🔧 **Fix**: Storage display uses compact format (C:SSD | D:HDD...)
+- 🧹 **Cleanup**: Removed auto-tuning parameters from Info tab (cleaner)
 
 ### v1.0.12
 
@@ -282,15 +289,15 @@ python.exe .\run_all_tests.py
 
 ## 🐛 Troubleshooting
 
-### Always use `.venv312`
+### Always use `.venv`
 
 Avoid system `py`/`python` if they point to different versions.
 
 Quick verification:
 
 ```powershell
-.venv312\Scripts\python.exe --version
-.venv312\Scripts\python.exe -c "import customtkinter, psutil; print('✓ GUI deps OK')"
+.venv\Scripts\python.exe --version
+.venv\Scripts\python.exe -c "import customtkinter, psutil; print('✓ GUI deps OK')"
 ```
 
 ### Clean Python cache
