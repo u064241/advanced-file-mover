@@ -1333,17 +1333,24 @@ class AdvancedFileMoverCustomTkinter:
     
     def create_main_tab(self):
         """Tab principale: gestione file e cartelle"""
+        # Configura grid layout per main_tab: percorsi espandibili, progresso sempre visibile
+        self.main_tab.grid_columnconfigure(0, weight=1)
+        self.main_tab.grid_rowconfigure(0, weight=1)   # Percorsi: si espande/contrae
+        self.main_tab.grid_rowconfigure(1, weight=0)   # Opzioni: altezza fissa
+        self.main_tab.grid_rowconfigure(2, weight=0)   # Operazioni: altezza fissa
+        self.main_tab.grid_rowconfigure(3, weight=0)   # Progresso: altezza fissa, sempre visibile
+
         # Sezione Percorsi
         paths_frame = ctk.CTkFrame(self.main_tab)
-        paths_frame.pack(fill='x', padx=5, pady=1)
+        paths_frame.grid(row=0, column=0, sticky='nsew', padx=5, pady=1)
         
         self.paths_label = ctk.CTkLabel(paths_frame, text=self._t('main_paths_section', "📂 PERCORSI"), font=("Segoe UI", 12, "bold"))
         self._i18n_register(self.paths_label, 'main_paths_section', "📂 PERCORSI")
         self.paths_label.pack(anchor='w', padx=10, pady=(3, 1))
         
-        # Inner frame con grid layout
+        # Inner frame con grid layout (fill='both' per espandersi verticalmente)
         paths_inner = ctk.CTkFrame(paths_frame)
-        paths_inner.pack(fill='x', padx=5, pady=1)
+        paths_inner.pack(fill='both', expand=True, padx=5, pady=1)
         paths_inner.grid_columnconfigure(1, weight=1)  # Fa espandere src_frame
         
         # Sorgente
@@ -1450,7 +1457,7 @@ class AdvancedFileMoverCustomTkinter:
         
         # Sezione Opzioni
         options_frame = ctk.CTkFrame(self.main_tab)
-        options_frame.pack(fill='x', padx=5, pady=1)
+        options_frame.grid(row=1, column=0, sticky='ew', padx=5, pady=1)
         
         self.options_label = ctk.CTkLabel(options_frame, text=self._t('main_options_section', "⚙️ OPZIONI"), font=("Segoe UI", 12, "bold"))
         self._i18n_register(self.options_label, 'main_options_section', "⚙️ OPZIONI")
@@ -1492,7 +1499,7 @@ class AdvancedFileMoverCustomTkinter:
         
         # Sezione Operazioni
         ops_frame = ctk.CTkFrame(self.main_tab)
-        ops_frame.pack(fill='x', padx=10, pady=1)
+        ops_frame.grid(row=2, column=0, sticky='ew', padx=10, pady=1)
         
         self.ops_label = ctk.CTkLabel(ops_frame, text=self._t('main_ops_section', "🚀 OPERAZIONI"), font=("Segoe UI", 12, "bold"))
         self._i18n_register(self.ops_label, 'main_ops_section', "🚀 OPERAZIONI")
@@ -1517,9 +1524,9 @@ class AdvancedFileMoverCustomTkinter:
         self._i18n_register(self.cancel_btn, 'btn_cancel', "❌ Annulla")
         self.cancel_btn.pack(side='left', padx=5)
         
-        # Sezione Progresso
+        # Sezione Progresso (sempre visibile in fondo grazie al grid layout)
         progress_frame = ctk.CTkFrame(self.main_tab)
-        progress_frame.pack(fill='x', padx=5, pady=(2, 3))
+        progress_frame.grid(row=3, column=0, sticky='sew', padx=5, pady=(2, 3))
         
         self.progress_section_label = ctk.CTkLabel(progress_frame, text=self._t('main_progress_section', "📊 PROGRESSO"), font=("Segoe UI", 12, "bold"))
         self._i18n_register(self.progress_section_label, 'main_progress_section', "📊 PROGRESSO")
