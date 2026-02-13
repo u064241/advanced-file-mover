@@ -3,6 +3,7 @@ Registrazione nel menu contestuale di Windows
 """
 import sys
 import os
+import json
 import winreg
 import subprocess
 import argparse
@@ -28,16 +29,73 @@ class ContextMenuRegistrar:
     RECYCLE_BIN_KEY = RECYCLE_BIN_BASE + r"\Z_AdvancedFileMover"  # nome ordinato verso il basso senza essere l'ultimo assoluto
     LEGACY_RECYCLE_BIN_KEY = RECYCLE_BIN_BASE + r"\AdvancedFileMover"  # cleanup versioni precedenti
     
-    def __init__(self, use_admin=False):
+    def __init__(self, use_admin=False, copy_label=None, move_label=None):
         """
         Inizializza registrar
         
         Args:
             use_admin: Se True, usa HKEY_LOCAL_MACHINE, altrimenti HKEY_CURRENT_USER
+            copy_label: Etichetta tradotta per "Copia [Avanzata]" (None = auto da config/i18n)
+            move_label: Etichetta tradotta per "Sposta [Avanzata]" (None = auto da config/i18n)
         """
         self.use_admin = use_admin
         self.root = winreg.HKEY_LOCAL_MACHINE if use_admin else winreg.HKEY_CURRENT_USER
         self.base_path = f"HKEY_{'LOCAL_MACHINE' if use_admin else 'CURRENT_USER'}"
+        
+        # Carica etichette tradotte per il menu contestuale
+        if copy_label and move_label:
+            self._copy_label = copy_label
+            self._move_label = move_label
+        else:
+            labels = self._load_context_menu_labels()
+            self._copy_label = labels[0]
+            self._move_label = labels[1]
+
+    def _load_context_menu_labels(self):
+        """Carica le etichette tradotte per il menu contestuale da config.json + i18n"""
+        default_copy = "Copia [Avanzata]"
+        default_move = "Sposta [Avanzata]"
+        try:
+            # Cerca config.json (LocalAppData > accanto all'exe > nella dir del progetto)
+            config_paths = []
+            local_app_data = os.environ.get('LOCALAPPDATA', '')
+            if local_app_data:
+                config_paths.append(Path(local_app_data) / 'AdvancedFileMover' / 'config.json')
+            if getattr(sys, 'frozen', False):
+                config_paths.append(Path(sys.executable).parent / 'config.json')
+            config_paths.append(self.APP_DIR / 'config.json')
+            
+            lang = 'it'  # default
+            for cp in config_paths:
+                if cp.exists():
+                    try:
+                        with open(cp, 'r', encoding='utf-8') as f:
+                            cfg = json.load(f)
+                        lang = cfg.get('language', 'it')
+                        break
+                    except Exception:
+                        continue
+            
+            # Cerca file i18n
+            i18n_paths = []
+            if getattr(sys, 'frozen', False):
+                i18n_paths.append(Path(sys.executable).parent / 'i18n' / f'{lang}.json')
+            i18n_paths.append(self.APP_DIR / 'i18n' / f'{lang}.json')
+            
+            for ip in i18n_paths:
+                if ip.exists():
+                    try:
+                        with open(ip, 'r', encoding='utf-8') as f:
+                            translations = json.load(f)
+                        return (
+                            translations.get('ctx_copy_label', default_copy),
+                            translations.get('ctx_move_label', default_move)
+                        )
+                    except Exception:
+                        continue
+        except Exception:
+            pass
+        return (default_copy, default_move)
 
     def _resolve_gui_exe(self) -> Path | None:
         """Restituisce il percorso dell'eseguibile GUI se disponibile.
@@ -157,11 +215,11 @@ class ContextMenuRegistrar:
             # Creare shell subkey per le voci cascata
             shell_key = winreg.CreateKey(parent_key, "shell")
             
-            # Sub-voce 1: Copia (NO emoji nel MUIVerb, l'icona verrà dalle .ico)
-            self._register_powershell_subcommand(shell_key, "Copy", "Copia [Avanzata]", "copy", exe_dir)
+            # Sub-voce 1: Copia (etichetta tradotta in base alla lingua)
+            self._register_powershell_subcommand(shell_key, "Copy", self._copy_label, "copy", exe_dir)
             
-            # Sub-voce 2: Sposta (NO emoji nel MUIVerb, l'icona verrà dalle .ico)
-            self._register_powershell_subcommand(shell_key, "Move", "Sposta [Avanzata]", "move", exe_dir)
+            # Sub-voce 2: Sposta (etichetta tradotta in base alla lingua)
+            self._register_powershell_subcommand(shell_key, "Move", self._move_label, "move", exe_dir)
             
             winreg.CloseKey(shell_key)
             winreg.CloseKey(parent_key)

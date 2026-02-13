@@ -502,8 +502,11 @@ class AdvancedFileMoverCustomTkinter:
         except Exception:
             pass
         
-        # Context menu
-        self.context_manager = ContextMenuRegistrar()
+        # Context menu (passa le etichette tradotte nella lingua corrente)
+        self.context_manager = ContextMenuRegistrar(
+            copy_label=self._t('ctx_copy_label', 'Copia [Avanzata]'),
+            move_label=self._t('ctx_move_label', 'Sposta [Avanzata]')
+        )
 
         # UI - Crea l'interfaccia PRIMA della detection (non bloccare UI)
         self.create_widgets()
@@ -799,6 +802,15 @@ class AdvancedFileMoverCustomTkinter:
             try:
                 if hasattr(self, 'info_text'):
                     self.update_info()
+            except Exception:
+                pass
+
+            # Aggiorna le etichette del menu contestuale per la nuova lingua
+            try:
+                self.context_manager = ContextMenuRegistrar(
+                    copy_label=self._t('ctx_copy_label', 'Copia [Avanzata]'),
+                    move_label=self._t('ctx_move_label', 'Sposta [Avanzata]')
+                )
             except Exception:
                 pass
         except Exception:
