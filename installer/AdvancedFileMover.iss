@@ -23,6 +23,11 @@ SetupIconFile={#SourcePath}\..\dist\AdvancedFileMoverPro\Icon\super_icon.ico
 CloseApplications=yes
 RestartApplications=no
 
+[InstallDelete]
+; Pulizia da versioni precedenti (one-file → one-dir migration)
+; Rimuove l'intera cartella app prima di installare, così non restano file orfani
+Type: filesandordirs; Name: "{app}\*"
+
 [Files]
 Source: "{#SourcePath}\..\dist\AdvancedFileMoverPro\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
@@ -41,6 +46,7 @@ Filename: "{app}\AdvancedFileMoverPro.exe"; Parameters: "--register-context-menu
 [UninstallRun]
 ; Rimuove il menu contestuale prima della disinstallazione
 Filename: "{app}\AdvancedFileMoverPro.exe"; Parameters: "--unregister-context-menu"; Flags: waituntilterminated; RunOnceId: "UnregisterContextMenu"
+
 
 
 
