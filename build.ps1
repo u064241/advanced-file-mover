@@ -4,6 +4,7 @@
 param(
     [switch]$Clean = $false,
     [switch]$Setup = $false,
+    [switch]$Release = $false,
     [string]$IsccPath = 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe',
     [switch]$Help = $false
 )
@@ -46,12 +47,14 @@ if ($Help) {
     Write-Host "  .\build.ps1              - Build normale (pulizia cartelle dist/build)" -ForegroundColor $Green
     Write-Host "  .\build.ps1 -Clean       - Build con --clean per PyInstaller" -ForegroundColor $Green
     Write-Host "  .\build.ps1 -Setup       - Dopo il build, compila anche Setup.exe (Inno Setup) e rimuove ./dist se OK" -ForegroundColor $Green
+    Write-Host "  .\build.ps1 -Setup -Release - Build + Setup + crea Release GitHub (rimuove binari dalle release vecchie)" -ForegroundColor $Green
     Write-Host "  .\build.ps1 -Setup -IsccPath <percorso\\ISCC.exe> - Override percorso ISCC.exe" -ForegroundColor $Green
     Write-Host "  .\build.ps1 -Help        - Mostra questo help`n" -ForegroundColor $Green
     
     Write-Host "RISULTATO:`n" -ForegroundColor $Yellow
     Write-Host "  ✓ dist/AdvancedFileMoverPro.exe   - Eseguibile compilato (singolo file)" -ForegroundColor $Green
     Write-Host "  ✓ installer/Output/*Setup*.exe    - Setup.exe generato da Inno Setup (se usi -Setup)" -ForegroundColor $Green
+    Write-Host "  ✓ GitHub Release con Setup.exe    - Solo con -Release (richiede gh CLI)" -ForegroundColor $Green
     Write-Host "  ✓ build/                 - Build temporanei (rimosso dopo)" -ForegroundColor $Green
     exit
 }
@@ -265,6 +268,82 @@ if (Test-Path 'build') {
     Write-Host "🧹 Rimuovo cartella build temporanea..." -ForegroundColor $Yellow
     Remove-Item -Recurse -Force 'build'
     Write-Host "   ✓ Rimosso`n" -ForegroundColor $Green
+}
+
+# ── GitHub Release ──────────────────────────────────────────────────
+if ($Release -and $Setup) {
+    Write-Host "[5/5] 🚀 Pubblicazione Release su GitHub..." -ForegroundColor $Yellow
+
+    # Verifica gh CLI
+    $GhCli = Get-Command 'gh' -ErrorAction SilentlyContinue
+    if (-not $GhCli) {
+        Write-Host "     ❌ GitHub CLI (gh) non trovato! Installa da https://cli.github.com/" -ForegroundColor $Red
+        Write-Host "     ⚠️  La release non è stata creata, ma il build è OK." -ForegroundColor $Yellow
+    } else {
+        # Leggi versione da config.json
+        try {
+            $CfgJson = Get-Content 'config.json' -Raw | ConvertFrom-Json
+            $Ver = $CfgJson.version
+        } catch {
+            $Ver = '1.0.0'
+        }
+        $TagName = "v$Ver"
+        $SetupFile = "installer/Output/AdvancedFileMover_${Ver}_Setup.exe"
+
+        if (-not (Test-Path $SetupFile)) {
+            Write-Host "     ❌ Setup.exe non trovato: $SetupFile" -ForegroundColor $Red
+        } else {
+            # 1) Rimuovi binari da TUTTE le release precedenti (mantieni solo note/changelog)
+            Write-Host "     🧹 Pulizia binari dalle release precedenti..." -ForegroundColor $Cyan
+            try {
+                $AllReleases = gh release list --json tagName --jq '.[].tagName' 2>$null
+                if ($AllReleases) {
+                    foreach ($OldTag in $AllReleases) {
+                        if ($OldTag -eq $TagName) { continue }  # Salta la release corrente
+                        $OldAssets = gh release view $OldTag --json assets --jq '.assets[].name' 2>$null
+                        if ($OldAssets) {
+                            foreach ($Asset in $OldAssets) {
+                                Write-Host "       Rimuovo $Asset da $OldTag" -ForegroundColor $Cyan
+                                gh release delete-asset $OldTag $Asset --yes 2>$null
+                            }
+                            Write-Host "       ✓ Binari rimossi da $OldTag" -ForegroundColor $Green
+                        }
+                    }
+                }
+            } catch {
+                Write-Host "     ⚠️ Errore pulizia release vecchie: $($_.Exception.Message)" -ForegroundColor $Yellow
+            }
+
+            # 2) Crea tag git se non esiste
+            $ExistingTag = git tag -l $TagName 2>$null
+            if (-not $ExistingTag) {
+                Write-Host "     🏷️  Creo tag $TagName..." -ForegroundColor $Cyan
+                git tag -a $TagName -m "$TagName"
+                git push origin $TagName
+            }
+
+            # 3) Crea o aggiorna la release GitHub
+            $ExistingRelease = gh release view $TagName 2>$null
+            if ($LASTEXITCODE -eq 0) {
+                # Release esiste già: carica/sovrascrivi il binario
+                Write-Host "     📦 Release $TagName esiste, aggiorno il binario..." -ForegroundColor $Cyan
+                gh release upload $TagName $SetupFile --clobber
+            } else {
+                # Crea nuova release
+                Write-Host "     📦 Creo release $TagName..." -ForegroundColor $Cyan
+                gh release create $TagName $SetupFile --title $TagName --generate-notes
+            }
+
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "     ✓ Release $TagName pubblicata su GitHub" -ForegroundColor $Green
+                Write-Host "     🔗 https://github.com/u064241/advanced-file-mover/releases/tag/$TagName" -ForegroundColor $Cyan
+            } else {
+                Write-Host "     ❌ Errore nella pubblicazione della release" -ForegroundColor $Red
+            }
+        }
+    }
+} elseif ($Release -and -not $Setup) {
+    Write-Host "`n⚠️  -Release richiede anche -Setup (serve il Setup.exe da caricare)" -ForegroundColor $Yellow
 }
 
 Write-Host "════════════════════════════════════════`n" -ForegroundColor $Cyan
