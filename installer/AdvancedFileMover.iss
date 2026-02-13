@@ -75,3 +75,4 @@ Filename: "{app}\AdvancedFileMoverPro.exe"; Parameters: "--unregister-context-me
 
 
 
+
