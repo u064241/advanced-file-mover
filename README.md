@@ -1,6 +1,6 @@
 # Advanced File Mover Pro
 
-[![Version](https://img.shields.io/badge/version-1.0.3-blue.svg)](https://github.com/u064241/advanced-file-mover/releases/latest)
+[![Version](https://img.shields.io/badge/version-1.0.4-blue.svg)](https://github.com/u064241/advanced-file-mover/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](https://www.microsoft.com/windows)
 
@@ -15,12 +15,12 @@ Professional Windows utility for copying/moving files and folders with real-time
 Download the latest version from [Releases](https://github.com/u064241/advanced-file-mover/releases/latest):
 
 ```text
-AdvancedFileMover_1.0.3_Setup.exe
+AdvancedFileMover_1.0.4_Setup.exe
 ```
 
 ### Automatic Installation
 
-1. Run `AdvancedFileMover_1.0.3_Setup.exe`
+1. Run `AdvancedFileMover_1.0.4_Setup.exe`
 2. Follow the installation wizard
 3. Context menu will be automatically registered
 4. Launch the app from Start Menu or via context menu (Shift + right-click)
@@ -97,6 +97,11 @@ pyinstaller --clean gui_customtkinter.spec
 ---
 
 ## 🔄 Changelog
+
+### v1.0.4
+
+- 🌐 **i18n**: Context menu auto-updates when changing language (no manual re-register needed)
+- 🔧 **Engine**: Added `is_registered()` method to detect existing context menu registration
 
 ### v1.0.3
 
