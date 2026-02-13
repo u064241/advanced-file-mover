@@ -1,8 +1,3 @@
-"""
-Advanced File Mover - GUI CustomTkinter Modern
-Interfaccia moderna con CustomTkinter (tema automatico, tema switching perfetto)
-"""
-
 import sys
 import os
 import json
@@ -14,8 +9,44 @@ from pathlib import Path
 import tkinter as tk
 from tkinter import filedialog, messagebox, scrolledtext
 
+# Drag and Drop support
+try:
+    from tkinterdnd2 import DND_FILES, TkinterDnD
+    HAS_DND = True
+except ImportError:
+    HAS_DND = False
+    DND_FILES = None
+    TkinterDnD = None
+
 # CustomTkinter
 import customtkinter as ctk
+
+# Crea una classe wrapper CTk che supporta DnD
+if HAS_DND:
+    class CTkDnD(TkinterDnD.Tk):
+        """CustomTkinter-compatible root con supporto DnD"""
+        def __init__(self, *args, **kwargs):
+            # Chiama il costruttore di TkinterDnD.Tk (NON di tk.Tk per evitare ricorsione)
+            super().__init__(*args, **kwargs)
+            # Applica lo stile CustomTkinter
+            ctk.set_appearance_mode("system")
+            ctk.set_default_color_theme("blue")
+            # Applica gli attributi CTk essenziali per compatibilità
+            self._appearance_mode = ctk.get_appearance_mode()
+            
+        def configure(self, **kwargs):
+            """Override per compatibilità con CustomTkinter"""
+            # Gestisci parametri CustomTkinter
+            if 'fg_color' in kwargs:
+                bg_color = kwargs.pop('fg_color')
+                if isinstance(bg_color, (list, tuple)) and len(bg_color) == 2:
+                    # Scegli colore in base al tema
+                    bg_color = bg_color[0] if self._appearance_mode == "Light" else bg_color[1]
+                kwargs['bg'] = bg_color
+            return super().configure(**kwargs)
+else:
+    # Fallback: usa CTk normale se DnD non disponibile
+    CTkDnD = ctk.CTk
 
 # Aggiungi il parent directory al path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -30,6 +61,44 @@ from registry.context_menu import ContextMenuRegistrar
 # Imposta l'aspetto di CustomTkinter
 ctk.set_appearance_mode("system")  # "dark", "light" o "system"
 ctk.set_default_color_theme("blue")  # "blue", "green", "dark-blue", etc.
+
+# Funzioni helper per Windows admin drag and drop
+try:
+    import ctypes
+    from ctypes import wintypes
+    
+    def is_admin():
+        """Verifica se l'app è eseguita come amministratore"""
+        try:
+            return ctypes.windll.shell32.IsUserAnAdmin()
+        except:
+            return False
+    
+    def enable_drag_drop_for_elevated():
+        """Abilita drag and drop anche se l'app è eseguita come Administrator"""
+        try:
+            # Messaggi Windows necessari per drag and drop
+            WM_DROPFILES = 0x0233
+            WM_COPYDATA = 0x004A
+            WM_COPYGLOBALDATA = 0x0049
+            
+            # Costante per permettere messaggi da privilegi inferiori
+            MSGFLT_ADD = 1
+            
+            # Chiama ChangeWindowMessageFilter per ogni messaggio necessario
+            ctypes.windll.user32.ChangeWindowMessageFilter(WM_DROPFILES, MSGFLT_ADD)
+            ctypes.windll.user32.ChangeWindowMessageFilter(WM_COPYDATA, MSGFLT_ADD)
+            ctypes.windll.user32.ChangeWindowMessageFilter(WM_COPYGLOBALDATA, MSGFLT_ADD)
+            
+            return True
+        except Exception:
+            return False
+except:
+    def is_admin():
+        return False
+    
+    def enable_drag_drop_for_elevated():
+        return False
 
 # ConfigManager per salvare/caricare configurazione
 class ConfigManager:
@@ -203,7 +272,7 @@ class AdvancedFileMoverCustomTkinter:
         self.dest_path = tk.StringVar()
         # Aggiungi trace per auto-tuning e refresh Info quando dest_path cambia
         self._info_update_after_id = None
-        self.dest_path.trace('w', lambda *args: self._on_destination_changed())
+        self.dest_path.trace_add('write', lambda *args: self._on_destination_changed())
 
         # Refresh accurato storage (solo drive coinvolti) - debounced
         self._accurate_refresh_after_id = None
@@ -246,6 +315,9 @@ class AdvancedFileMoverCustomTkinter:
             num_threads=int(self.threads.get())
         )
 
+        # Drag and Drop (il monkey-patch è già applicato negli import)
+        self.dnd_enabled = HAS_DND
+        
         # Callback progress: aggiorna UI direttamente dal motore (thread-safe via root.after)
         try:
             self.file_engine.set_progress_callback(self._on_engine_progress)
@@ -360,13 +432,13 @@ class AdvancedFileMoverCustomTkinter:
         # Centra finestra dopo che tutto è caricato
         self.root.after(100, self._center_window)
         
-        # Imposta dimensioni finali e blocca il resize
+        # Imposta dimensioni finali e disabilita il resize (rimuove il pulsante di massimizzazione)
         def finalize_window():
             if hasattr(self, '_desired_width') and hasattr(self, '_desired_height'):
                 # Imposta le dimensioni definitive
                 self.root.geometry(f"{self._desired_width}x{self._desired_height}+{self.root.winfo_x()}+{self.root.winfo_y()}")
-            # Sblocca il resize manuale dell'utente
-            self.root.resizable(True, True)
+            # Disabilita il resize (rimuove il pulsante di massimizzazione dalla barra titolo)
+            self.root.resizable(False, False)
             self._lock_window_size = False
         
         self.root.after(200, finalize_window)
@@ -483,7 +555,7 @@ class AdvancedFileMoverCustomTkinter:
                         current_text = ''
 
                     if current_text and ('|0%|' in current_text) and ('MB/s' in current_text) and ('ETA' in current_text or 'T:' in current_text):
-                        self.progress_label.configure(text=self._t('progress_placeholder', "Pronto|0%|--- MB/s|ETA:--:--"))
+                        self._set_progress_text(self._t('progress_placeholder', "Pronto|0%|--- MB/s|ETA:--:--"))
             except Exception:
                 pass
 
@@ -979,7 +1051,7 @@ class AdvancedFileMoverCustomTkinter:
 
         # Notebook per tabs
         self.notebook = ctk.CTkTabview(self.root)
-        self.notebook.grid(row=0, column=0, sticky='nsew', padx=10, pady=(10, 0))
+        self.notebook.grid(row=0, column=0, sticky='nsew', padx=5, pady=(5, 0))
         
         # Aggiungi tabs VUOTE (creazione veloce)
         self._tab_titles['main'] = self._t('tab_main', "📋 Principale")
@@ -1014,7 +1086,7 @@ class AdvancedFileMoverCustomTkinter:
         
         # Footer con status bar
         footer_frame = ctk.CTkFrame(self.root, fg_color="transparent")
-        footer_frame.grid(row=1, column=0, sticky='ew', padx=10, pady=(0, 3))
+        footer_frame.grid(row=1, column=0, sticky='ew', padx=5, pady=(0, 2))
         footer_frame.grid_propagate(False)  # Blocca altezza del footer
         footer_frame.configure(height=50)   # Altezza fissa
         
@@ -1026,7 +1098,7 @@ class AdvancedFileMoverCustomTkinter:
             text=self._t('status_ready', 'Pronto'),
             text_color=("gray", "gray")
         )
-        self.status_label.pack(side='right', padx=10)
+        self.status_label.pack(side='right', padx=5)
 
         try:
             self._i18n_register(self.status_label, 'status_ready', 'Pronto')
@@ -1037,45 +1109,88 @@ class AdvancedFileMoverCustomTkinter:
         """Tab principale: gestione file e cartelle"""
         # Sezione Percorsi
         paths_frame = ctk.CTkFrame(self.main_tab)
-        paths_frame.pack(fill='x', padx=10, pady=2)
+        paths_frame.pack(fill='x', padx=5, pady=1)
         
         self.paths_label = ctk.CTkLabel(paths_frame, text=self._t('main_paths_section', "📂 PERCORSI"), font=("Segoe UI", 12, "bold"))
         self._i18n_register(self.paths_label, 'main_paths_section', "📂 PERCORSI")
-        self.paths_label.pack(anchor='w', padx=10, pady=(5, 2))
+        self.paths_label.pack(anchor='w', padx=10, pady=(3, 1))
         
         # Inner frame con grid layout
         paths_inner = ctk.CTkFrame(paths_frame)
-        paths_inner.pack(fill='x', padx=10, pady=5)
+        paths_inner.pack(fill='x', padx=5, pady=1)
+        paths_inner.grid_columnconfigure(1, weight=1)  # Fa espandere src_frame
         
         # Sorgente
         self.src_label = ctk.CTkLabel(paths_inner, text=self._t('main_source', "Sorgente:"))
         self._i18n_register(self.src_label, 'main_source', "Sorgente:")
-        self.src_label.grid(row=0, column=0, sticky='nw', pady=5)
+        self.src_label.grid(row=0, column=0, sticky='nw', pady=(5,0))
         
-        src_frame = ctk.CTkFrame(paths_inner)
-        src_frame.grid(row=0, column=1, sticky='ew', padx=5)
+        # Frame interno per listbox + scrollbar (altezza elastica)
+        src_inner_frame = ctk.CTkFrame(paths_inner)
+        src_inner_frame.grid(row=0, column=1, sticky='nsew', padx=5)  # nsew = espandi in tutte le direzioni
+        src_inner_frame.grid_rowconfigure(0, weight=1, minsize=80)  # Espande verticalmente con minimo 80px
+        src_inner_frame.grid_columnconfigure(0, weight=1)
         
         # Determina colori Listbox in base al tema
         listbox_bg = "#2b2b2b" if self.current_theme == 'dark' else "#ffffff"
         listbox_fg = "#ffffff" if self.current_theme == 'dark' else "#000000"
         
         self.source_listbox = tk.Listbox(
-            src_frame,
-            height=2,
+            src_inner_frame,
+            height=5,
             bg=listbox_bg,
             fg=listbox_fg,
             selectbackground="#0078d4",
             relief='flat',
             borderwidth=1
         )
-        self.source_listbox.pack(side='left', fill='both', expand=True)
+        self.source_listbox.grid(row=0, column=0, sticky='nsew', padx=(0,2))  # nsew = espandi in tutte le direzioni
         
-        scrollbar = ctk.CTkScrollbar(src_frame, command=self.source_listbox.yview)
-        scrollbar.pack(side='right', fill='y')
+        scrollbar = ctk.CTkScrollbar(src_inner_frame, command=self.source_listbox.yview)
+        scrollbar.grid(row=0, column=1, sticky='ns')
         self.source_listbox.config(yscrollcommand=scrollbar.set)
+        
+        # Configura grid di paths_inner per far espandere src_inner_frame
+        paths_inner.grid_rowconfigure(0, weight=1)  # La riga 0 si espande verticalmente
+        
+        # Hint DnD (sotto la listbox, stessa colonna)
+        hint_color = "gray" if self.current_theme == 'dark' else "#7a5a00"
+        self.dnd_hint = ctk.CTkLabel(
+            paths_inner,
+            text="",
+            text_color=hint_color,
+            font=("Segoe UI", 8)
+        )
+        self.dnd_hint.grid(row=1, column=1, sticky='w', padx=5, pady=(2,0))
+        
+        # Drag and Drop
+        if HAS_DND and self.dnd_enabled:
+            try:
+                self.source_listbox.drop_target_register(DND_FILES)
+                self.source_listbox.dnd_bind('<<Drop>>', self.drop_files)
+                
+                hint_text = self._t('dnd_hint', "💡 Trascina qui i file")
+                if is_admin():
+                    hint_text += " (DnD admin)"
+                
+                self.dnd_hint.configure(text=hint_text)
+                self._i18n_register(self.dnd_hint, 'dnd_hint', "💡 Trascina qui i file")
+            except Exception:
+                pass
+        elif HAS_DND and is_admin():
+            try:
+                self.dnd_hint.configure(text="⚠️ DnD non disponibile (Administrator)", text_color="orange")
+            except Exception:
+                pass
+        elif not HAS_DND:
+            try:
+                self.dnd_hint.configure(text="💡 pip install tkinterdnd2 per drag & drop")
+            except Exception:
+                pass
         
         # Bottoni sorgente
         src_btn_frame = ctk.CTkFrame(paths_inner)
+        src_btn_frame.grid(row=0, column=2, padx=5, sticky='n')
         src_btn_frame.grid(row=0, column=2, padx=5, sticky='n')
         
         self.add_file_btn = ctk.CTkButton(src_btn_frame, text=self._t('btn_add_file', "➕ File"), command=self._add_files, width=100)
@@ -1093,31 +1208,30 @@ class AdvancedFileMoverCustomTkinter:
         self.remove_all_btn = ctk.CTkButton(src_btn_frame, text=self._t('btn_remove_all', "🗑️ Rimuovi Tutti"), command=self._clear_all_sources_and_destination, width=100)
         self._i18n_register(self.remove_all_btn, 'btn_remove_all', "🗑️ Rimuovi Tutti")
         self.remove_all_btn.pack(pady=2, fill='x')
+        src_btn_frame.grid_rowconfigure(0, weight=1)  # Centra verticalmente i bottoni
         
-        paths_inner.columnconfigure(1, weight=1)
-        
-        # Destinazione
+        # Destinazione (row 2, per stare sotto all'hint)
         self.dst_label = ctk.CTkLabel(paths_inner, text=self._t('main_destination', "Destinazione:"))
         self._i18n_register(self.dst_label, 'main_destination', "Destinazione:")
-        self.dst_label.grid(row=1, column=0, sticky='w', pady=5)
+        self.dst_label.grid(row=2, column=0, sticky='w', pady=(5,0))
         
         dest_entry = ctk.CTkEntry(paths_inner, textvariable=self.dest_path)
-        dest_entry.grid(row=1, column=1, sticky='ew', padx=5)
+        dest_entry.grid(row=2, column=1, sticky='ew', padx=5)
         
         self.browse_btn = ctk.CTkButton(paths_inner, text=self._t('btn_browse', "Sfoglia"), command=lambda: self.browse_folder(for_source=False), width=100)
         self._i18n_register(self.browse_btn, 'btn_browse', "Sfoglia")
-        self.browse_btn.grid(row=1, column=2, padx=5)
+        self.browse_btn.grid(row=2, column=2, padx=5)
         
         # Sezione Opzioni
         options_frame = ctk.CTkFrame(self.main_tab)
-        options_frame.pack(fill='x', padx=10, pady=2)
+        options_frame.pack(fill='x', padx=5, pady=1)
         
         self.options_label = ctk.CTkLabel(options_frame, text=self._t('main_options_section', "⚙️ OPZIONI"), font=("Segoe UI", 12, "bold"))
         self._i18n_register(self.options_label, 'main_options_section', "⚙️ OPZIONI")
-        self.options_label.pack(anchor='w', padx=10, pady=(5, 2))
+        self.options_label.pack(anchor='w', padx=5, pady=(2, 1))
         
         opts_inner = ctk.CTkFrame(options_frame)
-        opts_inner.pack(fill='x', padx=10, pady=5)
+        opts_inner.pack(fill='x', padx=5, pady=1)
         
         self.ramdrive_checkbox = ctk.CTkCheckBox(opts_inner, text=self._t('opt_use_ramdrive', "Usa RamDrive"), variable=self.ramdrive_enabled)
         self._i18n_register(self.ramdrive_checkbox, 'opt_use_ramdrive', "Usa RamDrive")
@@ -1152,14 +1266,14 @@ class AdvancedFileMoverCustomTkinter:
         
         # Sezione Operazioni
         ops_frame = ctk.CTkFrame(self.main_tab)
-        ops_frame.pack(fill='x', padx=10, pady=2)
+        ops_frame.pack(fill='x', padx=10, pady=1)
         
         self.ops_label = ctk.CTkLabel(ops_frame, text=self._t('main_ops_section', "🚀 OPERAZIONI"), font=("Segoe UI", 12, "bold"))
         self._i18n_register(self.ops_label, 'main_ops_section', "🚀 OPERAZIONI")
-        self.ops_label.pack(anchor='w', padx=10, pady=(5, 2))
+        self.ops_label.pack(anchor='w', padx=10, pady=(3, 1))
         
         ops_inner = ctk.CTkFrame(ops_frame)
-        ops_inner.pack(fill='x', padx=10, pady=5)
+        ops_inner.pack(fill='x', padx=10, pady=2)
         
         # Frame interno per centrare i bottoni
         buttons_frame = ctk.CTkFrame(ops_inner, fg_color="transparent")
@@ -1179,65 +1293,37 @@ class AdvancedFileMoverCustomTkinter:
         
         # Sezione Progresso
         progress_frame = ctk.CTkFrame(self.main_tab)
-        progress_frame.pack(fill='x', padx=10, pady=2)
+        progress_frame.pack(fill='x', padx=5, pady=1)
         
         self.progress_section_label = ctk.CTkLabel(progress_frame, text=self._t('main_progress_section', "📊 PROGRESSO"), font=("Segoe UI", 12, "bold"))
         self._i18n_register(self.progress_section_label, 'main_progress_section', "📊 PROGRESSO")
-        self.progress_section_label.pack(anchor='w', padx=10, pady=(10, 5))
+        self.progress_section_label.pack(anchor='w', padx=5, pady=(2, 1))
         
         prog_inner = ctk.CTkFrame(progress_frame)
-        prog_inner.pack(fill='x', padx=6, pady=6)
+        prog_inner.pack(fill='x', padx=5, pady=2)
 
-        # Progress bar (solo visiva) + label unica con dettagli
-        self.progress_bar = ctk.CTkProgressBar(prog_inner, height=20, mode='determinate')
-        self.progress_bar.set(0.0)
-        self.progress_bar.pack(fill='x', pady=(5, 8))
-
-        # Riga dettagli: label principale + contatore file separato (i/n)
-        # Layout: label centrata su tutta la riga + contatore posizionato a destra
-        self.progress_details_row = ctk.CTkFrame(prog_inner, fg_color="transparent")
-        self.progress_details_row.pack(fill='x', pady=4)
-
-        # Label unica con tutto: nome file | percentuale | MB/s | ETA
+        # Progress text (sopra la barra)
         self.progress_label = ctk.CTkLabel(
-            self.progress_details_row,
-            text="Pronto|0%|--- MB/s|ETA:--:--",
-            text_color=("#00FF00", "#00FF00"),
-            font=("Courier", 18),
-            wraplength=1000,
-            height=70,
+            prog_inner,
+            text="Pronto | 0% | --- MB/s | ETA:--:--",
+            text_color=("#000000", "#FFFFFF"),
+            font=("Segoe UI", 10),
             anchor='center',
             justify='center'
         )
-        self.progress_label.pack(fill='x', expand=True, padx=2)
+        self.progress_label.pack(fill='x', pady=(2, 2))
 
-        # Contatore file (stabile, non incluso nel testo principale)
-        self.file_counter_label = ctk.CTkLabel(
-            self.progress_details_row,
-            text="",
-            text_color=("white", "white"),
-            font=("Courier", 18),
-            width=90,
-            anchor='e',
-            justify='right'
-        )
-        self.file_counter_label.place(relx=1.0, rely=0.5, anchor='e', x=0)
+        # Progress bar (semplice, senza testo sovrapposto)
+        self.progress_bar = ctk.CTkProgressBar(prog_inner, height=18, mode='determinate')
+        self.progress_bar.set(0.0)
+        self.progress_bar.pack(fill='x', pady=0)
 
-        # Adatta il wrap alla larghezza disponibile, così il testo non invade il contatore
-        def _resize_progress_wrap(event):
-            try:
-                counter_w = int(self.file_counter_label.winfo_reqwidth() or 90)
-                available = int(event.width) - counter_w - 30
-                if available < 250:
-                    available = 250
-                self.progress_label.configure(wraplength=available)
-            except Exception:
-                pass
+        # Compatibilità: file_counter_label è None (disabilitato per spazio)
+        self.file_counter_label = None
 
-        try:
-            self.progress_details_row.bind('<Configure>', _resize_progress_wrap)
-        except Exception:
-            pass
+        # Riga dettagli non necessaria (manteniamo per compatibilita')
+        self.progress_details_row = ctk.CTkFrame(prog_inner, fg_color="transparent")
+        self.progress_details_row.pack_forget()
 
         # Mostra sempre la progress UI (non nasconderla all'avvio)
         self._progress_ui_visible = True
@@ -1246,8 +1332,10 @@ class AdvancedFileMoverCustomTkinter:
         if getattr(self, '_progress_ui_visible', False):
             return
         try:
-            self.progress_bar.pack(fill='x', pady=(5, 8))
-            self.progress_details_row.pack(fill='x', pady=8)
+            if hasattr(self, 'progress_label') and self.progress_label is not None:
+                self.progress_label.pack(fill='x', pady=(2, 2))
+            self.progress_bar.pack(fill='x', pady=0)
+            self.progress_details_row.pack_forget()
             self._progress_ui_visible = True
         except Exception:
             pass
@@ -1256,21 +1344,34 @@ class AdvancedFileMoverCustomTkinter:
         if not getattr(self, '_progress_ui_visible', False):
             return
         try:
+            if hasattr(self, 'progress_label') and self.progress_label is not None:
+                self.progress_label.pack_forget()
             self.progress_bar.pack_forget()
             self.progress_details_row.pack_forget()
-            try:
-                if hasattr(self, 'file_counter_label') and self.file_counter_label is not None:
-                    self.file_counter_label.configure(text="")
-            except Exception:
-                pass
             self._progress_ui_visible = False
+        except Exception:
+            pass
+
+    def _set_progress_text(self, text: str, percentage: int | None = None):
+        """Aggiorna il testo della barra di progresso"""
+        try:
+            if hasattr(self, 'progress_label') and self.progress_label is not None:
+                self.progress_label.configure(text=text)
+        except Exception:
+            pass
+
+    def _set_file_counter_text(self, text: str) -> None:
+        try:
+            if getattr(self, 'file_counter_label', None) is None:
+                return
+            self.file_counter_label.configure(text=text)
         except Exception:
             pass
     
     def create_info_tab(self):
         """Tab informazioni - Sistema, Storage, RamDrive"""
         frame = ctk.CTkFrame(self.info_tab)
-        frame.pack(fill='both', expand=True, padx=10, pady=10)
+        frame.pack(fill='both', expand=True, padx=5, pady=5)
         
         # Scrollable text box per informazioni con sfondo simile agli altri frame
         # Usa un colore che si adatta al tema (grigio scuro in dark, grigio chiaro in light)
@@ -1301,141 +1402,70 @@ class AdvancedFileMoverCustomTkinter:
             
             # === SYSTEM INFO ===
             self.info_text.insert('end', self._t('info_system_section', "🔧 INFORMAZIONI SISTEMA") + "\n")
-            self.info_text.insert('end', "═" * 50 + "\n")
             
             # OS e Python
             os_name = f"{platform.system()} {platform.release()}"
             python_ver = platform.python_version()
-            self.info_text.insert('end', f"OS: {os_name}\n")
-            self.info_text.insert('end', f"Python: {python_ver}\n")
+            self.info_text.insert('end', f"OS: {os_name} | Python: {python_ver}\n")
             
             # CPU
             cpu_info = platform.processor()
-            self.info_text.insert('end', f"{self._t('info_cpu', 'Processore')}: {cpu_info}\n")
+            self.info_text.insert('end', f"CPU: {cpu_info}\n")
             
             # RAM
             mem = psutil.virtual_memory()
             ram_total = mem.total / (1024**3)
             ram_available = mem.available / (1024**3)
             ram_percent = mem.percent
-            self.info_text.insert('end', f"{self._t('info_ram_total', 'RAM Totale')}: {ram_total:.2f} GB\n")
-            self.info_text.insert('end', f"{self._t('info_ram_available', 'RAM Disponibile')}: {ram_available:.2f} GB\n")
-            self.info_text.insert('end', f"{self._t('info_ram_used_pct', 'Percentuale RAM Utilizzata')}: {ram_percent}%\n\n")
+            self.info_text.insert('end', f"RAM: {ram_total:.1f}GB | Libera: {ram_available:.1f}GB ({ram_percent:.0f}%)\n")
             
             # === RAMDRIVE ===
-            self.info_text.insert('end', self._t('info_ramdrive_section', "💾 RAMDRIVE") + "\n")
-            self.info_text.insert('end', "═" * 50 + "\n")
+            self.info_text.insert('end', "\n" + self._t('info_ramdrive_section', "💾 RAMDRIVE") + "\n")
             
             ramdrive_status = self.ramdrive_manager.detect_ramdrive()
             if ramdrive_status:
                 ram_letter = self.ramdrive_manager.ramdrive_letter
-                self.info_text.insert('end', self._t('info_status_detected', "Stato: ✅ RILEVATO") + "\n")
-                self.info_text.insert('end', f"{self._t('info_drive_letter', 'Lettera')}: {ram_letter}:\n")
+                self.info_text.insert('end', self._t('info_status_detected', "✅ RILEVATO") + f" ({ram_letter}:)")
                 
                 # Ottieni info spazio RamDrive
                 try:
                     ram_info = self.ramdrive_manager.get_ramdrive_info()
                     if ram_info['available']:
-                        self.info_text.insert('end', f"{self._t('info_space_total', 'Spazio Totale')}: {ram_info['total_formatted']}\n")
-                        self.info_text.insert('end', f"{self._t('info_space_free', 'Spazio Disponibile')}: {ram_info['free_formatted']}\n")
-                        self.info_text.insert('end', f"{self._t('info_space_used_pct', 'Percentuale Utilizzata')}: {ram_info['used_percent']:.1f}%\n\n")
+                        self.info_text.insert('end', f" | {ram_info['total_formatted']} | Libero: {ram_info['free_formatted']}")
                 except:
-                    self.info_text.insert('end', "\n")
-                
-                self.info_text.insert('end', self._t('info_ramdrive_boost', "🚀 PERFORMANCE BOOST CON RAMDRIVE: +50-200% più veloce!") + "\n\n")
+                    pass
+                self.info_text.insert('end', "\n")
             else:
-                self.info_text.insert('end', self._t('info_status_not_detected', "Stato: ❌ NON RILEVATO") + "\n\n")
+                self.info_text.insert('end', self._t('info_status_not_detected', "❌ NON RILEVATO") + "\n")
             
             # === STORAGE ===
-            self.info_text.insert('end', self._t('info_storage_section', "🗂️ STORAGE RILEVATO") + "\n")
-            self.info_text.insert('end', "═" * 50 + "\n")
+            self.info_text.insert('end', "\n" + self._t('info_storage_section', "🗂️ STORAGE") + "\n")
             try:
-                # Usa get_storage_type() che ritorna dalla cache raffinata (PowerShell lazy)
-                # NON usare scan_all_drives() che ritorna la cache veloce (QueryDosDevice)
                 import os
+                drives = []
                 for letter in sorted('CDEFGHIJKLMNOPQRSTUVWXYZ'):
                     if os.path.exists(f"{letter}:\\"):
                         storage_type = self.ramdrive_manager.get_storage_type(f"{letter}:\\")
-                        self.info_text.insert('end', f"{letter}: {storage_type.upper()}\n")
+                        drives.append(f"{letter}: {storage_type.upper()}")
+                self.info_text.insert('end', " | ".join(drives) + "\n")
             except Exception as e:
-                self.info_text.insert('end', f"{self._t('info_detect_error', 'Errore rilevamento')}: {str(e)}\n")
-            self.info_text.insert('end', "\n")
-            
-            # === PARAMETRI AUTO-TUNING ===
-            optimal_params = {
-                'ram': {'buffer_mb': 8, 'threads': 16},
-                'nvme': {'buffer_mb': 256, 'threads': 12},
-                'ssd': {'buffer_mb': 128, 'threads': 8},
-                'usb': {'buffer_mb': 64, 'threads': 4},
-                'nas': {'buffer_mb': 32, 'threads': 2},
-                'hdd': {'buffer_mb': 80, 'threads': 2}
-            }
-
-            if self.source_paths:
-                self.info_text.insert('end', self._t('info_params_source', "⚙️ PARAMETRI AUTO-TUNING (SORGENTE)") + "\n")
-                self.info_text.insert('end', "═" * 50 + "\n")
-                try:
-                    import os
-
-                    # Mostra tipo storage + parametri consigliati per ogni sorgente (solo info)
-                    for i, src in enumerate(list(self.source_paths), start=1):
-                        storage_type_src = None
-                        try:
-                            storage_type_src = self.ramdrive_manager.get_storage_type(src)
-                        except Exception:
-                            try:
-                                drive = os.path.splitdrive(src)[0]
-                                if drive:
-                                    storage_type_src = self.ramdrive_manager.get_storage_type(drive + "\\")
-                            except Exception:
-                                storage_type_src = None
-
-                        if not storage_type_src:
-                            storage_type_src = 'hdd'
-
-                        params_src = optimal_params.get(storage_type_src, {'buffer_mb': 100, 'threads': 4})
-                        self.info_text.insert('end', f"{i}) {src}\n")
-                        self.info_text.insert('end', f"   {self._t('info_storage_type', 'Tipo Storage')}: {storage_type_src.upper()}\n")
-                        self.info_text.insert('end', f"   {self._t('info_buffer_recommended', 'Buffer Consigliato')}: {params_src['buffer_mb']} MB | {self._t('info_threads', 'Thread')}: {params_src['threads']}\n")
-                except Exception as e:
-                    self.info_text.insert('end', f"{self._t('info_error', 'Errore')}: {str(e)}\n")
-                self.info_text.insert('end', "\n")
-
-            if self.dest_path.get():
-                self.info_text.insert('end', self._t('info_params_dest', "⚙️ PARAMETRI AUTO-TUNING (DESTINAZIONE)") + "\n")
-                self.info_text.insert('end', "═" * 50 + "\n")
-                try:
-                    storage_type_str = self.ramdrive_manager.get_storage_type(self.dest_path.get())
-                    params = optimal_params.get(storage_type_str, {'buffer_mb': 100, 'threads': 4})
-                    
-                    dest_label = self._t('main_destination', 'Destinazione:')
-                    try:
-                        dest_label = str(dest_label).rstrip(':').strip()
-                    except Exception:
-                        pass
-                    self.info_text.insert('end', f"{dest_label}: {self.dest_path.get()}\n")
-                    self.info_text.insert('end', f"{self._t('info_storage_type', 'Tipo Storage')}: {storage_type_str.upper()}\n")
-                    self.info_text.insert('end', f"{self._t('info_buffer_optimal', 'Buffer Ottimale')}: {params['buffer_mb']} MB\n")
-                    self.info_text.insert('end', f"{self._t('info_threads_optimal', 'Thread Ottimali')}: {params['threads']}\n")
-                except Exception as e:
-                    self.info_text.insert('end', f"{self._t('info_error', 'Errore')}: {str(e)}\n")
-                self.info_text.insert('end', "\n")
+                self.info_text.insert('end', f"{self._t('info_detect_error', 'Errore')}: {str(e)}\n")
             
             # === ENGINE CONFIG ===
-            self.info_text.insert('end', self._t('info_engine_config', "⚙️ CONFIGURAZIONE MOTORE") + "\n")
-            self.info_text.insert('end', "═" * 50 + "\n")
-            self.info_text.insert('end', f"{self._t('info_selected_buffer', 'Buffer Selezionato')}: {self.buffer_size.get()} MB\n")
-            self.info_text.insert('end', f"{self._t('info_selected_threads', 'Thread Selezionati')}: {self.threads.get()}\n")
-            self.info_text.insert('end', f"{self._t('opt_use_ramdrive', 'Usa RamDrive')}: {'✅ ' + self._t('yes', 'SI') if self.ramdrive_enabled.get() else '❌ ' + self._t('no', 'NO')}\n")
-            self.info_text.insert('end', f"{self._t('opt_overwrite', 'Sovrascrivi file esistenti')}: {'✅ ' + self._t('yes', 'SI') if self.overwrite_enabled.get() else '❌ ' + self._t('no', 'NO')}\n")
-            self.info_text.insert('end', f"{self._t('opt_delete_source', 'Elimina origine (Sposta)')}: {'✅ ' + self._t('yes', 'SI') if self.delete_source_enabled.get() else '❌ ' + self._t('no', 'NO')}\n\n")
+            self.info_text.insert('end', "\n" + self._t('info_engine_config', "⚙️ MOTORE") + "\n")
+            config_items = [
+                f"Buffer: {self.buffer_size.get()}MB",
+                f"Thread: {self.threads.get()}",
+                f"RamDrive: {'✅' if self.ramdrive_enabled.get() else '❌'}",
+                f"Sovrascrivi: {'✅' if self.overwrite_enabled.get() else '❌'}",
+                f"Sposta: {'✅' if self.delete_source_enabled.get() else '❌'}"
+            ]
+            self.info_text.insert('end', " | ".join(config_items) + "\n")
             
             # === VERSION ===
-            self.info_text.insert('end', self._t('info_version', "📝 VERSIONE") + "\n")
-            self.info_text.insert('end', "═" * 50 + "\n")
+            self.info_text.insert('end', "\n📝 Advanced File Mover Pro v")
             app_version = self.config_manager.get('version', '1.0.0')
-            self.info_text.insert('end', f"Advanced File Mover Pro v{app_version} (CustomTkinter Edition)\n")
-            self.info_text.insert('end', self._t('info_rights', "© 2025 - Tutti i diritti riservati") + "\n")
+            self.info_text.insert('end', app_version)
             
             self.info_text.configure(state='disabled')
         except Exception as e:
@@ -1447,11 +1477,11 @@ class AdvancedFileMoverCustomTkinter:
     def create_menu_tab(self):
         """Tab menu contestuale"""
         frame = ctk.CTkFrame(self.menu_tab)
-        frame.pack(fill='both', expand=True, padx=10, pady=10)
+        frame.pack(fill='both', expand=True, padx=5, pady=5)
         
         title = ctk.CTkLabel(frame, text=self._t('menu_title', "🖱️ Menu Contestuale di Windows"), font=("Segoe UI", 12, "bold"))
         self._i18n_register(title, 'menu_title', "🖱️ Menu Contestuale di Windows")
-        title.pack(pady=10)
+        title.pack(pady=5)
         
         # Descrizione
         info_frame = ctk.CTkFrame(frame)
@@ -1474,7 +1504,7 @@ class AdvancedFileMoverCustomTkinter:
                             "✅ Tasto destro su file/cartella → Copia Avanzata\n"
                             "✅ Tasto destro su file/cartella → Sposta Avanzato\n\n"
                             "La sorgente sarà il file/cartella selezionato e la GUI aprirà il browsing per scegliere la destinazione.")
-        info_label.pack(anchor='w', padx=10, pady=10)
+        info_label.pack(anchor='w', padx=5, pady=5)
         
         # Hardware
         hardware_frame = ctk.CTkFrame(frame)
@@ -1482,7 +1512,7 @@ class AdvancedFileMoverCustomTkinter:
         
         hardware_title = ctk.CTkLabel(hardware_frame, text=self._t('menu_hw_title', "🔧 Ottimizzazione Hardware"), font=("Segoe UI", 11, "bold"))
         self._i18n_register(hardware_title, 'menu_hw_title', "🔧 Ottimizzazione Hardware")
-        hardware_title.pack(anchor='w', padx=10, pady=(10, 5))
+        hardware_title.pack(anchor='w', padx=5, pady=(5, 2))
         
         # Testo hardware (senza RamDrive info per non bloccare avvio)
         hardware_text = self._t(
@@ -1507,7 +1537,7 @@ class AdvancedFileMoverCustomTkinter:
                             "🌐 NAS: Buffer 32MB, 2 Thread\n"
                             "💾 RamDrive: Buffer 8MB (RAM pura), 16 Thread\n\n"
                             "I parametri vengono regolati automaticamente in base al percorso di destinazione.")
-        hardware_label.pack(anchor='w', padx=10, pady=(0, 10))
+        hardware_label.pack(anchor='w', padx=5, pady=(0, 5))
         
         # Buttons
         buttons_frame = ctk.CTkFrame(frame)
@@ -1527,11 +1557,11 @@ class AdvancedFileMoverCustomTkinter:
         
         # Status display
         status_frame = ctk.CTkFrame(frame)
-        status_frame.pack(fill='x', padx=5, pady=10)
+        status_frame.pack(fill='x', padx=5, pady=5)
         
         self.menu_status_label = ctk.CTkLabel(status_frame, text=self._t('menu_status_unknown', "Stato: Sconosciuto"), justify='left', wraplength=550)
         self._i18n_register(self.menu_status_label, 'menu_status_unknown', "Stato: Sconosciuto")
-        self.menu_status_label.pack(anchor='w', padx=10, pady=10)
+        self.menu_status_label.pack(anchor='w', padx=5, pady=5)
         
         # Spacer in fondo per uniformità con altre tab
         ctk.CTkFrame(frame, height=20, fg_color="transparent").pack(fill='x')
@@ -1542,25 +1572,25 @@ class AdvancedFileMoverCustomTkinter:
     def create_view_tab(self):
         """Tab visualizzazione"""
         frame = ctk.CTkFrame(self.view_tab)
-        frame.pack(fill='both', expand=True, padx=10, pady=10)
+        frame.pack(fill='both', expand=True, padx=5, pady=5)
         
         title = ctk.CTkLabel(frame, text=self._t('view_title', "Visualizzazione"), font=("Segoe UI", 14, "bold"))
         self._i18n_register(title, 'view_title', "Visualizzazione")
-        title.pack(pady=10)
+        title.pack(pady=5)
         
         # Always on top
         self.always_on_top_checkbox = ctk.CTkCheckBox(frame, text=self._t('always_on_top', "Sempre in primo piano"), variable=self.always_on_top_var, command=self.toggle_always_on_top)
         self._i18n_register(self.always_on_top_checkbox, 'always_on_top', "Sempre in primo piano")
-        self.always_on_top_checkbox.pack(anchor='w', padx=10, pady=10)
+        self.always_on_top_checkbox.pack(anchor='w', padx=5, pady=5)
         
         # Separatore
         sep = ctk.CTkFrame(frame, height=2, fg_color="gray30")
-        sep.pack(fill='x', padx=10, pady=15)
+        sep.pack(fill='x', padx=5, pady=8)
         
         # Tema toggle
         tema_label = ctk.CTkLabel(frame, text=self._t('theme_label', "🎨 Tema Interfaccia"), font=("Segoe UI", 12, "bold"))
         self._i18n_register(tema_label, 'theme_label', "🎨 Tema Interfaccia")
-        tema_label.pack(anchor='w', padx=10, pady=(10, 5))
+        tema_label.pack(anchor='w', padx=5, pady=(5, 2))
         
         self.theme_btn = ctk.CTkButton(
             frame,
@@ -1568,16 +1598,16 @@ class AdvancedFileMoverCustomTkinter:
             command=self._toggle_theme,
             width=200
         )
-        self.theme_btn.pack(padx=10, pady=5)
+        self.theme_btn.pack(padx=5, pady=2)
 
         # Separatore
         sep2 = ctk.CTkFrame(frame, height=2, fg_color="gray30")
-        sep2.pack(fill='x', padx=10, pady=15)
+        sep2.pack(fill='x', padx=5, pady=8)
 
         # Lingua UI
         lang_label = ctk.CTkLabel(frame, text=self._t('language_label', "🌐 Lingua Interfaccia"), font=("Segoe UI", 12, "bold"))
         self._i18n_register(lang_label, 'language_label', "🌐 Lingua Interfaccia")
-        lang_label.pack(anchor='w', padx=10, pady=(10, 5))
+        lang_label.pack(anchor='w', padx=5, pady=(5, 2))
 
         values = ["IT", "EN", "FR", "DE", "ES"]
 
@@ -1596,7 +1626,7 @@ class AdvancedFileMoverCustomTkinter:
 
         # Riga selezione lingua: bandiera + dropdown
         lang_row = ctk.CTkFrame(frame, fg_color="transparent")
-        lang_row.pack(anchor='w', padx=10, pady=(0, 5))
+        lang_row.pack(anchor='w', padx=5, pady=(0, 2))
 
         try:
             self._load_flag_images()
@@ -1625,12 +1655,12 @@ class AdvancedFileMoverCustomTkinter:
 
         self.lang_hint_label = ctk.CTkLabel(frame, text=self._t('language_hint_applied', 'Lingua applicata.'), text_color=("gray", "gray"))
         self._i18n_register(self.lang_hint_label, 'language_hint_applied', 'Lingua applicata.')
-        self.lang_hint_label.pack(anchor='w', padx=10, pady=(0, 10))
+        self.lang_hint_label.pack(anchor='w', padx=5, pady=(0, 5))
 
         # Privilegi / Elevazione
         elev_label = ctk.CTkLabel(frame, text=self._t('elevation_section', '🔒 Privilegi'), font=("Segoe UI", 12, "bold"))
         self._i18n_register(elev_label, 'elevation_section', '🔒 Privilegi')
-        elev_label.pack(anchor='w', padx=10, pady=(10, 5))
+        elev_label.pack(anchor='w', padx=5, pady=(5, 2))
 
         def _toggle_auto_elevate():
             try:
@@ -1645,7 +1675,7 @@ class AdvancedFileMoverCustomTkinter:
             command=_toggle_auto_elevate,
         )
         self._i18n_register(self.auto_elevate_checkbox, 'auto_elevate_manual', "Auto-elevazione (UAC) all'avvio (solo avvio manuale)")
-        self.auto_elevate_checkbox.pack(anchor='w', padx=10, pady=(0, 5))
+        self.auto_elevate_checkbox.pack(anchor='w', padx=5, pady=(0, 2))
 
         self.restart_admin_btn = ctk.CTkButton(
             frame,
@@ -1654,7 +1684,7 @@ class AdvancedFileMoverCustomTkinter:
             width=260,
         )
         self._i18n_register(self.restart_admin_btn, 'restart_as_admin', 'Riavvia come amministratore')
-        self.restart_admin_btn.pack(anchor='w', padx=10, pady=(0, 10))
+        self.restart_admin_btn.pack(anchor='w', padx=5, pady=(0, 5))
     
     def _auto_tune_parameters(self):
         """Auto-tuning di buffer e thread in base al tipo di storage della destinazione"""
@@ -1767,6 +1797,42 @@ class AdvancedFileMoverCustomTkinter:
             self._on_destination_changed()
         except Exception:
             pass
+    
+    def drop_files(self, event):
+        """Gestisce i file/cartelle trascinati sulla listbox sorgente"""
+        try:
+            # Il dato può arrivare in formati diversi da tkinterdnd2
+            files = self.root.tk.splitlist(event.data)
+            
+            added_count = 0
+            for file_path in files:
+                # Rimuove eventuali graffe, apici, spazi extra
+                file_path = file_path.strip('{}"\' ')
+                
+                if not file_path or not os.path.exists(file_path):
+                    continue
+                
+                # Aggiungi solo se non già presente
+                if file_path not in self.source_paths:
+                    self.source_paths.append(file_path)
+                    try:
+                        self.source_listbox.insert('end', file_path)
+                    except Exception:
+                        pass
+                    added_count += 1
+            
+            if added_count > 0:
+                self._on_sources_changed()
+                try:
+                    status_msg = self._t('status_dnd_added', f"Aggiunti {added_count} elementi")
+                    self.status_label.configure(text=status_msg)
+                except Exception:
+                    pass
+            
+            return event.action
+        except Exception as e:
+            print(f"Errore drop_files: {e}")
+            return 'copy'
     
     def browse_folder(self, for_source=False):
         """Sfoglia per cartella"""
@@ -1975,6 +2041,8 @@ class AdvancedFileMoverCustomTkinter:
             # - Se l'utente ha selezionato SOLO file, usa un contatore "batch" (1/n) anche per n=1
             # - Se c'è una cartella tra le sorgenti, usa il contatore del motore (file dentro la cartella)
             try:
+                if getattr(self, 'file_counter_label', None) is None:
+                    return
                 batch_n = int(getattr(self, '_batch_file_count', 0) or 0)
                 batch_i = int(getattr(self, '_batch_file_index', 0) or 0)
                 if batch_n > 1:
@@ -2111,9 +2179,9 @@ class AdvancedFileMoverCustomTkinter:
                     if n > 1:
                         self._batch_file_index = int(idx)
                         i = int(self._batch_file_index)
-                        self.root.after(0, lambda i=i, n=n: self.file_counter_label.configure(text=f"{i}/{n}"))
+                        self.root.after(0, lambda i=i, n=n: self._set_file_counter_text(f"{i}/{n}"))
                     elif n == 1:
-                        self.root.after(0, lambda: self.file_counter_label.configure(text=""))
+                        self.root.after(0, lambda: self._set_file_counter_text(""))
                 except Exception:
                     pass
                 
@@ -2317,7 +2385,7 @@ class AdvancedFileMoverCustomTkinter:
 
         status_text = f"{safe_text}|{percentage}%|{speed_mb:.1f} MB/s|{eta_label}:{eta_str}"
         try:
-            self.progress_label.configure(text=status_text)
+            self._set_progress_text(status_text, percentage)
         except Exception:
             pass
     
@@ -2745,7 +2813,13 @@ def main() -> int:
     except Exception:
         pass
 
-    root = ctk.CTk()
+    # Abilita drag and drop per app con privilegi admin (PRIMA di creare la root)
+    if HAS_DND and is_admin():
+        enable_drag_drop_for_elevated()
+
+    # Crea root con supporto DnD se disponibile
+    root = CTkDnD()
+    
     app = AdvancedFileMoverCustomTkinter(
         root,
         initial_sources=sources,

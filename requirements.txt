@@ -10,6 +10,9 @@ requests>=2.31.0
 # UI (CustomTkinter)
 customtkinter>=5.2.0
 
+# Drag and Drop support
+tkinterdnd2>=0.3.0
+
 # Imaging (for HiDPI-safe flag icons)
 pillow>=10.0.0
 

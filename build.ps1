@@ -17,7 +17,7 @@ try {
 }
 
 # Usa preferibilmente Python della venv (stessa della GUI)
-$VenvPython = 'C:\SOURCECODE\.venv312\Scripts\python.exe'
+$VenvPython = 'C:\SOURCECODE\.venv\Scripts\python.exe'
 $PythonExe = if (Test-Path $VenvPython) { $VenvPython } else { 'python' }
 
 # Colori
