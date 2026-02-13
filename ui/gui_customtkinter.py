@@ -811,6 +811,9 @@ class AdvancedFileMoverCustomTkinter:
                     copy_label=self._t('ctx_copy_label', 'Copia [Avanzata]'),
                     move_label=self._t('ctx_move_label', 'Sposta [Avanzata]')
                 )
+                # Se il menu è già registrato, ri-registra automaticamente con le nuove etichette
+                if self.context_manager.is_registered():
+                    self.context_manager.register()
             except Exception:
                 pass
         except Exception:

@@ -97,6 +97,17 @@ class ContextMenuRegistrar:
             pass
         return (default_copy, default_move)
 
+    def is_registered(self) -> bool:
+        """Verifica se il menu contestuale è attualmente registrato nel registro di Windows"""
+        try:
+            key = winreg.OpenKey(self.root, r"Software\Classes\*\shell\AdvancedFileMover")
+            winreg.CloseKey(key)
+            return True
+        except FileNotFoundError:
+            return False
+        except Exception:
+            return False
+
     def _resolve_gui_exe(self) -> Path | None:
         """Restituisce il percorso dell'eseguibile GUI se disponibile.
 
