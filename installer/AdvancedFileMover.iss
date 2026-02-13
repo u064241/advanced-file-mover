@@ -5,7 +5,7 @@
 ; Nota: versione letta automaticamente da config.json durante build.ps1
 
 #ifndef MyAppVersion
-  #define MyAppVersion "1.0.1"
+  #define MyAppVersion "1.0.2"
 #endif
 
 [Setup]
@@ -19,16 +19,12 @@ Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
 PrivilegesRequired=admin
-SetupIconFile={#SourcePath}\..\dist\Icon\super_icon.ico
+SetupIconFile={#SourcePath}\..\dist\AdvancedFileMoverPro\Icon\super_icon.ico
 CloseApplications=yes
 RestartApplications=no
 
 [Files]
-Source: "{#SourcePath}\..\dist\AdvancedFileMoverPro.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#SourcePath}\..\dist\config.json"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#SourcePath}\..\dist\Icon\*"; DestDir: "{app}\Icon"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "{#SourcePath}\..\dist\i18n\*"; DestDir: "{app}\i18n"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "{#SourcePath}\..\dist\assets\flags\*"; DestDir: "{app}\assets\flags"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#SourcePath}\..\dist\AdvancedFileMoverPro\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\Advanced File Mover Pro"; Filename: "{app}\AdvancedFileMoverPro.exe"
@@ -45,6 +41,7 @@ Filename: "{app}\AdvancedFileMoverPro.exe"; Parameters: "--register-context-menu
 [UninstallRun]
 ; Rimuove il menu contestuale prima della disinstallazione
 Filename: "{app}\AdvancedFileMoverPro.exe"; Parameters: "--unregister-context-menu"; Flags: waituntilterminated; RunOnceId: "UnregisterContextMenu"
+
 
 
 

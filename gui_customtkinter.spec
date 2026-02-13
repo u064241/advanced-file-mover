@@ -22,9 +22,6 @@ pyz = PYZ(a.pure, a.zipped_data, cipher=None)
 exe = EXE(
     pyz,
     a.scripts,
-    a.binaries,
-    a.zipfiles,
-    a.datas,
     [],
     name='AdvancedFileMoverPro',
     debug=False,
@@ -32,7 +29,6 @@ exe = EXE(
     strip=False,
     upx=True,
     upx_exclude=[],
-    runtime_tmpdir=None,
     console=False,  # ← IMPORTANTE: No console (GUI app)
     disable_windowed_traceback=False,
     target_arch=None,

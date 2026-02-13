@@ -118,19 +118,19 @@ Write-Host "     Modalità: One-Dir (cartella con file sciolti)`n" -ForegroundCo
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "`n✅ BUILD COMPLETATO CON SUCCESSO!`n" -ForegroundColor $Green
-    Write-Host "📦 Output: dist/AdvancedFileMoverPro.exe" -ForegroundColor $Green
-    Write-Host "📍 Dimensione: $(if (Test-Path 'dist/AdvancedFileMoverPro.exe') { "{0:N0} KB" -f ((Get-Item 'dist/AdvancedFileMoverPro.exe').Length / 1KB) } else { 'N/A' })`n" -ForegroundColor $Green
+    Write-Host "📦 Output: dist/AdvancedFileMoverPro/AdvancedFileMoverPro.exe (one-dir)" -ForegroundColor $Green
+    Write-Host "📍 Dimensione: $(if (Test-Path 'dist/AdvancedFileMoverPro/AdvancedFileMoverPro.exe') { "{0:N0} KB" -f ((Get-Item 'dist/AdvancedFileMoverPro/AdvancedFileMoverPro.exe').Length / 1KB) } else { 'N/A' })`n" -ForegroundColor $Green
     
-    # Copia config.json vicino all'exe
-    Write-Host "📋 Copia config.json in dist/..." -ForegroundColor $Yellow
+    # Copia config.json nella cartella one-dir
+    Write-Host "📋 Copia config.json in dist/AdvancedFileMoverPro/..." -ForegroundColor $Yellow
     if (Test-Path 'config.json') {
-        Copy-Item 'config.json' -Destination 'dist/config.json' -Force
+        Copy-Item 'config.json' -Destination 'dist/AdvancedFileMoverPro/config.json' -Force
         Write-Host "   ✓ config.json copiato" -ForegroundColor $Green
     }
     
-    # Copia icone in dist/Icon/ (cartella ordinata)
-    Write-Host "🎨 Copia icone in dist/Icon/..." -ForegroundColor $Yellow
-    $IconDir = 'dist/Icon'
+    # Copia icone in dist/AdvancedFileMoverPro/Icon/
+    Write-Host "🎨 Copia icone in dist/AdvancedFileMoverPro/Icon/..." -ForegroundColor $Yellow
+    $IconDir = 'dist/AdvancedFileMoverPro/Icon'
     if (-not (Test-Path $IconDir)) {
         New-Item -ItemType Directory -Path $IconDir -Force | Out-Null
         Write-Host "   ✓ Cartella Icon creata" -ForegroundColor $Green
@@ -150,9 +150,9 @@ if ($LASTEXITCODE -eq 0) {
         Write-Host "   ✓ super_icon.ico copiato" -ForegroundColor $Green
     }
 
-    # Copia traduzioni (i18n) in dist/i18n/
-    Write-Host "🌐 Copia traduzioni in dist/i18n/..." -ForegroundColor $Yellow
-    $I18nDir = 'dist/i18n'
+    # Copia traduzioni (i18n) in dist/AdvancedFileMoverPro/i18n/
+    Write-Host "🌐 Copia traduzioni in dist/AdvancedFileMoverPro/i18n/..." -ForegroundColor $Yellow
+    $I18nDir = 'dist/AdvancedFileMoverPro/i18n'
     if (-not (Test-Path $I18nDir)) {
         New-Item -ItemType Directory -Path $I18nDir -Force | Out-Null
     }
@@ -164,9 +164,9 @@ if ($LASTEXITCODE -eq 0) {
         Write-Host "   ⚠️ Cartella i18n non trovata" -ForegroundColor $Yellow
     }
 
-    # Copia bandiere (assets/flags) in dist/assets/flags/
-    Write-Host "🏳️ Copia bandiere in dist/assets/flags/..." -ForegroundColor $Yellow
-    $FlagsDir = 'dist/assets/flags'
+    # Copia bandiere (assets/flags) in dist/AdvancedFileMoverPro/assets/flags/
+    Write-Host "🏳️ Copia bandiere in dist/AdvancedFileMoverPro/assets/flags/..." -ForegroundColor $Yellow
+    $FlagsDir = 'dist/AdvancedFileMoverPro/assets/flags'
     if (-not (Test-Path $FlagsDir)) {
         New-Item -ItemType Directory -Path $FlagsDir -Force | Out-Null
     }
