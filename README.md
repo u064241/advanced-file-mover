@@ -1,6 +1,6 @@
 # Advanced File Mover Pro
 
-[![Version](https://img.shields.io/badge/version-1.0.4-blue.svg)](https://github.com/u064241/advanced-file-mover/releases/latest)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/u064241/advanced-file-mover/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](https://www.microsoft.com/windows)
 
@@ -15,12 +15,12 @@ Professional Windows utility for copying/moving files and folders with real-time
 Download the latest version from [Releases](https://github.com/u064241/advanced-file-mover/releases/latest):
 
 ```text
-AdvancedFileMover_1.0.4_Setup.exe
+AdvancedFileMover_1.0.0_Setup.exe
 ```
 
 ### Automatic Installation
 
-1. Run `AdvancedFileMover_1.0.4_Setup.exe`
+1. Run `AdvancedFileMover_1.0.0_Setup.exe`
 2. Follow the installation wizard
 3. Context menu will be automatically registered
 4. Launch the app from Start Menu or via context menu (Shift + right-click)
@@ -98,30 +98,6 @@ pyinstaller --clean gui_customtkinter.spec
 
 ## 🔄 Changelog
 
-### v1.0.4
-
-- 🌐 **i18n**: Context menu auto-updates when changing language (no manual re-register needed)
-- 🔧 **Engine**: Added `is_registered()` method to detect existing context menu registration
-
-### v1.0.3
-
-- 🌐 **i18n**: Context menu entries (Copy/Move) now follow app language setting
-- 🌐 **i18n**: Added `ctx_copy_label` / `ctx_move_label` keys to all 5 language files
-- 🔧 **Engine**: Context menu re-registers with translated labels on language change
-
-### v1.0.2
-
-- 🐛 **Bugfix**: Fixed "Failed to load Python DLL" error when TEMP is on RamDrive
-- 📦 **Build**: Switched from one-file to proper one-dir PyInstaller build (no temp extraction needed)
-- 📦 **Build**: Simplified Inno Setup packaging with single recursive source
-- 🚀 **Build**: Added `-Release` flag to build.ps1 for automated GitHub release publishing
-
-### v1.0.1
-
-- 🐛 **Bugfix**: Progress bar and transfer info label no longer hidden below window bottom edge
-- 🎨 **UI**: Main tab converted from pack to grid layout — progress section always anchored at bottom
-- 🎨 **UI**: Source listbox now expands/contracts with window resize
-
 ### v1.0.0
 
 - 🎯 **Feature**: Native drag & drop support (tkinterdnd2) - drop files directly on source listbox
@@ -129,11 +105,14 @@ pyinstaller --clean gui_customtkinter.spec
 - 🎯 **Feature**: Multi-file context menu via IPC (Named Pipe + file-based) - single instance aggregates all selected files
 - 🎯 **Feature**: Auto-update from GitHub with launcher script (no file lock issues)
 - 🎨 **UI**: CustomTkinter modern interface with dark/light theme toggle
-- 🎨 **UI**: Compact layout with simplified progress bar (text above, clean visualization)
+- 🎨 **UI**: Grid-based main tab layout — progress section always anchored at bottom
 - 🎨 **UI**: Non-resizable window (900×720) for consistent UX
 - 🎨 **UI**: High-contrast progress text with speed (MB/s) and ETA display
 - 🎨 **UI**: Multi-language support (IT, EN, FR, DE, ES) with flag icons
 - 🎨 **UI**: Elastic source listbox with minimum 80px height
+- 🌐 **i18n**: Auto-detect system language on first launch (fallback: English)
+- 🌐 **i18n**: Full runtime language switch — all widgets, tabs, progress bar, dialogs update instantly
+- 🌐 **i18n**: Context menu entries (Copy/Move) follow app language, auto-re-register on change
 - ⚡ **Performance**: Auto-tuning buffer/threads based on storage type (NVMe/SSD/HDD/USB/NAS/RamDrive)
 - ⚡ **Performance**: Faster startup with background tab loading
 - ⚡ **Performance**: Auto-detect USB/device insert/removal (drive polling) with automatic Info tab refresh
@@ -142,8 +121,8 @@ pyinstaller --clean gui_customtkinter.spec
 - 🔧 **Engine**: Single-instance mutex with IPC for context menu integration
 - 📂 **Context Menu**: Windows Explorer integration (Shift + right-click)
 - 📂 **Context Menu**: Submenu with Copy [Advanced] and Move [Advanced]
-- 📦 **Installer**: Inno Setup-based Windows installer
-- 📦 **Build**: PyInstaller one-dir packaging with automatic version sync
+- 📦 **Installer**: Inno Setup-based Windows installer with clean upgrade support
+- 📦 **Build**: PyInstaller one-dir packaging (no temp extraction, RamDrive compatible)
 
 ---
 

@@ -420,8 +420,12 @@ class AdvancedFileMoverCustomTkinter:
         # Carica configurazione
         self.config_manager = ConfigManager()
 
-        # Lingua UI (i18n)
-        self.language_code = str(self.config_manager.get('language', 'it') or 'it').lower()
+        # Lingua UI (i18n) — usa lingua salvata, oppure rileva dal sistema
+        _saved_lang = str(self.config_manager.get('language', '') or '').lower()
+        if _saved_lang in ('it', 'en', 'fr', 'de', 'es'):
+            self.language_code = _saved_lang
+        else:
+            self.language_code = _detect_system_language()
         self._translations = {}
         self._i18n_widgets = []
         self._tab_titles = {}
@@ -574,7 +578,7 @@ class AdvancedFileMoverCustomTkinter:
                         if result:
                             letter, storage_type = result
                             try:
-                                self.status_label.configure(text=f"Rilevato {letter}: {storage_type.upper()}")
+                                self.status_label.configure(text=self._t('status_detected_drive', 'Rilevato {letter}: {type}').format(letter=letter, type=storage_type.upper()))
                             except:
                                 pass
                 
@@ -583,7 +587,7 @@ class AdvancedFileMoverCustomTkinter:
                 
                 # Status finale
                 try:
-                    self.status_label.configure(text="Pronto")
+                    self.status_label.configure(text=self._t('status_ready', 'Pronto'))
                 except:
                     pass
             except Exception as e:
@@ -734,17 +738,48 @@ class AdvancedFileMoverCustomTkinter:
                     try:
                         if hasattr(self, 'notebook') and hasattr(self.notebook, 'rename'):
                             self.notebook.rename(old_title, new_title)
+                            # Bug CTkTabview: rename() non aggiorna _current_name
+                            if getattr(self.notebook, '_current_name', None) == old_title:
+                                self.notebook._current_name = new_title
                             renamed = True
                     except Exception:
                         renamed = False
 
                     if not renamed:
-                        # Fallback: prova a cambiare il testo del bottone segmentato.
+                        # Fallback: aggiorna testo bottone + chiave interna _tab_dict
                         try:
                             sb = getattr(self.notebook, '_segmented_button', None)
                             buttons = getattr(sb, '_buttons_dict', None)
                             if isinstance(buttons, dict) and old_title in buttons:
-                                buttons[old_title].configure(text=new_title)
+                                btn_widget = buttons.pop(old_title)
+                                # Aggiorna testo e lambda command del bottone
+                                btn_widget.configure(
+                                    text=new_title,
+                                    command=lambda v=new_title: sb.set(v, from_button_callback=True),
+                                )
+                                buttons[new_title] = btn_widget
+                                # Aggiorna _tab_dict (chiave interna di CTkTabview)
+                                tab_dict = getattr(self.notebook, '_tab_dict', None)
+                                if isinstance(tab_dict, dict) and old_title in tab_dict:
+                                    tab_dict[new_title] = tab_dict.pop(old_title)
+                                # Aggiorna _name_list se presente
+                                name_list = getattr(self.notebook, '_name_list', None)
+                                if isinstance(name_list, list):
+                                    for i, name in enumerate(name_list):
+                                        if name == old_title:
+                                            name_list[i] = new_title
+                                            break
+                                # Aggiorna _current_name se è il tab attivo
+                                if getattr(self.notebook, '_current_name', None) == old_title:
+                                    self.notebook._current_name = new_title
+                                # Aggiorna valori del segmented button
+                                if sb is not None and hasattr(sb, '_value_list'):
+                                    for i, v in enumerate(sb._value_list):
+                                        if v == old_title:
+                                            sb._value_list[i] = new_title
+                                            break
+                                    if getattr(sb, '_current_value', None) == old_title:
+                                        sb._current_value = new_title
                                 renamed = True
                         except Exception:
                             pass
@@ -783,8 +818,9 @@ class AdvancedFileMoverCustomTkinter:
                     except Exception:
                         current_text = ''
 
-                    if current_text and ('|0%|' in current_text) and ('MB/s' in current_text) and ('ETA' in current_text or 'T:' in current_text):
-                        self._set_progress_text(self._t('progress_placeholder', "Pronto|0%|--- MB/s|ETA:--:--"))
+                    if current_text and ('0%' in current_text) and ('MB/s' in current_text) and ('ETA' in current_text or 'T:' in current_text):
+                        placeholder = self._t('progress_placeholder', "Pronto|0%|--- MB/s|ETA:--:--")
+                        self._set_progress_text(placeholder.replace('|', ' | '))
             except Exception:
                 pass
 
@@ -1427,12 +1463,14 @@ class AdvancedFileMoverCustomTkinter:
                 pass
         elif HAS_DND and is_admin():
             try:
-                self.dnd_hint.configure(text="⚠️ DnD non disponibile (Administrator)", text_color="orange")
+                self.dnd_hint.configure(text=self._t('dnd_not_available_admin', "⚠️ DnD non disponibile (Administrator)"), text_color="orange")
+                self._i18n_register(self.dnd_hint, 'dnd_not_available_admin', "⚠️ DnD non disponibile (Administrator)")
             except Exception:
                 pass
         elif not HAS_DND:
             try:
-                self.dnd_hint.configure(text="💡 pip install tkinterdnd2 per drag & drop")
+                self.dnd_hint.configure(text=self._t('dnd_install_hint', "💡 pip install tkinterdnd2 per drag & drop"))
+                self._i18n_register(self.dnd_hint, 'dnd_install_hint', "💡 pip install tkinterdnd2 per drag & drop")
             except Exception:
                 pass
         
@@ -1553,7 +1591,7 @@ class AdvancedFileMoverCustomTkinter:
         # Progress text (sopra la barra)
         self.progress_label = ctk.CTkLabel(
             prog_inner,
-            text="Pronto | 0% | --- MB/s | ETA:--:--",
+            text=self._t('progress_placeholder', "Pronto|0%|--- MB/s|ETA:--:--").replace('|', ' | '),
             text_color=("#000000", "#FFFFFF"),
             font=("Segoe UI", 13, "bold"),
             anchor='center',
@@ -1666,7 +1704,7 @@ class AdvancedFileMoverCustomTkinter:
             ram_total = mem.total / (1024**3)
             ram_available = mem.available / (1024**3)
             ram_percent = mem.percent
-            self.info_text.insert('end', f"RAM: {ram_total:.1f}GB | Libera: {ram_available:.1f}GB ({ram_percent:.0f}%)\n")
+            self.info_text.insert('end', self._t('info_ram_line', 'RAM: {total:.1f}GB | Libera: {free:.1f}GB ({pct:.0f}%)').format(total=ram_total, free=ram_available, pct=ram_percent) + "\n")
             
             # === RAMDRIVE ===
             self.info_text.insert('end', "\n" + self._t('info_ramdrive_section', "💾 RAMDRIVE") + "\n")
@@ -1680,7 +1718,7 @@ class AdvancedFileMoverCustomTkinter:
                 try:
                     ram_info = self.ramdrive_manager.get_ramdrive_info()
                     if ram_info['available']:
-                        self.info_text.insert('end', f" | {ram_info['total_formatted']} | Libero: {ram_info['free_formatted']}")
+                        self.info_text.insert('end', f" | {ram_info['total_formatted']} | {self._t('info_free_label', 'Libero')}: {ram_info['free_formatted']}")
                 except:
                     pass
                 self.info_text.insert('end', "\n")
@@ -1703,11 +1741,11 @@ class AdvancedFileMoverCustomTkinter:
             # === ENGINE CONFIG ===
             self.info_text.insert('end', "\n" + self._t('info_engine_config', "⚙️ MOTORE") + "\n")
             config_items = [
-                f"Buffer: {self.buffer_size.get()}MB",
-                f"Thread: {self.threads.get()}",
-                f"RamDrive: {'✅' if self.ramdrive_enabled.get() else '❌'}",
-                f"Sovrascrivi: {'✅' if self.overwrite_enabled.get() else '❌'}",
-                f"Sposta: {'✅' if self.delete_source_enabled.get() else '❌'}"
+                f"{self._t('info_buffer_config', 'Buffer')}: {self.buffer_size.get()}MB",
+                f"{self._t('info_thread_config', 'Thread')}: {self.threads.get()}",
+                f"{self._t('info_ramdrive_config', 'RamDrive')}: {'✅' if self.ramdrive_enabled.get() else '❌'}",
+                f"{self._t('info_overwrite_config', 'Sovrascrivi')}: {'✅' if self.overwrite_enabled.get() else '❌'}",
+                f"{self._t('info_move_config', 'Sposta')}: {'✅' if self.delete_source_enabled.get() else '❌'}"
             ]
             self.info_text.insert('end', " | ".join(config_items) + "\n")
             
@@ -2841,7 +2879,7 @@ class AdvancedFileMoverCustomTkinter:
         try:
             def show_update_dialog():
                 title = self._t('update_available_title', 'Aggiornamento disponibile')
-                message = f"Versione {version} disponibile.\n\nNote di rilascio:\n{release_notes}\n\nDesideri aggiornare adesso?"
+                message = self._t('update_available_msg', 'Versione {version} disponibile.\n\nNote di rilascio:\n{notes}\n\nDesideri aggiornare adesso?').format(version=version, notes=release_notes)
                 
                 result = messagebox.askyesno(title, message)
                 if result:
@@ -2871,9 +2909,9 @@ class AdvancedFileMoverCustomTkinter:
                         )
                         # If we reach here, on_close_app was NOT called (error path)
                         if not success:
-                            messagebox.showerror("Errore", f"Aggiornamento fallito: {msg}")
+                            messagebox.showerror(self._t('error_title', 'Errore'), self._t('update_failed', 'Aggiornamento fallito: {msg}').format(msg=msg))
                     except Exception as e:
-                        messagebox.showerror("Errore", f"Errore durante l'aggiornamento: {str(e)}")
+                        messagebox.showerror(self._t('error_title', 'Errore'), self._t('update_error', "Errore durante l'aggiornamento: {error}").format(error=str(e)))
             
             # Schedule in main thread
             self.root.after(100, show_update_dialog)
@@ -2932,12 +2970,12 @@ class AdvancedFileMoverCustomTkinter:
             if cmp_result == 0:
                 messagebox.showinfo(
                     self._t('update_check_title', 'Controllo Aggiornamenti'),
-                    self._t('already_latest', f'Stai già usando la versione più recente (v{local_version})')
+                    self._t('already_latest', 'Stai già usando la versione più recente (v{version})').format(version=local_version)
                 )
             elif cmp_result > 0:
                 messagebox.showinfo(
                     self._t('update_check_title', 'Controllo Aggiornamenti'),
-                    self._t('version_newer_local', f'Stai usando una versione più recente (v{local_version}) rispetto a quella su GitHub (v{remote_version})')
+                    self._t('version_newer_local', 'Stai usando una versione più recente (v{local}) rispetto a GitHub (v{remote})').format(local=local_version, remote=remote_version)
                 )
             else:
                 # Update available
@@ -2946,7 +2984,7 @@ class AdvancedFileMoverCustomTkinter:
         except Exception as e:
             messagebox.showerror(
                 self._t('error_title', 'Errore'),
-                f"Errore durante il controllo degli aggiornamenti: {str(e)}"
+                self._t('update_check_error', 'Errore durante il controllo degli aggiornamenti: {error}').format(error=str(e))
             )
         finally:
             self.check_updates_btn.configure(state='normal')
@@ -3223,6 +3261,38 @@ def _is_shell_namespace_path(path_str: str) -> bool:
     return False
 
 
+def _detect_system_language() -> str:
+    """Rileva la lingua di sistema e la mappa a una delle lingue supportate."""
+    try:
+        import locale
+        # Prova il locale di sistema (es. 'it_IT', 'en_US', 'fr_FR', 'de_DE', 'es_ES')
+        lang_code = locale.getdefaultlocale()[0] or ''
+        if not lang_code:
+            # Fallback Windows: usa GetUserDefaultUILanguage
+            try:
+                import ctypes
+                windll = ctypes.windll.kernel32
+                lang_id = windll.GetUserDefaultUILanguage()
+                # Mappa language ID → codice ISO
+                _WIN_LANG_MAP = {
+                    0x0410: 'it', 0x0810: 'it',  # it-IT, it-CH
+                    0x0409: 'en', 0x0809: 'en', 0x0C09: 'en', 0x1009: 'en', 0x1409: 'en',  # en-*
+                    0x040C: 'fr', 0x080C: 'fr', 0x0C0C: 'fr', 0x100C: 'fr',  # fr-*
+                    0x0407: 'de', 0x0807: 'de', 0x0C07: 'de',  # de-*
+                    0x040A: 'es', 0x080A: 'es', 0x0C0A: 'es',  # es-*
+                }
+                return _WIN_LANG_MAP.get(lang_id, 'en')
+            except Exception:
+                pass
+        # Estrae le prime 2 lettere (es. 'it' da 'it_IT')
+        short = lang_code[:2].lower()
+        if short in ('it', 'en', 'fr', 'de', 'es'):
+            return short
+    except Exception:
+        pass
+    return 'en'  # fallback globale: inglese
+
+
 def _get_config_language_quick() -> str:
     """Legge la lingua dalla config utente se esiste, senza crearla."""
     try:
@@ -3231,12 +3301,12 @@ def _get_config_language_quick() -> str:
         if cfg.exists():
             with open(cfg, 'r', encoding='utf-8') as f:
                 data = json.load(f) or {}
-            lang = str(data.get('language', 'it') or 'it').lower()
+            lang = str(data.get('language', '') or '').lower()
             if lang in ('it', 'en', 'fr', 'de', 'es'):
                 return lang
     except Exception:
         pass
-    return 'it'
+    return _detect_system_language()
 
 
 def _load_translations_for_main(language_code: str) -> dict:
