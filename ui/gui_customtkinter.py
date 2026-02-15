@@ -2711,9 +2711,41 @@ class AdvancedFileMoverCustomTkinter:
         """Verifica stato menu"""
         try:
             status = self.context_manager.get_status()
-            self.menu_status_label.configure(text=f"{self._t('menu_status_prefix', 'Stato Menu')}:\n{status}")
+            # Traduci il testo dello status dalle stringhe in italiano alle chiavi i18n
+            translated_status = self._translate_registry_status(status)
+            self.menu_status_label.configure(text=f"{self._t('menu_status_prefix', 'Stato Menu')}:\n{translated_status}")
         except Exception as e:
             self.menu_status_label.configure(text=self._t('menu_error_check_status', '❌ Errore verifica stato: {error}').format(error=str(e)))
+    
+    def _translate_registry_status(self, status_text):
+        """Traduce le stringhe dello stato del registro dalle stringhe in italiano alle chiavi i18n"""
+        # Mappa di traduzione: (stringa italiana) -> (chiave i18n)
+        translations = {
+            "🔍 Stato Menu Contestuale": self._t('registry_status_title', '🔍 Stato Menu Contestuale'),
+            "✅ File → 📋 Copia [Avanzata]": self._t('registry_file_copy_ok', '✅ File → 📋 Copia [Avanzata]'),
+            "❌ File → Copia [Avanzata] (non trovata)": self._t('registry_file_copy_missing', '❌ File → Copia [Avanzata] (non trovata)'),
+            "✅ File → ✂️ Sposta [Avanzata]": self._t('registry_file_move_ok', '✅ File → ✂️ Sposta [Avanzata]'),
+            "❌ File → Sposta [Avanzata] (non trovata)": self._t('registry_file_move_missing', '❌ File → Sposta [Avanzata] (non trovata)'),
+            "❌ File → Menu non registrato": self._t('registry_file_not_registered', '❌ File → Menu non registrato'),
+            "✅ Cartella → 📋 Copia [Avanzata]": self._t('registry_folder_copy_ok', '✅ Cartella → 📋 Copia [Avanzata]'),
+            "❌ Cartella → Copia [Avanzata] (non trovata)": self._t('registry_folder_copy_missing', '❌ Cartella → Copia [Avanzata] (non trovata)'),
+            "✅ Cartella → ✂️ Sposta [Avanzata]": self._t('registry_folder_move_ok', '✅ Cartella → ✂️ Sposta [Avanzata]'),
+            "❌ Cartella → Sposta [Avanzata] (non trovata)": self._t('registry_folder_move_missing', '❌ Cartella → Sposta [Avanzata] (non trovata)'),
+            "❌ Cartella → Menu non registrato": self._t('registry_folder_not_registered', '❌ Cartella → Menu non registrato'),
+            "✅ Unità → 📋 Copia [Avanzata]": self._t('registry_drive_copy_ok', '✅ Unità → 📋 Copia [Avanzata]'),
+            "❌ Unità → Copia [Avanzata] (non trovata)": self._t('registry_drive_copy_missing', '❌ Unità → Copia [Avanzata] (non trovata)'),
+            "✅ Unità → ✂️ Sposta [Avanzata]": self._t('registry_drive_move_ok', '✅ Unità → ✂️ Sposta [Avanzata]'),
+            "❌ Unità → Sposta [Avanzata] (non trovata)": self._t('registry_drive_move_missing', '❌ Unità → Sposta [Avanzata] (non trovata)'),
+            "❌ Unità → Menu non registrato": self._t('registry_drive_not_registered', '❌ Unità → Menu non registrato'),
+            "Errore nel leggere lo stato": self._t('registry_error_reading', 'Errore nel leggere lo stato'),
+        }
+        
+        # Sostituisci le stringhe in italiano con le versioni tradotte
+        result = status_text
+        for italian_text, translated_text in translations.items():
+            result = result.replace(italian_text, translated_text)
+        
+        return result
     
     def toggle_always_on_top(self):
         """Attiva/disattiva always on top"""
