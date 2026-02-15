@@ -96,33 +96,52 @@ pyinstaller --clean gui_customtkinter.spec
 
 ---
 
-## 🔄 Changelog
+## � Release Notes
 
-### v1.0.0
+**Version 1.0.0** - Stable Release - 2026-02-15
 
-- 🎯 **Feature**: Native drag & drop support (tkinterdnd2) - drop files directly on source listbox
-- 🎯 **Feature**: Admin drag & drop - works even when app runs with elevated privileges
-- 🎯 **Feature**: Multi-file context menu via IPC (Named Pipe + file-based) - single instance aggregates all selected files
-- 🎯 **Feature**: Auto-update from GitHub with launcher script (no file lock issues)
-- 🎨 **UI**: CustomTkinter modern interface with dark/light theme toggle
-- 🎨 **UI**: Grid-based main tab layout — progress section always anchored at bottom
-- 🎨 **UI**: Non-resizable window (900×720) for consistent UX
-- 🎨 **UI**: High-contrast progress text with speed (MB/s) and ETA display
-- 🎨 **UI**: Multi-language support (IT, EN, FR, DE, ES) with flag icons
-- 🎨 **UI**: Elastic source listbox with minimum 80px height
-- 🌐 **i18n**: Auto-detect system language on first launch (fallback: English)
-- 🌐 **i18n**: Full runtime language switch — all widgets, tabs, progress bar, dialogs update instantly
-- 🌐 **i18n**: Context menu entries (Copy/Move) follow app language, auto-re-register on change
-- ⚡ **Performance**: Auto-tuning buffer/threads based on storage type (NVMe/SSD/HDD/USB/NAS/RamDrive)
-- ⚡ **Performance**: Faster startup with background tab loading
-- ⚡ **Performance**: Auto-detect USB/device insert/removal (drive polling) with automatic Info tab refresh
-- 🔧 **Engine**: Multi-threaded copy/move with configurable buffer size
-- 🔧 **Engine**: RamDrive detection and acceleration support
-- 🔧 **Engine**: Single-instance mutex with IPC for context menu integration
-- 📂 **Context Menu**: Windows Explorer integration (Shift + right-click)
-- 📂 **Context Menu**: Submenu with Copy [Advanced] and Move [Advanced]
-- 📦 **Installer**: Inno Setup-based Windows installer with clean upgrade support
-- 📦 **Build**: PyInstaller one-dir packaging (no temp extraction, RamDrive compatible)
+For detailed changelog, see [CHANGELOG.md](CHANGELOG.md) for complete feature list and bug fixes.
+
+### v1.0.0 - Key Features
+
+#### 🎯 Core Engine
+- **Multi-threaded Copy/Move**: Configurabile buffer size con auto-tuning intelligente
+- **RamDrive Support**: Rilevamento automatico e accelerazione
+- **Single-Instance IPC**: Named Pipe per integrazione menu contestuale
+- **Context Menu Integration**: Shift + Right-Click per accesso veloce
+
+#### 🎨 Modern Interface
+- **CustomTkinter GUI**: Dark/Light theme con cambio in tempo reale
+- **Grid Layout**: Sezione progresso sempre visibile in fondo
+- **Real-time Progress**: Velocità (MB/s) e ETA
+- **Responsive Design**: Finestra consistente 900×720
+
+#### 🌍 Complete i18n Support
+- **5 Languages**: Italiano, English, Français, Deutsch, Español
+- **Runtime Switching**: Cambio lingua istantaneo con aggiornamento UI completo
+- **Auto-detect Language**: Rileva lingua di sistema al primo avvio
+- **Menu Context i18n**: Voci di menu seguono la lingua dell'app
+- **✨ NEW**: Registry status fully translatable in all languages
+
+#### ⚡ Performance Optimization
+- **Auto-tuning**: Buffer e thread basati su tipo storage
+  - NVMe → 256MB buffer, 12 thread
+  - SSD → 128MB buffer, 8 thread
+  - HDD → 80MB buffer, 2 thread
+  - RamDrive → 8MB buffer, 16 thread
+- **Fast Startup**: Background tab loading
+- **Device Detection**: Auto-detect USB insert/removal
+
+#### 🛡️ Stability & Updates
+- **Auto-Update**: Controlla aggiornamenti da GitHub all'avvio
+- **Silent Setup**: Installer silenzioso con upgrade support
+- **Version Management**: Sincronizzazione automatica da `config.json`
+
+#### 🐛 Fixes in v1.0.0
+- ✅ Registry status text now fully translatable
+- ✅ Menu status section updates language correctly
+- ✅ All hardcoded strings mapped to i18n keys
+- ✅ Dynamic translation for Copy/Move status
 
 ---
 
@@ -155,28 +174,45 @@ When an update is found:
 
 ---
 
-## 📐 Versioning
+## 📐 Versioning & Release Management
 
 The application version is managed centrally in `config.json`:
 
 ```json
 {
- "version": "1.0.9",
+ "version": "1.0.0",
  ...
 }
 ```
 
-### Automatic Synchronization
+### Current Version: v1.0.0 (Stable)
+
+This is the **first stable release** of Advanced File Mover Pro with:
+- ✅ Complete feature set implemented
+- ✅ All bugs fixed (see [CHANGELOG.md](CHANGELOG.md))
+- ✅ Full i18n support (5 languages)
+- ✅ Registry status fully translatable
+- ✅ Comprehensive documentation
+
+### Version Synchronization
 
 When you run `.\build.ps1 -Setup`:
 
 - `build.ps1` reads the version from `config.json`
 - Automatically updates `installer/AdvancedFileMover.iss`
 - Passes it to Inno Setup
-- Output Setup will be named: `AdvancedFileMover_{version}_Setup.exe` (e.g., `AdvancedFileMover_1.0.9_Setup.exe`)
+- Output Setup will be named: `AdvancedFileMover_{version}_Setup.exe` (e.g., `AdvancedFileMover_1.0.0_Setup.exe`)
 - Version also appears in Windows Control Panel
 
-**To update the version**: modify the `version` field in `config.json` before running the build.
+**To update the version**: Modify the `version` field in `config.json` before running the build.
+
+### Release Process
+
+1. Update `config.json` with new version number
+2. Update [CHANGELOG.md](CHANGELOG.md) with changes
+3. Run build script: `.\build.ps1 -Clean -Setup`
+4. Push to GitHub and create Release tag
+5. Upload Setup.exe to GitHub Release
 
 ---
 
