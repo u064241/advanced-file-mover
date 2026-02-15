@@ -41,6 +41,9 @@ Thumbs.db
 .Spotlight-V100
 .Trashes
 
+# Build output
+installer/Output/
+
 # Project specific
 .storage_cache.json
 *.log
