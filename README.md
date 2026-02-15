@@ -4,15 +4,68 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](https://www.microsoft.com/windows)
 
-Professional Windows utility for copying/moving files and folders with real-time progress, auto-optimization (buffer/threads), Explorer context menu integration, and **auto-update from GitHub**.
+Professional Windows utility for copying and moving files and folders with real-time progress, hardware auto-optimization (buffer/threads), Windows Explorer context menu integration, and automatic updates from GitHub.
+
+**Version**: 1.0.0 (Stable)  
+**Release Date**: 2026-02-15  
+**Status**: ✅ Production Ready
 
 ---
 
-## 📦 Installation
+## 🎯 Key Features
 
-### Download Release
+### ⚡ Performance & Optimization
+- **Smart Auto-tuning**: Automatically adjusts buffer size and thread count based on storage type
+  - NVMe: 256MB buffer, 12 threads
+  - SSD: 128MB buffer, 8 threads
+  - HDD: 80MB buffer, 2 threads
+  - USB: 64MB buffer, 4 threads
+  - NAS: 32MB buffer, 2 threads
+  - RamDrive: 8MB buffer, 16 threads
+- **RamDrive Detection**: Auto-detect and accelerate operations on RamDrive
+- **Multi-threaded Engine**: Efficient concurrent copy/move operations
+- **Real-time Progress**: Display speed (MB/s) and ETA
+- **Device Auto-detection**: Monitor for USB and storage device changes
 
-Download the latest version from [Releases](https://github.com/u064241/advanced-file-mover/releases/latest):
+### 🎨 Modern User Interface
+- **CustomTkinter GUI**: Modern, responsive design with dark/light theme toggle
+- **Real-time Progress Display**: Continuous speed and ETA updates
+- **Responsive Layout**: Consistent 900×720px non-resizable window with grid-based design
+- **Elastic Listbox**: Flexible source file list with minimum 80px height
+- **Drag & Drop Support**: Native tkinterdnd2 integration - even works with elevated privileges
+
+### 🌍 Complete Internationalization
+- **5 Supported Languages**: Italian, English, French, German, Spanish
+- **Auto-detect System Language**: Automatically detects and uses system language on first launch
+- **Runtime Language Switching**: Change language instantly - entire GUI updates dynamically
+- **Fully Translatable UI**: All dialogs, progress messages, and system text support all languages
+- **Registry Status Translation**: Context menu status messages now translate to all supported languages
+
+### 🔧 Windows Explorer Integration
+- **Context Menu**: Right-click access via Shift + Right-Click in Windows Explorer
+- **Submenu with Copy/Move**: "Copy [Advanced]" and "Move [Advanced]" options
+- **Smart Status Display**: Real-time verification of registered menu items with language support
+- **Dynamic Menu Registration**: Menu automatically updates when changing language
+- **Single-Instance IPC**: Named Pipe integration for efficient multi-selection aggregation
+
+### 🚀 Auto-Update System
+- **Automatic Update Checking**: Checks for updates on application startup (background)
+- **Manual Update Check**: "Check Updates" button in the Info tab
+- **Silent Installation**: Automatic download and installation of updates
+- **Version Synchronization**: Version synced from `config.json` automatically
+
+### 📦 Installation & Distribution
+- **Inno Setup Installer**: Professional Windows installer with upgrade support
+- **PyInstaller One-Dir**: RamDrive-compatible, no temporary extraction
+- **Portable Friendly**: Minimal system dependencies required
+
+---
+
+## 📥 Installation
+
+### Download Release (Recommended)
+
+Download the latest version from [GitHub Releases](https://github.com/u064241/advanced-file-mover/releases/latest):
 
 ```text
 AdvancedFileMover_1.0.0_Setup.exe
@@ -20,74 +73,51 @@ AdvancedFileMover_1.0.0_Setup.exe
 
 ### Automatic Installation
 
-1. Run `AdvancedFileMover_1.0.0_Setup.exe`
-2. Follow the installation wizard
-3. Context menu will be automatically registered
-4. Launch the app from Start Menu or via context menu (Shift + right-click)
+1. Download `AdvancedFileMover_1.0.0_Setup.exe`
+2. Run the installer
+3. Follow the installation wizard
+4. Context menu will be automatically registered
+5. Launch from Start Menu or via context menu (Shift + Right-Click)
 
 ### Requirements
 
-- Windows 10/11 (64-bit)
-- .NET Framework (included in Windows)
-- Administrator rights for installation
+- **OS**: Windows 10/11 (64-bit)
+- **Runtime**: .NET Framework (included in Windows)
+- **Permissions**: Administrator rights required for installation
+- **RAM**: 4GB minimum (8GB+ recommended)
+- **Storage**: 50MB free space
 
-### First Time Installation
+### Build from Source
 
-Run the installer and follow the wizard. The app will be registered in the Windows context menu automatically.
-
----
-
-## 🚀 Usage
-
-### Context Menu (Quick Method)
-
-1. Select one or more files/folders in Explorer
-2. **Shift + Right-Click** → You'll see **"Advanced File Mover"**
-3. Choose:
-   - **Copy [Advanced]** → Copy with optimization
-   - **Move [Advanced]** → Move with optimization
-
-### GUI Interface
-
-1. Launch from Start Menu: **"Advanced File Mover Pro"**
-2. Select source (file/folder)
-3. Select destination
-4. Choose operation (Copy/Move)
-5. Click **"Start Operation"**
-
----
-
-## 🔧 Build from Source
-
-### Prerequisites
+#### Prerequisites
 
 ```powershell
 # Python 3.12+
-# Virtual environment
+python --version
+
+# Create and activate virtual environment
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Inno Setup 6 (for installer)
+# Install Inno Setup 6 (for creating installer)
 # https://jrsoftware.org/isdl.php
 ```
 
-### Complete Build
+#### Build Options
 
+**Complete Build (PyInstaller + Installer)**
 ```powershell
-cd C:\SOURCECODE\PYTHON\ADVANCED_FILE_MOVER
+cd C:\SOURCECODE\PYTHON\advanced-file-mover
 
-# Build PyInstaller + Inno Setup
 .\build.ps1 -Clean -Setup
 
-# Output:
-# installer\Output\AdvancedFileMover_1.0.0_Setup.exe
+# Output: installer\Output\AdvancedFileMover_1.0.0_Setup.exe
 ```
 
-### PyInstaller Only Build
-
+**PyInstaller Only (Executable)**
 ```powershell
 pyinstaller --clean gui_customtkinter.spec
 
@@ -96,203 +126,289 @@ pyinstaller --clean gui_customtkinter.spec
 
 ---
 
-## � Release Notes
+## 🚀 Usage
 
-**Version 1.0.0** - Stable Release - 2026-02-15
+### Quick Start via Context Menu
 
-For detailed changelog, see [CHANGELOG.md](CHANGELOG.md) for complete feature list and bug fixes.
+1. Select one or more files/folders in Windows Explorer
+2. **Shift + Right-Click** → Select **"Advanced File Mover"**
+3. Choose operation:
+   - **Copy [Advanced]** - Copy with optimization
+   - **Move [Advanced]** - Move with optimization
+4. Select destination in the GUI
+5. Operation begins with real-time progress display
 
-### v1.0.0 - Key Features
+### GUI Interface
 
-#### 🎯 Core Engine
-- **Multi-threaded Copy/Move**: Configurabile buffer size con auto-tuning intelligente
-- **RamDrive Support**: Rilevamento automatico e accelerazione
-- **Single-Instance IPC**: Named Pipe per integrazione menu contestuale
-- **Context Menu Integration**: Shift + Right-Click per accesso veloce
+1. Launch from Start Menu: **"Advanced File Mover Pro"**
+2. Add source files/folders:
+   - Click **"Add File"** or **"Add Folder"** buttons
+   - Or drag & drop files directly onto the source list
+3. Select destination folder (click **"Browse"**)
+4. Configure options:
+   - **Use RamDrive**: Enable for ultra-fast transfers to/from RamDrive
+   - **Overwrite**: Replace existing files at destination
+   - **Delete Source**: Remove original files after move operation
+5. Choose operation: **Copy** or **Move**
+6. Monitor real-time progress with speed and ETA
 
-#### 🎨 Modern Interface
-- **CustomTkinter GUI**: Dark/Light theme con cambio in tempo reale
-- **Grid Layout**: Sezione progresso sempre visibile in fondo
-- **Real-time Progress**: Velocità (MB/s) e ETA
-- **Responsive Design**: Finestra consistente 900×720
+### Info Tab
 
-#### 🌍 Complete i18n Support
-- **5 Languages**: Italiano, English, Français, Deutsch, Español
-- **Runtime Switching**: Cambio lingua istantaneo con aggiornamento UI completo
-- **Auto-detect Language**: Rileva lingua di sistema al primo avvio
-- **Menu Context i18n**: Voci di menu seguono la lingua dell'app
-- **✨ NEW**: Registry status fully translatable in all languages
+- **System Information**: CPU, RAM, and system details
+- **RamDrive Status**: Detection and statistics
+- **Storage Detection**: Identifies storage type and location
+- **Auto-tuning Parameters**: Shows recommended buffer/threads for selected paths
+- **Check Updates**: Manual update checking
 
-#### ⚡ Performance Optimization
-- **Auto-tuning**: Buffer e thread basati su tipo storage
-  - NVMe → 256MB buffer, 12 thread
-  - SSD → 128MB buffer, 8 thread
-  - HDD → 80MB buffer, 2 thread
-  - RamDrive → 8MB buffer, 16 thread
-- **Fast Startup**: Background tab loading
-- **Device Detection**: Auto-detect USB insert/removal
+### View Tab
 
-#### 🛡️ Stability & Updates
-- **Auto-Update**: Controlla aggiornamenti da GitHub all'avvio
-- **Silent Setup**: Installer silenzioso con upgrade support
-- **Version Management**: Sincronizzazione automatica da `config.json`
-
-#### 🐛 Fixes in v1.0.0
-- ✅ Registry status text now fully translatable
-- ✅ Menu status section updates language correctly
-- ✅ All hardcoded strings mapped to i18n keys
-- ✅ Dynamic translation for Copy/Move status
+- **Theme Selection**: Switch between Dark and Light themes
+- **Language Selection**: Choose from 5 supported languages
+- **Auto-elevate Options**: Configure UAC behavior
+- **Always on Top**: Keep window above other windows
 
 ---
 
-## 📝 User Data (config + cache)
+## 🔄 Version & Changelog
 
-- User configuration: `%LOCALAPPDATA%\AdvancedFileMover\config.json`
-- Storage detection cache: `%LOCALAPPDATA%\AdvancedFileMover\.storage_cache.json`
+### v1.0.0 (2026-02-15) - Stable Release
 
-On first launch, if `config.json` doesn't exist in LocalAppData, it's created automatically.
-If a `config.json` "template" exists near the EXE (e.g., installation), it's used as a base and then saved to LocalAppData.
+#### ✨ New Features
+- Native drag & drop support (tkinterdnd2) - drop files directly on source listbox
+- Admin drag & drop - works even when app runs with elevated privileges
+- Multi-file context menu via IPC (Named Pipe + file-based aggregation)
+- Auto-update from GitHub with launcher script (no file lock issues)
+- CustomTkinter modern interface with dark/light theme toggle
+- Grid-based main tab layout - progress section always anchored at bottom
+- High-contrast progress text with speed (MB/s) and ETA display
+- Multi-language support (Italian, English, French, German, Spanish) with flag icons
+- Elastic source listbox with minimum 80px height
+- Auto-detect system language on first launch (fallback: English)
+- Full runtime language switch - all widgets update instantly
+- Context menu entries follow app language with auto-re-registration
+- Multi-threaded copy/move with configurable buffer size
+- RamDrive detection and acceleration support
+- Single-instance mutex with IPC for context menu integration
+- Auto-tuning buffer/threads based on storage type
+- Faster startup with background tab loading
+- Auto-detect USB/device insert/removal with automatic Info tab refresh
+- Inno Setup-based Windows installer with clean upgrade support
+- PyInstaller one-dir packaging (no temp extraction, RamDrive compatible)
+
+#### 🐛 Bug Fixes
+- ✅ Registry status text now fully translatable in all languages
+- ✅ Menu status section updates language correctly on language change
+- ✅ All hardcoded Italian strings in registry status mapped to i18n keys
+- ✅ Dynamic translation mapping for registry output (copy/move/missing status)
+
+#### 📋 Improvements
+- Complete i18n support for all UI elements, dialogs, and system messages
+- Comprehensive documentation with installation and troubleshooting guides
+- Professional Inno Setup installer with upgrade support
+- Development-friendly project structure with clear separation of concerns
 
 ---
 
-## 🔄 Auto-Update from GitHub
+## 📂 Project Structure
 
-The application automatically checks for updates on startup:
-
-- ✅ Asynchronous check in background (doesn't block the app)
-- ✅ Manual **"Check Updates"** button in the Info tab
-- ✅ Automatic download and installation (silent setup)
-- ✅ Version synced from `config.json`
-
-When an update is found:
-
-1. Dialog with release notes
-2. Automatic download of Setup.exe from GitHub Release
-3. **App closes cleanly** before installer runs (v1.0.6+)
-4. Silent installer execution
-5. Automatic app restart
+```
+advanced-file-mover/
+├── ui/
+│   ├── gui_customtkinter.py      # Main GUI application
+│   └── __init__.py
+├── src/
+│   ├── file_operations.py         # Multi-threaded copy/move engine
+│   ├── update_checker.py          # Auto-update from GitHub
+│   ├── ramdrive_handler.py        # RamDrive detection & acceleration
+│   ├── storage_detector.py        # Storage type detection engine
+│   ├── utils.py                   # Utility functions
+│   └── __init__.py
+├── registry/
+│   ├── context_menu.py            # Context menu registration
+│   └── __init__.py
+├── i18n/
+│   ├── it.json                    # Italian translations
+│   ├── en.json                    # English translations
+│   ├── fr.json                    # French translations
+│   ├── de.json                    # German translations
+│   └── es.json                    # Spanish translations
+├── icon/                          # Application icons
+├── installer/
+│   ├── AdvancedFileMover.iss      # Inno Setup script
+│   └── Output/                    # Built installers
+├── config.json                    # Application configuration
+├── gui_customtkinter.spec         # PyInstaller spec file
+├── requirements.txt               # Python package dependencies
+├── build.ps1                      # Build automation script
+├── run_gui.ps1                    # Launch GUI script
+├── README.md                      # This file
+└── LICENSE                        # MIT License
+```
 
 ---
 
-## 📐 Versioning & Release Management
+## 🎛️ Configuration
 
-The application version is managed centrally in `config.json`:
+Application settings are stored in `%LOCALAPPDATA%\AdvancedFileMover\config.json`:
 
 ```json
 {
- "version": "1.0.0",
- ...
+  "version": "1.0.0",
+  "theme": "dark",
+  "always_on_top": true,
+  "window_size": {
+    "width": 900,
+    "height": 720
+  },
+  "buffer_size": 100,
+  "threads": 4,
+  "ramdrive": true,
+  "overwrite": true,
+  "delete_source": true,
+  "language": "en",
+  "auto_elevate_on_start": false
 }
 ```
 
-### Current Version: v1.0.0 (Stable)
+### Configuration Options
 
-This is the **first stable release** of Advanced File Mover Pro with:
-- ✅ Complete feature set implemented
-- ✅ All bugs fixed (see [CHANGELOG.md](CHANGELOG.md))
-- ✅ Full i18n support (5 languages)
-- ✅ Registry status fully translatable
-- ✅ Comprehensive documentation
+- **version**: Application version (auto-synced)
+- **theme**: Interface theme ("dark" or "light")
+- **always_on_top**: Keep window above other windows (true/false)
+- **window_size**: Window dimensions (width × height)
+- **buffer_size**: File operation buffer in MB (50-256)
+- **threads**: Number of concurrent threads (1-16)
+- **ramdrive**: Enable RamDrive acceleration (true/false)
+- **overwrite**: Automatically overwrite existing files (true/false)
+- **delete_source**: Delete original files after move (true/false)
+- **language**: Interface language ("it", "en", "fr", "de", "es")
+- **auto_elevate_on_start**: Auto-elevate UAC on startup (true/false)
 
-### Version Synchronization
+### User Data Location
 
-When you run `.\build.ps1 -Setup`:
+- **Configuration**: `%LOCALAPPDATA%\AdvancedFileMover\config.json`
+- **Cache**: `%LOCALAPPDATA%\AdvancedFileMover\.storage_cache.json`
 
-- `build.ps1` reads the version from `config.json`
-- Automatically updates `installer/AdvancedFileMover.iss`
-- Passes it to Inno Setup
-- Output Setup will be named: `AdvancedFileMover_{version}_Setup.exe` (e.g., `AdvancedFileMover_1.0.0_Setup.exe`)
-- Version also appears in Windows Control Panel
-
-**To update the version**: Modify the `version` field in `config.json` before running the build.
-
-### Release Process
-
-1. Update `config.json` with new version number
-2. Update [CHANGELOG.md](CHANGELOG.md) with changes
-3. Run build script: `.\build.ps1 -Clean -Setup`
-4. Push to GitHub and create Release tag
-5. Upload Setup.exe to GitHub Release
+On first launch, if `config.json` doesn't exist, it's created automatically.
 
 ---
 
-## 🎨 Context Menu (Explorer)
+## 🌐 Supported Languages
 
-Registers the "Advanced File Mover" submenu with "Copy [Advanced]" / "Move [Advanced]" actions.
+| Language | Code | Status |
+|----------|------|--------|
+| 🇮🇹 Italiano (Italian) | it | ✅ Complete |
+| 🇬🇧 English | en | ✅ Complete |
+| 🇫🇷 Français (French) | fr | ✅ Complete |
+| 🇩🇪 Deutsch (German) | de | ✅ Complete |
+| 🇪🇸 Español (Spanish) | es | ✅ Complete |
 
-Note: the menu is in **Extended** mode → appears only with **Shift + right-click**.
+To change language:
+1. Open the application
+2. Click the **View** tab
+3. Select desired language from **🌐 Interface Language** dropdown
+4. All UI elements update instantly
+5. Context menu automatically re-registers with new language
 
-### Recommended Mode (EXE)
+---
 
+## 🔧 Advanced Options
+
+### Context Menu Registration (Command Line)
+
+**Register via EXE:**
 ```powershell
-# register context menu (HKCU)
 dist\AdvancedFileMoverPro.exe --register-context-menu
+```
 
-# unregister
+**Unregister via EXE:**
+```powershell
 dist\AdvancedFileMoverPro.exe --unregister-context-menu
 ```
 
-### Alternative Mode (script)
-
+**Register via Python (HKCU - Current User):**
 ```powershell
-# register (HKCU)
 python.exe .\registry\context_menu.py --register
+```
 
-# unregister
-python.exe .\registry\context_menu.py --unregister
-
-# for HKLM (all users) requires admin
+**Register for All Users (HKLM - Requires Admin):**
+```powershell
 python.exe .\registry\context_menu.py --register --admin
 ```
 
----
-
-## 🌍 Languages / i18n
-
-- Translations are in `i18n/*.json`
-- Flag icons are in `src/assets/flags/*.png`
-- Language switching is dynamic and applies to the entire GUI
-
----
-
-## 🧪 Testing
-
+**Unregister via Python:**
 ```powershell
-cd .\TEST
-python.exe .\run_all_tests.py
+python.exe .\registry\context_menu.py --unregister
 ```
 
----
+### Version Management
 
-## 📁 Project Structure (essential)
+Version is centrally managed in `config.json`:
 
-- `ui/gui_customtkinter.py`: Main GUI
-- `src/file_operations.py`: Copy/move engine + progress
-- `src/update_checker.py`: Auto-update from GitHub
-- `src/ramdrive_handler.py` / `src/storage_detector.py`: Storage detection + auto-tuning
-- `registry/context_menu.py`: Context menu registration/unregistration
+```json
+{
+  "version": "1.0.0",
+  ...
+}
+```
+
+**To update version:**
+1. Modify `version` field in `config.json`
+2. Run `.\build.ps1 -Clean -Setup`
+3. Build script automatically updates installer version
+4. Output filename reflects new version: `AdvancedFileMover_X.X.X_Setup.exe`
+5. Version appears in Windows Control Panel
 
 ---
 
 ## 🐛 Troubleshooting
 
-### Always use `.venv`
+### Issue: Drag & Drop Not Working
 
-Avoid system `py`/`python` if they point to different versions.
-
-Quick verification:
-
+**Solution**: Ensure you have tkinterdnd2 installed:
 ```powershell
-.venv\Scripts\python.exe --version
-.venv\Scripts\python.exe -c "import customtkinter, psutil; print('✓ GUI deps OK')"
+pip install tkinterdnd2
 ```
 
-### Clean Python cache
+If still not working with Administrator privileges, the app handles this automatically with fallback methods.
 
+### Issue: Python Cache Errors
+
+**Solution**: Clear Python cache:
 ```powershell
 taskkill /F /IM python.exe
 Remove-Item -Recurse -Force .\ui\__pycache__, .\src\__pycache__ -ErrorAction SilentlyContinue
 ```
+
+### Issue: Context Menu Not Appearing
+
+**Solution**: Verify registration and check Windows Registry:
+1. Run the application as Administrator
+2. Go to the **Context Menu** tab
+3. Click **"Check Status"** button
+4. If not registered, click **"Register Menu"**
+
+### Issue: Update Not Downloading
+
+**Solution**: Check internet connection and verify GitHub releases:
+1. Go to the **Info** tab
+2. Click **"Check Updates"**
+3. Ensure you have internet connectivity
+4. Check [GitHub Releases](https://github.com/u064241/advanced-file-mover/releases)
+
+### Issue: RamDrive Not Detected
+
+**Solution**: Ensure RamDrive is properly installed and mounted:
+1. Go to the **Info** tab
+2. Check **RamDrive** section for drive letter and status
+3. Verify drive is mounted in Windows Disk Management
+4. Try refreshing the Info tab
+
+### Getting Help
+
+For additional support:
+- **GitHub Issues**: [Report a bug](https://github.com/u064241/advanced-file-mover/issues)
+- **GitHub Discussions**: [Ask a question](https://github.com/u064241/advanced-file-mover/discussions)
 
 ---
 
@@ -300,33 +416,104 @@ Remove-Item -Recurse -Force .\ui\__pycache__, .\src\__pycache__ -ErrorAction Sil
 
 Contributions, issues and feature requests are welcome!
 
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+### Development Setup
+
+1. Fork the repository
+2. Clone your fork: `git clone https://github.com/YOUR-USERNAME/advanced-file-mover.git`
+3. Create virtual environment: `python -m venv .venv`
+4. Activate: `.venv\Scripts\Activate.ps1`
+5. Install dependencies: `pip install -r requirements.txt`
+6. Create feature branch: `git checkout -b feature/YourFeature`
+7. Make your changes
+8. Commit: `git commit -m "Add YourFeature"`
+9. Push: `git push origin feature/YourFeature`
+10. Create Pull Request
+
+### Code Style
+
+- Follow PEP 8 conventions
+- Use meaningful variable and function names
+- Add comments for complex logic
+- Update documentation for new features
+
+### Testing
+
+Before submitting a PR:
+```powershell
+# Run the GUI
+.\run_gui.ps1
+
+# Build without installer
+pyinstaller --clean gui_customtkinter.spec
+
+# Test installer build
+.\build.ps1 -Clean -Setup
+```
+
+---
+
+## 📦 Dependencies
+
+### Core Dependencies
+
+```
+customtkinter>=5.0.0        # Modern GUI framework
+psutil>=5.9.0               # System monitoring
+tkinterdnd2>=0.3.0          # Drag and drop support
+```
+
+### Optional Dependencies
+
+```
+pyinstaller>=6.0            # For building executables
+inno-setup                  # For creating Windows installer (system-wide)
+```
+
+See `requirements.txt` for complete dependency list.
 
 ---
 
 ## 📄 License
 
-Distributed under MIT License. See `LICENSE` for more information.
+Distributed under the MIT License. See [LICENSE](LICENSE) file for details.
 
----
-
-## 👤 Author
-
-### u064241
-
-- GitHub: [@u064241](https://github.com/u064241)
-- Repository: [advanced-file-mover](https://github.com/u064241/advanced-file-mover)
+MIT License - Free to use, modify, and distribute!
 
 ---
 
 ## 🙏 Acknowledgments
 
-- [CustomTkinter](https://github.com/TomSchimansky/CustomTkinter) - Modern GUI framework
-- [PyInstaller](https://www.pyinstaller.org/) - Packaging
-- [Inno Setup](https://jrsoftware.org/isinfo.php) - Windows installer
+- [CustomTkinter](https://github.com/TomSchimansky/CustomTkinter) - Modern GUI framework for Python
+- [PyInstaller](https://www.pyinstaller.org/) - Application packaging and distribution
+- [Inno Setup](https://jrsoftware.org/isinfo.php) - Professional Windows installer creation
+- [psutil](https://github.com/giampaolo/psutil) - Cross-platform system monitoring
+- [tkinterdnd2](https://github.com/pmgagne/tkinterdnd2) - Drag and drop support
 
 ---
+
+## 👤 Author
+
+**Advanced File Mover Pro** is developed and maintained by **u064241**
+
+- 🔗 GitHub: [@u064241](https://github.com/u064241)
+- 📦 Repository: [advanced-file-mover](https://github.com/u064241/advanced-file-mover)
+- 🐛 Issues: [GitHub Issues](https://github.com/u064241/advanced-file-mover/issues)
+
+---
+
+## 📈 Roadmap
+
+Future releases may include:
+
+- GPU acceleration for large file transfers
+- Advanced batch operations and scheduling
+- Network storage optimization
+- Plugin system for custom operations
+- Cloud storage integration
+- Compression during transfer
+
+---
+
+**Thank you for using Advanced File Mover Pro!**
+
+*For updates and information, visit the [GitHub Repository](https://github.com/u064241/advanced-file-mover)*
