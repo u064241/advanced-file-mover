@@ -53,7 +53,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.file_operations import FileOperationEngine
 from src.ramdrive_handler import RamDriveManager
-from src.utils import format_bytes, format_time
+from src.utils import format_bytes, format_time, long_path, strip_long_path_prefix
 from src.storage_detector import StorageDetector
 from src.update_checker import check_for_update_async
 from registry.context_menu import ContextMenuRegistrar
@@ -2079,7 +2079,7 @@ class AdvancedFileMoverCustomTkinter:
                 # Rimuove eventuali graffe, apici, spazi extra
                 file_path = file_path.strip('{}"\' ')
                 
-                if not file_path or not os.path.exists(file_path):
+                if not file_path or not os.path.exists(long_path(file_path)):
                     continue
                 
                 # Aggiungi solo se non già presente
@@ -2406,7 +2406,7 @@ class AdvancedFileMoverCustomTkinter:
             try:
                 only_files = True
                 for s in self.source_paths:
-                    if os.path.isdir(s):
+                    if os.path.isdir(long_path(s)):
                         only_files = False
                         break
                 if only_files:
@@ -2416,7 +2416,7 @@ class AdvancedFileMoverCustomTkinter:
                     total_bytes = 0
                     for s in self.source_paths:
                         try:
-                            total_bytes += int(os.path.getsize(s))
+                            total_bytes += int(os.path.getsize(long_path(s)))
                         except Exception:
                             pass
                     self._batch_total_size = int(total_bytes)
@@ -2462,7 +2462,7 @@ class AdvancedFileMoverCustomTkinter:
                 # (es: dest\NomeCartella) invece di riversarne i file direttamente nella root
                 item_destination = destination
                 try:
-                    if os.path.isdir(source):
+                    if os.path.isdir(long_path(source)):
                         item_destination = os.path.join(destination, Path(source).name)
                 except Exception:
                     item_destination = destination
@@ -2484,8 +2484,8 @@ class AdvancedFileMoverCustomTkinter:
 
                 # Aggiorna bytes completati per batch (solo file)
                 try:
-                    if success and int(getattr(self, '_batch_total_size', 0) or 0) > 0 and os.path.isfile(source):
-                        self._batch_completed_bytes += int(os.path.getsize(source))
+                    if success and int(getattr(self, '_batch_total_size', 0) or 0) > 0 and os.path.isfile(long_path(source)):
+                        self._batch_completed_bytes += int(os.path.getsize(long_path(source)))
                 except Exception:
                     pass
                 
@@ -3186,7 +3186,7 @@ def _parse_launch_args(argv):
             for j in range(i + 1, max_j + 1):
                 candidate = ' '.join(tokens[i:j])
                 try:
-                    if os.path.exists(candidate):
+                    if os.path.exists(long_path(candidate)):
                         best = candidate
                         best_j = j
                 except Exception:
