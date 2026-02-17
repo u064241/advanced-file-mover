@@ -1,13 +1,13 @@
 # Advanced File Mover Pro
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/u064241/advanced-file-mover/releases/latest)
+[![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)](https://github.com/u064241/advanced-file-mover/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](https://www.microsoft.com/windows)
 
 Professional Windows utility for copying and moving files and folders with real-time progress, hardware auto-optimization (buffer/threads), Windows Explorer context menu integration, and automatic updates from GitHub.
 
-**Version**: 1.0.0 (Stable)  
-**Release Date**: 2026-02-15  
+**Version**: 1.0.1 (Stable)  
+**Release Date**: 2026-02-18  
 **Status**: ✅ Production Ready
 
 ---
@@ -22,6 +22,7 @@ Professional Windows utility for copying and moving files and folders with real-
   - USB: 64MB buffer, 4 threads
   - NAS: 32MB buffer, 2 threads
   - RamDrive: 8MB buffer, 16 threads
+- **Long Path Support**: Full support for paths exceeding 260 characters (Windows MAX_PATH limit)
 - **RamDrive Detection**: Auto-detect and accelerate operations on RamDrive
 - **Multi-threaded Engine**: Efficient concurrent copy/move operations
 - **Real-time Progress**: Display speed (MB/s) and ETA
@@ -68,12 +69,12 @@ Professional Windows utility for copying and moving files and folders with real-
 Download the latest version from [GitHub Releases](https://github.com/u064241/advanced-file-mover/releases/latest):
 
 ```text
-AdvancedFileMover_1.0.0_Setup.exe
+AdvancedFileMover_1.0.1_Setup.exe
 ```
 
 ### Automatic Installation
 
-1. Download `AdvancedFileMover_1.0.0_Setup.exe`
+1. Download `AdvancedFileMover_1.0.1_Setup.exe`
 2. Run the installer
 3. Follow the installation wizard
 4. Context menu will be automatically registered
@@ -114,7 +115,7 @@ cd C:\SOURCECODE\PYTHON\advanced-file-mover
 
 .\build.ps1 -Clean -Setup
 
-# Output: installer\Output\AdvancedFileMover_1.0.0_Setup.exe
+# Output: installer\Output\AdvancedFileMover_1.0.1_Setup.exe
 ```
 
 **PyInstaller Only (Executable)**
@@ -170,6 +171,22 @@ pyinstaller --clean gui_customtkinter.spec
 ---
 
 ## 🔄 Version & Changelog
+
+### v1.0.1 (2026-02-18) - Patch Release
+
+#### 🐛 Bug Fixes
+- **Long Path Support**: Added `\\?\` prefix to all filesystem operations, fixing failures on paths exceeding Windows MAX_PATH (260 characters)
+- All `os.walk`, `os.makedirs`, `open()`, `os.remove`, `os.path.exists` calls in the copy/move engine now support paths > 260 characters
+- Drag & drop path validation now works correctly with long paths
+- CLI argument path reconstruction (context menu) handles long paths properly
+- Error messages display clean paths (without `\\?\` prefix) for readability
+
+#### ✨ Improvements
+- New utility functions: `long_path()` and `strip_long_path_prefix()` in `src/utils.py`
+- `is_path_accessible()`, `is_path_writable()`, `get_file_size()`, `create_directory_if_not_exists()` now support long paths
+- Works on all Windows systems regardless of `LongPathsEnabled` registry setting
+
+---
 
 ### v1.0.0 (2026-02-15) - Stable Release
 
@@ -253,7 +270,7 @@ Application settings are stored in `%LOCALAPPDATA%\AdvancedFileMover\config.json
 
 ```json
 {
-  "version": "1.0.0",
+  "version": "1.0.1",
   "theme": "dark",
   "always_on_top": true,
   "window_size": {
@@ -347,7 +364,7 @@ Version is centrally managed in `config.json`:
 
 ```json
 {
-  "version": "1.0.0",
+  "version": "1.0.1",
   ...
 }
 ```

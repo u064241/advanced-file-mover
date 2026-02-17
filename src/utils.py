@@ -61,22 +61,24 @@ def format_time(seconds: float) -> str:
 
 def is_path_accessible(path: str) -> bool:
     """Verifica se il percorso è accessibile"""
-    return os.path.exists(path) and os.access(path, os.R_OK)
+    lp = long_path(path)
+    return os.path.exists(lp) and os.access(lp, os.R_OK)
 
 
 def is_path_writable(path: str) -> bool:
     """Verifica se il percorso è scrivibile"""
-    return os.access(path, os.W_OK)
+    return os.access(long_path(path), os.W_OK)
 
 
 def get_file_size(path: str) -> int:
     """Ottiene dimensione file o cartella"""
     try:
-        if os.path.isfile(path):
-            return os.path.getsize(path)
+        lp = long_path(path)
+        if os.path.isfile(lp):
+            return os.path.getsize(lp)
         else:
             total_size = 0
-            for dirpath, dirnames, filenames in os.walk(path):
+            for dirpath, dirnames, filenames in os.walk(lp):
                 for filename in filenames:
                     filepath = os.path.join(dirpath, filename)
                     try:
@@ -91,7 +93,7 @@ def get_file_size(path: str) -> int:
 def create_directory_if_not_exists(path: str) -> bool:
     """Crea directory se non esiste"""
     try:
-        os.makedirs(path, exist_ok=True)
+        os.makedirs(long_path(path), exist_ok=True)
         return True
     except Exception as e:
         print(f"Errore creazione directory: {e}")
@@ -113,8 +115,41 @@ def get_command_output(command: str) -> str:
         return ""
 
 
+def long_path(path: str) -> str:
+    """
+    Aggiunge il prefisso \\\\?\\ per supportare path > 260 caratteri su Windows.
+    Su sistemi non-Windows restituisce il path invariato.
+    Gestisce correttamente path UNC (\\\\server\\share → \\\\?\\UNC\\server\\share).
+    """
+    if os.name != 'nt' or not path:
+        return path
+    # Normalizza e rendi assoluto
+    path = os.path.abspath(path)
+    # Già prefissato
+    if path.startswith('\\\\?\\'):
+        return path
+    # UNC path (\\server\share)
+    if path.startswith('\\\\'):
+        return '\\\\?\\UNC\\' + path[2:]
+    return '\\\\?\\' + path
+
+
+def strip_long_path_prefix(path: str) -> str:
+    """
+    Rimuove il prefisso \\\\?\\ dal path per visualizzazione/UI.
+    Utile quando il path deve essere mostrato all'utente.
+    """
+    if not path:
+        return path
+    if path.startswith('\\\\?\\UNC\\'):
+        return '\\\\' + path[8:]
+    if path.startswith('\\\\?\\'):
+        return path[4:]
+    return path
+
+
 def enable_long_paths():
-    """Abilita supporto long paths in Windows"""
+    """Abilita supporto long paths in Windows (richiede privilegi amministratore)"""
     try:
         import winreg
         key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, 

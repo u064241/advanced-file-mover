@@ -9,6 +9,7 @@ import tempfile
 from pathlib import Path
 from typing import Callable, Optional
 from enum import Enum
+from .utils import long_path, strip_long_path_prefix
 
 
 class OperationType(Enum):
@@ -110,8 +111,12 @@ class FileOperationEngine:
         """Esegue operazione (copy/move)"""
         ramdrive_temp_path = None
         try:
+            # Applica long path prefix per supportare path > 260 caratteri
+            source = long_path(source)
+            destination = long_path(destination)
+
             if not os.path.exists(source):
-                self._log_error(f"Sorgente non trovata: {source}")
+                self._log_error(f"Sorgente non trovata: {strip_long_path_prefix(source)}")
                 return False
 
             self.processed_size = 0
@@ -220,12 +225,13 @@ class FileOperationEngine:
     
     def _get_total_size(self, path: str) -> int:
         """Calcola size totale di file/directory"""
-        if os.path.isfile(path):
-            return os.path.getsize(path)
+        lp = long_path(path)
+        if os.path.isfile(lp):
+            return os.path.getsize(lp)
         
         total = 0
         try:
-            for dirpath, dirnames, filenames in os.walk(path):
+            for dirpath, dirnames, filenames in os.walk(lp):
                 for filename in filenames:
                     filepath = os.path.join(dirpath, filename)
                     try:
@@ -251,18 +257,22 @@ class FileOperationEngine:
             files_to_process = []
             total_size = 0
 
+            # Applica long path prefix
+            lp_source = long_path(source)
+            lp_destination = long_path(destination)
+
             def _on_walk_error(err):
                 try:
                     self._log_error(f"Errore accesso directory durante scansione: {getattr(err, 'filename', '')} ({err})")
                 except Exception:
                     pass
 
-            for root, dirs, files in os.walk(source, onerror=_on_walk_error):
+            for root, dirs, files in os.walk(lp_source, onerror=_on_walk_error):
                 if self.is_cancelled:
                     return None
 
-                rel_path = os.path.relpath(root, source)
-                dst_root = destination if rel_path == '.' else os.path.join(destination, rel_path)
+                rel_path = os.path.relpath(root, lp_source)
+                dst_root = lp_destination if rel_path == '.' else os.path.join(lp_destination, rel_path)
 
                 for filename in files:
                     if self.is_cancelled:
@@ -311,6 +321,10 @@ class FileOperationEngine:
                     operation: OperationType) -> bool:
         """Gestisce copia/spostamento singolo file"""
         try:
+            # Applica long path prefix
+            source = long_path(source)
+            destination = long_path(destination)
+
             # Se destination è una directory, aggiungi il nome del file
             if os.path.isdir(destination):
                 destination = os.path.join(destination, os.path.basename(source))
@@ -321,7 +335,7 @@ class FileOperationEngine:
                 try:
                     os.makedirs(dest_dir, exist_ok=True)
                 except Exception as e:
-                    self._log_error(f"Errore creazione directory destinazione: {dest_dir} ({self._format_exc(e)})")
+                    self._log_error(f"Errore creazione directory destinazione: {strip_long_path_prefix(dest_dir)} ({self._format_exc(e)})")
                     return False
             
             self.current_file = os.path.basename(source)
@@ -352,7 +366,7 @@ class FileOperationEngine:
             try:
                 src_fh = open(source, 'rb')
             except Exception as e:
-                self._log_error(f"Errore apertura sorgente: {source} ({self._format_exc(e)})")
+                self._log_error(f"Errore apertura sorgente: {strip_long_path_prefix(source)} ({self._format_exc(e)})")
                 return False
 
             try:
@@ -362,7 +376,7 @@ class FileOperationEngine:
                     src_fh.close()
                 except Exception:
                     pass
-                self._log_error(f"Errore apertura destinazione: {destination} ({self._format_exc(e)})")
+                self._log_error(f"Errore apertura destinazione: {strip_long_path_prefix(destination)} ({self._format_exc(e)})")
                 return False
 
             with src_fh as src, dst_fh as dst:
@@ -389,7 +403,7 @@ class FileOperationEngine:
             return True
         
         except Exception as e:
-            self._log_error(f"Errore copia file: {source} -> {destination} ({self._format_exc(e)})")
+            self._log_error(f"Errore copia file: {strip_long_path_prefix(source)} -> {strip_long_path_prefix(destination)} ({self._format_exc(e)})")
             if os.path.exists(destination):
                 try:
                     os.remove(destination)
@@ -401,6 +415,10 @@ class FileOperationEngine:
                          operation: OperationType) -> bool:
         """Gestisce copia/spostamento directory"""
         try:
+            # Applica long path prefix
+            source = long_path(source)
+            destination = long_path(destination)
+
             # Creare directory destinazione
             if not os.path.exists(destination):
                 os.makedirs(destination, exist_ok=True)
@@ -460,7 +478,7 @@ class FileOperationEngine:
                     if operation == OperationType.MOVE:
                         os.remove(src_file)
                 except Exception as e:
-                    self._log_error(f"Errore file {src_file}: {e}")
+                    self._log_error(f"Errore file {strip_long_path_prefix(src_file)}: {e}")
             
             # Se move, cancellare directory source (se vuota)
             if operation == OperationType.MOVE:
@@ -480,6 +498,10 @@ class FileOperationEngine:
                                   ramdrive_temp_path: Optional[str] = None) -> bool:
         """Gestisce singolo file con supporto RamDrive 2-fasi"""
         try:
+            # Applica long path prefix
+            source = long_path(source)
+            destination = long_path(destination)
+
             if os.path.isdir(destination):
                 destination = os.path.join(destination, os.path.basename(source))
             
@@ -498,7 +520,7 @@ class FileOperationEngine:
                 return self._handle_file(source, destination, operation)
         
         except Exception as e:
-            self._log_error(f"Errore file {source}: {e}")
+            self._log_error(f"Errore file {strip_long_path_prefix(source)}: {e}")
             return False
     
     def _handle_directory_with_ramdrive(self, source: str, destination: str,
@@ -508,6 +530,10 @@ class FileOperationEngine:
                                        files_to_process=None) -> bool:
         """Gestisce directory con supporto RamDrive 2-fasi"""
         try:
+            # Applica long path prefix
+            source = long_path(source)
+            destination = long_path(destination)
+
             if not os.path.exists(destination):
                 os.makedirs(destination, exist_ok=True)
 
@@ -528,7 +554,7 @@ class FileOperationEngine:
                     try:
                         os.makedirs(dst_dir, exist_ok=True)
                     except Exception as e:
-                        self._log_error(f"Errore creazione directory: {dst_dir} ({self._format_exc(e)})")
+                        self._log_error(f"Errore creazione directory: {strip_long_path_prefix(dst_dir)} ({self._format_exc(e)})")
                         return False
                 
                 self.file_count = max(self.file_count, len(files_to_process))
@@ -553,13 +579,17 @@ class FileOperationEngine:
             
             return True
         except Exception as e:
-            self._log_error(f"Errore directory: {source} -> {destination} ({self._format_exc(e)})")
+            self._log_error(f"Errore directory: {strip_long_path_prefix(source)} -> {strip_long_path_prefix(destination)} ({self._format_exc(e)})")
             return False
     
     def _copy_via_ramdrive(self, source: str, destination: str,
                           ramdrive_temp_path: str, operation: OperationType) -> bool:
         """Copia file a 2 fasi: Sorgente → RamDrive → Destinazione"""
         try:
+            # Applica long path prefix
+            source = long_path(source)
+            destination = long_path(destination)
+
             # Fase 1: Sorgente → RamDrive
             temp_file = os.path.join(ramdrive_temp_path, os.path.basename(source))
             os.makedirs(ramdrive_temp_path, exist_ok=True)
@@ -596,6 +626,10 @@ class FileOperationEngine:
     def _copy_file_internal(self, source: str, destination: str, use_buffer: int) -> bool:
         """Copia file con buffer specificato (senza delete source)"""
         try:
+            # Applica long path prefix
+            source = long_path(source)
+            destination = long_path(destination)
+
             with open(source, 'rb') as src, open(destination, 'wb') as dst:
                 while True:
                     if self.is_cancelled:
@@ -615,7 +649,7 @@ class FileOperationEngine:
             
             return True
         except Exception as e:
-            self._log_error(f"Errore copia interna: {source} -> {destination} ({self._format_exc(e)})")
+            self._log_error(f"Errore copia interna: {strip_long_path_prefix(source)} -> {strip_long_path_prefix(destination)} ({self._format_exc(e)})")
             return False
             if self.on_complete:
                 self.on_complete()
