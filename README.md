@@ -1,13 +1,13 @@
 # Advanced File Mover Pro
 
-[![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)](https://github.com/u064241/advanced-file-mover/releases/latest)
+[![Version](https://img.shields.io/badge/version-1.0.2-blue.svg)](https://github.com/u064241/advanced-file-mover/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](https://www.microsoft.com/windows)
 
 Professional Windows utility for copying and moving files and folders with real-time progress, hardware auto-optimization (buffer/threads), Windows Explorer context menu integration, and automatic updates from GitHub.
 
-**Version**: 1.0.1 (Stable)  
-**Release Date**: 2026-02-18  
+**Version**: 1.0.2 (Stable)  
+**Release Date**: 2026-06-23  
 **Status**: ✅ Production Ready
 
 ---
@@ -171,6 +171,28 @@ pyinstaller --clean gui_customtkinter.spec
 ---
 
 ## 🔄 Version & Changelog
+
+### v1.0.2 (2026-06-23) - Bug Fix Release
+
+#### 🐛 Bug Fixes
+- **Thread Safety (`processed_size`)**: All updates to `processed_size` in the copy/move engine are now protected by `threading.Lock`, eliminating race conditions during parallel transfers
+- **`on_complete` called exactly once**: Callback was previously invoked once per file in `_handle_file`; moved to `_perform_operation` so it fires a single time at the end of the operation
+- **Missing `_log_info()` method**: Absent method caused silent `AttributeError` when logging informational events; stub now defined alongside `_log_error()`
+- **MOVE cross-drive space check**: Free-space validation for cross-drive moves now correctly uses `total_size` as the required space (was always `0`)
+- **`overwrite` parameter wired end-to-end**: `FileOperationEngine` now accepts and propagates `overwrite: bool = True`; GUI forwards the user toggle at engine construction and before each operation
+- **Overwrite check in `_copy_via_ramdrive`**: RamDrive-buffered copies now honour the `overwrite` flag (files were silently overwritten regardless)
+- **Temp file name collision in `_copy_via_ramdrive`**: Temporary files now use `id(source)` as prefix, preventing concurrent threads from clobbering each other's staging file
+- **Dead code removed from `_copy_file_internal`**: Unreachable `if self.on_complete` / `return True` block and orphaned `except` clause removed
+- **`_handle_directory` unified**: Legacy stub now delegates entirely to `_handle_directory_with_ramdrive`, eliminating duplicate directory-traversal logic
+- **Parallel directory copy**: `_handle_directory_with_ramdrive` reimplemented with `concurrent.futures.ThreadPoolExecutor`; destination directories are pre-created single-threaded to avoid race conditions; error propagation via `threading.Event`
+- **Tkinter thread safety**: Remaining tabs (Options, Stats, Info) are now loaded on the main thread via `root.after(500, …)` instead of a background `threading.Thread`, preventing widget-creation crashes
+- **`_auto_profile_parameters` duplicate removed**: Method was an exact copy of `_auto_tune_parameters`; now replaced by a one-line delegation, eliminating 20+ lines of diverged dead code
+- **`_progress_monitor` dead code removed**: Method was defined but never started as a thread; removed entirely
+- **IPC atomic rename**: `_poll_pending_files` now atomically renames the pending file before reading, eliminating the TOCTOU race where a second Explorer process could append data between the read and the clear
+- **RamDrive false-positive detection**: Volume-label heuristic no longer matches "temp", "volatile", or "memory" labels (false positives on USB "Memory Card" or SSD "Temp Work" partitions); only labels equal to "ram" or starting with "ram" are accepted
+- **Unused `StorageDetector` import cleaned up**: Instance and import removed from `gui_customtkinter.py` (class was instantiated but never used)
+
+---
 
 ### v1.0.1 (2026-02-18) - Patch Release
 

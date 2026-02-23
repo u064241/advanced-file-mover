@@ -54,7 +54,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from src.file_operations import FileOperationEngine
 from src.ramdrive_handler import RamDriveManager
 from src.utils import format_bytes, format_time, long_path, strip_long_path_prefix
-from src.storage_detector import StorageDetector
 from src.update_checker import check_for_update_async
 from registry.context_menu import ContextMenuRegistrar
 
@@ -226,18 +225,30 @@ def _ipc_start_listener(app_instance):
     def _poll_pending_files():
         try:
             if _IPC_PENDING_FILE.exists() and _IPC_PENDING_FILE.stat().st_size > 0:
-                # Leggi e svuota atomicamente
+                # Rename atomico: i nuovi writer troveranno il file mancante e ne creeranno uno nuovo.
+                # Questo evita la race condition lettura/svuotamento.
+                tmp_path = _IPC_PENDING_FILE.with_suffix('.tmp_read')
                 try:
-                    with open(_IPC_PENDING_FILE, 'r', encoding='utf-8') as f:
+                    _IPC_PENDING_FILE.rename(tmp_path)
+                    with open(tmp_path, 'r', encoding='utf-8') as f:
                         content = f.read()
-                    # Svuota il file
-                    with open(_IPC_PENDING_FILE, 'w', encoding='utf-8') as f:
-                        f.write('')
-                    
+                    try:
+                        tmp_path.unlink()
+                    except Exception:
+                        pass
                     if content.strip():
                         _process_ipc_messages(content.strip(), app_instance)
                 except Exception:
-                    pass
+                    # Se rename fallisce, prova lettura classica (fallback)
+                    try:
+                        with open(_IPC_PENDING_FILE, 'r', encoding='utf-8') as f:
+                            content = f.read()
+                        with open(_IPC_PENDING_FILE, 'w', encoding='utf-8') as f:
+                            f.write('')
+                        if content.strip():
+                            _process_ipc_messages(content.strip(), app_instance)
+                    except Exception:
+                        pass
         except Exception:
             pass
         
@@ -483,12 +494,12 @@ class AdvancedFileMoverCustomTkinter:
         ctk.set_appearance_mode(self.current_theme)
         
         # Managers
-        self.storage_detector = StorageDetector()
-        self.ramdrive_manager = RamDriveManager()  # Aggiungi RamDrive detection
+        self.ramdrive_manager = RamDriveManager()
         
         self.file_engine = FileOperationEngine(
             buffer_size=int(self.buffer_size.get()) * 1024 * 1024,  # Converti MB a bytes
-            num_threads=int(self.threads.get())
+            num_threads=int(self.threads.get()),
+            overwrite=self.overwrite_enabled.get()
         )
 
         # Drag and Drop (il monkey-patch è già applicato negli import)
@@ -1344,22 +1355,24 @@ class AdvancedFileMoverCustomTkinter:
         # Crea main_tab subito (quella principale)
         self.create_main_tab()
         
-        # Carica altre tab in background per avvio veloce
+        # Carica le altre tab nel main thread dopo un breve ritardo (avvio veloce).
+        # IMPORTANTE: la creazione di widget Tkinter NON è thread-safe –
+        # non usare threading.Thread per creare widget.
         def load_remaining_tabs():
             try:
-                import time
-                # Avvio veloce: le tab vengono caricate subito
-                # La detection della cache persistente è già stata fatta nel __init__ di RamDriveManager
-                time.sleep(0.5)  # Minima pausa per stabilità UI
-                
                 self.create_info_tab()
+            except Exception as e:
+                print(f"Errore creazione info tab: {e}")
+            try:
                 self.create_menu_tab()
+            except Exception as e:
+                print(f"Errore creazione menu tab: {e}")
+            try:
                 self.create_view_tab()
             except Exception as e:
-                print(f"Errore nel caricamento tab di background: {e}")
-        
-        bg_thread = threading.Thread(target=load_remaining_tabs, daemon=True)
-        bg_thread.start()
+                print(f"Errore creazione view tab: {e}")
+
+        self.root.after(500, load_remaining_tabs)
         
         # Footer con status bar
         footer_frame = ctk.CTkFrame(self.root, fg_color="transparent")
@@ -2120,37 +2133,8 @@ class AdvancedFileMoverCustomTkinter:
             self._auto_profile_parameters()
     
     def _auto_profile_parameters(self):
-        """Auto-profilazione buffer e thread in base ai drive selezionati"""
-        if not self.source_paths or not self.dest_path.get():
-            return  # Non fare nulla se mancano dati
-        
-        try:
-            # Ottieni il drive di destinazione
-            dest_drive = os.path.splitdrive(self.dest_path.get())[0]
-            
-            # Determina il tipo di storage della destinazione
-            storage_type = self.ramdrive_manager.get_storage_type(self.dest_path.get())
-            
-            # Parametri ottimali per diversi storage type
-            optimal_params = {
-                'ram': {'buffer_mb': 8, 'threads': 16},
-                'nvme': {'buffer_mb': 256, 'threads': 12},
-                'ssd': {'buffer_mb': 128, 'threads': 8},
-                'usb': {'buffer_mb': 64, 'threads': 4},
-                'nas': {'buffer_mb': 32, 'threads': 2},
-                'hdd': {'buffer_mb': 80, 'threads': 2}
-            }
-            
-            params = optimal_params.get(storage_type, {'buffer_mb': 100, 'threads': 4})
-            
-            # Aggiorna i valori (NON salva nel config)
-            self.buffer_size.set(str(params['buffer_mb']))
-            self.threads.set(str(params['threads']))
-            
-        except Exception as e:
-            # Se c'è errore, mantieni i default (100MB, 4 thread)
-            self.buffer_size.set('100')
-            self.threads.set('4')
+        """Alias di _auto_tune_parameters (già unificati: la logica dipende solo dalla destinazione)."""
+        self._auto_tune_parameters()
     
     def _start_operation(self, operation_type):
         """Avvia copia/sposta"""
@@ -2341,25 +2325,6 @@ class AdvancedFileMoverCustomTkinter:
         except Exception:
             pass
     
-    def _progress_monitor(self):
-        """Monitora progress durante l'operazione (ogni 100ms)"""
-        import time
-        
-        while self.operation_in_progress:
-            try:
-                # Ottieni dati progress dal file_engine
-                if hasattr(self.file_engine, 'processed_size') and hasattr(self.file_engine, 'total_size'):
-                    total = self.file_engine.total_size
-                    processed = self.file_engine.processed_size
-                    
-                    if total > 0:
-                        percentage = int((processed / total) * 100)
-                        self.root.after(0, lambda p=percentage: self._update_progress(p, ""))
-                
-                time.sleep(0.1)  # Aggiorna ogni 100ms
-            except:
-                time.sleep(0.1)
-    
     def _operation_worker(self, operation_type):
         """Worker thread per operazione copia/sposta"""
         result_state = 'error'
@@ -2398,6 +2363,7 @@ class AdvancedFileMoverCustomTkinter:
             # Aggiorna engine con parametri correnti
             self.file_engine.buffer_size = int(self.buffer_size.get()) * 1024 * 1024
             self.file_engine.num_threads = int(self.threads.get())
+            self.file_engine.overwrite = self.overwrite_enabled.get()  # collega checkbox overwrite
             self.file_engine.reset_progress()
             
             destination = self.dest_path.get()

@@ -283,8 +283,10 @@ class RamDriveManager:
                     
                     if ok:
                         vol_label = vol_name.value.lower()
-                        # Volume label suggerisce RAM?
-                        if any(kw in vol_label for kw in ["ram", "temp", "volatile", "memory"]):
+                        # Volume label suggerisce esplicitamente RAM?
+                        # "temp", "volatile", "memory" rimossi: troppo generici (falsi positivi su USB/SSD).
+                        # Teniamo solo label che iniziano con "ram" (es. "ram", "ramdisk", "ramdrive", "ramcache").
+                        if vol_label == "ram" or vol_label.startswith("ram"):
                             self.ramdrive_letter = letter
                             self.detected_software.append(f'Volume-Label ({vol_label})')
                             return True
