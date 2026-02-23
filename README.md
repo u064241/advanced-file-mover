@@ -7,7 +7,7 @@
 Professional Windows utility for copying and moving files and folders with real-time progress, hardware auto-optimization (buffer/threads), Windows Explorer context menu integration, and automatic updates from GitHub.
 
 **Version**: 1.0.2 (Stable)  
-**Release Date**: 2026-06-23  
+**Release Date**: 2026-02-23  
 **Status**: ✅ Production Ready
 
 ---
@@ -172,7 +172,7 @@ pyinstaller --clean gui_customtkinter.spec
 
 ## 🔄 Version & Changelog
 
-### v1.0.2 (2026-06-23) - Bug Fix Release
+### v1.0.2 (2026-02-23) - Bug Fix Release
 
 #### 🐛 Bug Fixes
 - **Thread Safety (`processed_size`)**: All updates to `processed_size` in the copy/move engine are now protected by `threading.Lock`, eliminating race conditions during parallel transfers
