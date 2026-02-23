@@ -4,6 +4,7 @@ Engine core per operazioni file ottimizzate
 import os
 import shutil
 import threading
+import concurrent.futures
 import time
 import tempfile
 from pathlib import Path
@@ -30,7 +31,8 @@ class FileOperationEngine:
                  buffer_size: int = BUFFER_SIZE,
                  use_ramdrive: bool = True,
                  ramdrive_letter: Optional[str] = None,
-                 num_threads: int = 4):
+                 num_threads: int = 4,
+                 overwrite: bool = True):
         """
         Inizializza engine
         
@@ -38,19 +40,22 @@ class FileOperationEngine:
             buffer_size: Dimensione buffer in bytes
             use_ramdrive: Usare RamDrive se disponibile
             ramdrive_letter: Lettera RamDrive (A-Z)
-            num_threads: Numero thread per operazioni parallele
+            num_threads: Numero thread per operazioni parallele (directory)
+            overwrite: Sovrascrivere file esistenti in destinazione
         """
         self.buffer_size = buffer_size
         self.use_ramdrive = use_ramdrive
         self.ramdrive_letter = ramdrive_letter
-        self.num_threads = num_threads
+        self.num_threads = max(1, num_threads)
+        self.overwrite = overwrite
         
-        # Progress tracking
+        # Progress tracking (processed_size modificato da più thread → lock)
         self.current_file = ""
         self.total_size = 0
         self.processed_size = 0
         self.current_speed = 0  # bytes/sec
         self.is_cancelled = False
+        self._processed_size_lock = threading.Lock()
 
         # File counting (per mostrare 1/n)
         self.file_index = 0
@@ -72,21 +77,30 @@ class FileOperationEngine:
     def set_complete_callback(self, callback: Callable):
         """Imposta callback per completamento"""
         self.on_complete = callback
-    
+
+    def _log_info(self, message: str):
+        """Log informativo (silenzioso per default; non espone callback separato)."""
+        pass  # Sostituire con logger se richiesto
+
+    def _log_error(self, message: str):
+        """Log errore"""
+        if self.on_error:
+            self.on_error(message)
+
     def cancel(self):
         """Cancella operazione in corso"""
         self.is_cancelled = True
     
     def reset_progress(self):
         """Resetta lo stato del progresso per una nuova operazione"""
-        self.current_file = ""
-        self.total_size = 0
-        self.processed_size = 0
-        self.current_speed = 0
-        self.is_cancelled = False
-
-        self.file_index = 0
-        self.file_count = 0
+        with self._processed_size_lock:
+            self.current_file = ""
+            self.total_size = 0
+            self.processed_size = 0
+            self.current_speed = 0
+            self.is_cancelled = False
+            self.file_index = 0
+            self.file_count = 0
     
     def copy(self, source: str, destination: str) -> bool:
         """
@@ -171,7 +185,9 @@ class FileOperationEngine:
                 self._log_info(f"✅ Trasferimento diretto a RamDrive con buffer ottimizzato")
             
             # CONTROLLO SPAZIO DESTINAZIONE
+            # Per MOVE tra drive diversi l'operazione è copy+delete: serve spazio.
             dest_drive = os.path.splitdrive(destination)[0]
+            src_drive  = os.path.splitdrive(source)[0]
             if dest_drive:
                 try:
                     usage = shutil.disk_usage(dest_drive)
@@ -179,7 +195,11 @@ class FileOperationEngine:
                     
                     if operation == OperationType.COPY:
                         required = self.total_size
-                    else:  # MOVE
+                    elif operation == OperationType.MOVE:
+                        # Cross-drive MOVE = copy + delete: serve spazio in destinazione
+                        same_drive = dest_drive.upper() == src_drive.upper()
+                        required = 0 if same_drive else self.total_size
+                    else:
                         required = 0
                     
                     if free_space < required:
@@ -194,14 +214,15 @@ class FileOperationEngine:
                     pass
             
             # Esegui operazione
+            success = False
             if os.path.isfile(source):
                 # Singolo file
                 self.file_index = 1
-                return self._handle_file_with_ramdrive(source, destination, operation, 
+                success = self._handle_file_with_ramdrive(source, destination, operation, 
                                                        use_ramdrive_buffer, ramdrive_temp_path)
             else:
                 # Directory
-                return self._handle_directory_with_ramdrive(
+                success = self._handle_directory_with_ramdrive(
                     source,
                     destination,
                     operation,
@@ -209,6 +230,11 @@ class FileOperationEngine:
                     ramdrive_temp_path,
                     files_to_process=files_to_process,
                 )
+
+            # Callback completamento (segnalato UNA sola volta al termine)
+            if success and self.on_complete:
+                self.on_complete()
+            return success
         
         except Exception as e:
             self._log_error(f"Errore operazione: {e}")
@@ -329,6 +355,11 @@ class FileOperationEngine:
             if os.path.isdir(destination):
                 destination = os.path.join(destination, os.path.basename(source))
             
+            # Controllo overwrite: se la destinazione esiste e overwrite=False, salta
+            if os.path.exists(destination) and not self.overwrite:
+                self._log_info(f"Skip (esistente): {strip_long_path_prefix(destination)}")
+                return True
+
             # Creare directory destinazione se necessaria
             dest_dir = os.path.dirname(destination)
             if dest_dir and not os.path.exists(dest_dir):
@@ -353,13 +384,10 @@ class FileOperationEngine:
             is_ramdrive = self.ramdrive_letter and dest_drive == f"{self.ramdrive_letter.upper()}:"
             
             if is_ramdrive:
-                # RamDrive: buffer ottimizzato (trasferimento RAM->RAM)
-                use_buffer = 8 * 1024 * 1024  # 8 MB
+                use_buffer = 8 * 1024 * 1024  # 8 MB (RAM->RAM)
             elif file_size > self.LARGE_FILE_THRESHOLD:
-                # File grandi: buffer grande
                 use_buffer = self.LARGE_FILE_BUFFER
             else:
-                # File normali: buffer standard
                 use_buffer = self.buffer_size
             
             # Copia effettiva con buffering
@@ -382,23 +410,24 @@ class FileOperationEngine:
             with src_fh as src, dst_fh as dst:
                 while True:
                     if self.is_cancelled:
-                        os.remove(destination)
+                        try:
+                            os.remove(destination)
+                        except:
+                            pass
                         return False
                     
-                    buffer = src.read(use_buffer)
-                    if not buffer:
+                    chunk = src.read(use_buffer)
+                    if not chunk:
                         break
                     
-                    dst.write(buffer)
-                    self.processed_size += len(buffer)
+                    dst.write(chunk)
+                    with self._processed_size_lock:
+                        self.processed_size += len(chunk)
                     self._report_progress()
             
             # Se move, cancellare sorgente
             if operation == OperationType.MOVE:
                 os.remove(source)
-            
-            if self.on_complete:
-                self.on_complete()
             
             return True
         
@@ -413,84 +442,13 @@ class FileOperationEngine:
     
     def _handle_directory(self, source: str, destination: str,
                          operation: OperationType) -> bool:
-        """Gestisce copia/spostamento directory"""
-        try:
-            # Applica long path prefix
-            source = long_path(source)
-            destination = long_path(destination)
-
-            # Creare directory destinazione
-            if not os.path.exists(destination):
-                os.makedirs(destination, exist_ok=True)
-            
-            files_to_process = []
-            
-            # Raccogliere tutti i file
-            for dirpath, dirnames, filenames in os.walk(source):
-                for filename in filenames:
-                    src_file = os.path.join(dirpath, filename)
-                    rel_path = os.path.relpath(src_file, source)
-                    dst_file = os.path.join(destination, rel_path)
-                    files_to_process.append((src_file, dst_file))
-            
-            # Processare file
-            for i, (src_file, dst_file) in enumerate(files_to_process, start=1):
-                if self.is_cancelled:
-                    return False
-                
-                # Creare subdirectory se necessaria
-                dst_dir = os.path.dirname(dst_file)
-                if not os.path.exists(dst_dir):
-                    os.makedirs(dst_dir, exist_ok=True)
-                
-                self.file_count = max(self.file_count, len(files_to_process))
-                self.file_index = i
-                self.current_file = os.path.basename(src_file)
-                self._report_progress()
-                
-                # Ottimizza buffer in base a destinazione
-                file_size = os.path.getsize(src_file)
-                
-                # Se target è ramdrive, usa buffer minimo
-                dest_drive = os.path.splitdrive(dst_file)[0].upper()
-                is_ramdrive = self.ramdrive_letter and dest_drive == f"{self.ramdrive_letter.upper()}:"
-                
-                if is_ramdrive:
-                    # RamDrive: buffer ottimizzato (trasferimento RAM->RAM)
-                    use_buffer = 8 * 1024 * 1024  # 8 MB
-                elif file_size > self.LARGE_FILE_THRESHOLD:
-                    # File grandi: buffer grande
-                    use_buffer = self.LARGE_FILE_BUFFER
-                else:
-                    # File normali: buffer standard
-                    use_buffer = self.buffer_size
-                
-                try:
-                    with open(src_file, 'rb') as src, open(dst_file, 'wb') as dst:
-                        while True:
-                            buffer = src.read(use_buffer)
-                            if not buffer:
-                                break
-                            dst.write(buffer)
-                            self.processed_size += len(buffer)
-                    
-                    # Se move, cancellare sorgente
-                    if operation == OperationType.MOVE:
-                        os.remove(src_file)
-                except Exception as e:
-                    self._log_error(f"Errore file {strip_long_path_prefix(src_file)}: {e}")
-            
-            # Se move, cancellare directory source (se vuota)
-            if operation == OperationType.MOVE:
-                try:
-                    os.rmdir(source)
-                except:
-                    pass  # Directory non vuota, ignorare
-            
-            return True
-        except Exception as e:
-            self._log_error(f"Errore directory: {e}")
-            return False
+        """Deprecato: delega a _handle_directory_with_ramdrive (no ramdrive buffer)."""
+        return self._handle_directory_with_ramdrive(
+            source, destination, operation,
+            use_ramdrive_buffer=False,
+            ramdrive_temp_path=None,
+            files_to_process=None,
+        )
     
     def _handle_file_with_ramdrive(self, source: str, destination: str,
                                   operation: OperationType,
@@ -528,7 +486,11 @@ class FileOperationEngine:
                                        use_ramdrive_buffer: bool = False,
                                        ramdrive_temp_path: Optional[str] = None,
                                        files_to_process=None) -> bool:
-        """Gestisce directory con supporto RamDrive 2-fasi"""
+        """Gestisce directory con parallelismo reale (ThreadPoolExecutor) e supporto RamDrive 2-fasi.
+        
+        Nota: la modalità RamDrive-buffer rimane sequenziale per evitare collisioni
+        nel nome del file temporaneo; il parallelismo si attiva nella modalità diretta.
+        """
         try:
             # Applica long path prefix
             source = long_path(source)
@@ -543,40 +505,64 @@ class FileOperationEngine:
                     return False
                 files_to_process, total_size = plan
                 self.total_size = total_size
-            
-            # Processare file
-            for i, (src_file, dst_file) in enumerate(files_to_process, start=1):
-                if self.is_cancelled:
+
+            total = len(files_to_process)
+            self.file_count = total
+
+            # -- Pre-crea tutte le directory destinazione (single-thread per evitare race) --
+            dirs_to_create = {os.path.dirname(dst) for _, dst in files_to_process if os.path.dirname(dst)}
+            for dst_dir in sorted(dirs_to_create):  # sorted = parent prima di figlio
+                try:
+                    os.makedirs(dst_dir, exist_ok=True)
+                except Exception as e:
+                    self._log_error(f"Errore creazione directory: {strip_long_path_prefix(dst_dir)} ({self._format_exc(e)})")
                     return False
-                
-                dst_dir = os.path.dirname(dst_file)
-                if not os.path.exists(dst_dir):
-                    try:
-                        os.makedirs(dst_dir, exist_ok=True)
-                    except Exception as e:
-                        self._log_error(f"Errore creazione directory: {strip_long_path_prefix(dst_dir)} ({self._format_exc(e)})")
-                        return False
-                
-                self.file_count = max(self.file_count, len(files_to_process))
-                self.file_index = i
-                self.current_file = os.path.basename(src_file)
-                
-                # Flusso a 2 fasi o diretto
+
+            # --- Flag di errore thread-safe ---
+            error_event = threading.Event()
+            file_index_lock = threading.Lock()
+
+            def process_one(idx_src_dst):
+                """Worker per singolo file (eseguito in thread pool)."""
+                i, (src_file, dst_file) = idx_src_dst
+                if self.is_cancelled or error_event.is_set():
+                    return False
+
+                with file_index_lock:
+                    self.file_index = i
+                    self.current_file = os.path.basename(src_file)
+
                 if use_ramdrive_buffer and ramdrive_temp_path:
-                    temp_file = os.path.join(ramdrive_temp_path, os.path.basename(src_file))
-                    os.makedirs(ramdrive_temp_path, exist_ok=True)
-                    if not self._copy_via_ramdrive(src_file, dst_file, ramdrive_temp_path, operation):
-                        return False
+                    ok = self._copy_via_ramdrive(src_file, dst_file, ramdrive_temp_path, operation)
                 else:
-                    if not self._handle_file(src_file, dst_file, operation):
-                        return False
-            
+                    ok = self._handle_file(src_file, dst_file, operation)
+
+                if not ok:
+                    error_event.set()
+                return ok
+
+            # --- Esecuzione: parallela in modalità diretta, sequenziale con ramdrive buffer ---
+            if use_ramdrive_buffer and ramdrive_temp_path:
+                # Sequenziale: evita collisioni nel temp path
+                results = [process_one(item) for item in enumerate(files_to_process, start=1)]
+            else:
+                max_workers = max(1, min(self.num_threads, total))
+                with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+                    results = list(executor.map(
+                        process_one,
+                        enumerate(files_to_process, start=1)
+                    ))
+
+            if error_event.is_set() or not all(results):
+                return False
+
+            # MOVE: rimuovi la struttura directory sorgente (tutti i file sono già stati eliminati)
             if operation == OperationType.MOVE:
                 try:
-                    os.rmdir(source)
-                except:
+                    shutil.rmtree(source, ignore_errors=True)
+                except Exception:
                     pass
-            
+
             return True
         except Exception as e:
             self._log_error(f"Errore directory: {strip_long_path_prefix(source)} -> {strip_long_path_prefix(destination)} ({self._format_exc(e)})")
@@ -590,8 +576,15 @@ class FileOperationEngine:
             source = long_path(source)
             destination = long_path(destination)
 
+            # Controllo overwrite: se destinazione esiste e overwrite=False, salta
+            if os.path.exists(destination) and not self.overwrite:
+                self._log_info(f"Skip (esistente): {strip_long_path_prefix(destination)}")
+                return True
+
             # Fase 1: Sorgente → RamDrive
-            temp_file = os.path.join(ramdrive_temp_path, os.path.basename(source))
+            # Usa un nome univoco per evitare collisioni in operazioni parallele future
+            base_name = f"{id(source):x}_{os.path.basename(source)}"
+            temp_file = os.path.join(ramdrive_temp_path, base_name)
             os.makedirs(ramdrive_temp_path, exist_ok=True)
             
             if not self._copy_file_internal(source, temp_file, use_buffer=8 * 1024 * 1024):
@@ -639,42 +632,32 @@ class FileOperationEngine:
                             pass
                         return False
                     
-                    buffer = src.read(use_buffer)
-                    if not buffer:
+                    chunk = src.read(use_buffer)
+                    if not chunk:
                         break
                     
-                    dst.write(buffer)
-                    self.processed_size += len(buffer)
+                    dst.write(chunk)
+                    with self._processed_size_lock:
+                        self.processed_size += len(chunk)
                     self._report_progress()
             
             return True
         except Exception as e:
             self._log_error(f"Errore copia interna: {strip_long_path_prefix(source)} -> {strip_long_path_prefix(destination)} ({self._format_exc(e)})")
             return False
-            if self.on_complete:
-                self.on_complete()
-            
-            return True
-        
-        except Exception as e:
-            self._log_error(f"Errore copia directory: {e}")
-            return False
     
     def _report_progress(self):
         """Riporta progress"""
         if self.on_progress:
+            with self._processed_size_lock:
+                ps = self.processed_size
             progress_data = {
                 'current_file': self.current_file,
                 'total_size': self.total_size,
-                'processed_size': self.processed_size,
+                'processed_size': ps,
                 'speed': self.current_speed,
-                'percentage': (self.processed_size / max(self.total_size, 1)) * 100,
+                'percentage': (ps / max(self.total_size, 1)) * 100,
                 'file_index': int(self.file_index),
                 'file_count': int(self.file_count),
             }
             self.on_progress(progress_data)
-    
-    def _log_error(self, message: str):
-        """Log errore"""
-        if self.on_error:
-            self.on_error(message)
