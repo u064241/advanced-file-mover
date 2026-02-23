@@ -69,12 +69,12 @@ Professional Windows utility for copying and moving files and folders with real-
 Download the latest version from [GitHub Releases](https://github.com/u064241/advanced-file-mover/releases/latest):
 
 ```text
-AdvancedFileMover_1.0.1_Setup.exe
+AdvancedFileMover_1.0.2_Setup.exe
 ```
 
 ### Automatic Installation
 
-1. Download `AdvancedFileMover_1.0.1_Setup.exe`
+1. Download `AdvancedFileMover_1.0.2_Setup.exe`
 2. Run the installer
 3. Follow the installation wizard
 4. Context menu will be automatically registered
@@ -115,7 +115,7 @@ cd C:\SOURCECODE\PYTHON\advanced-file-mover
 
 .\build.ps1 -Clean -Setup
 
-# Output: installer\Output\AdvancedFileMover_1.0.1_Setup.exe
+# Output: installer\Output\AdvancedFileMover_1.0.2_Setup.exe
 ```
 
 **PyInstaller Only (Executable)**
@@ -292,7 +292,7 @@ Application settings are stored in `%LOCALAPPDATA%\AdvancedFileMover\config.json
 
 ```json
 {
-  "version": "1.0.1",
+  "version": "1.0.2",
   "theme": "dark",
   "always_on_top": true,
   "window_size": {
@@ -386,7 +386,7 @@ Version is centrally managed in `config.json`:
 
 ```json
 {
-  "version": "1.0.1",
+  "version": "1.0.2",
   ...
 }
 ```
