@@ -480,6 +480,9 @@ class AdvancedFileMoverCustomTkinter:
         
         # Checkbox variables
         self.ramdrive_enabled = tk.BooleanVar(value=self.config_manager.get('ramdrive', False))
+        # Preferenza utente reale: conservata quando il checkbox viene disabilitato a forza
+        # (es. sorgente/destinazione coincide con il RamDrive). None = nessun override attivo.
+        self._ramdrive_user_pref: bool | None = None
         self.overwrite_enabled = tk.BooleanVar(value=self.config_manager.get('overwrite', False))
         self.delete_source_enabled = tk.BooleanVar(value=self.config_manager.get('delete_source', False))
         self.always_on_top_var = tk.BooleanVar(value=self.config_manager.get('always_on_top', False))
@@ -1076,7 +1079,7 @@ class AdvancedFileMoverCustomTkinter:
             pass
 
     def _update_ramdrive_option_state(self):
-        """Disabilita 'Usa RamDrive' se la sorgente è sul RamDrive stesso."""
+        """Disabilita 'Usa RamDrive' se la sorgente o la destinazione coincidono con il RamDrive."""
         try:
             try:
                 has_ramdrive = bool(self.ramdrive_manager.detect_ramdrive())
@@ -1084,6 +1087,13 @@ class AdvancedFileMoverCustomTkinter:
                 has_ramdrive = False
 
             if not has_ramdrive:
+                # Nessun RamDrive presente: ripristina preferenza utente e abilita
+                try:
+                    if self._ramdrive_user_pref is not None:
+                        self.ramdrive_enabled.set(self._ramdrive_user_pref)
+                        self._ramdrive_user_pref = None
+                except Exception:
+                    pass
                 try:
                     if hasattr(self, 'ramdrive_checkbox'):
                         self.ramdrive_checkbox.configure(state='normal')
@@ -1091,17 +1101,30 @@ class AdvancedFileMoverCustomTkinter:
                     pass
                 return
 
-            source_on_ram = False
+            # Verifica sorgenti
+            path_on_ram = False
             for src in list(self.source_paths or []):
                 try:
                     if self.ramdrive_manager.get_storage_type(src) == 'ram':
-                        source_on_ram = True
+                        path_on_ram = True
                         break
                 except Exception:
                     continue
 
-            if source_on_ram:
+            # Verifica destinazione (se sorgenti ok)
+            if not path_on_ram:
                 try:
+                    dest = self.dest_path.get()
+                    if dest and self.ramdrive_manager.get_storage_type(dest) == 'ram':
+                        path_on_ram = True
+                except Exception:
+                    pass
+
+            if path_on_ram:
+                # Salva preferenza reale solo la prima volta (evita di sovrascrivere con False)
+                try:
+                    if self._ramdrive_user_pref is None:
+                        self._ramdrive_user_pref = self.ramdrive_enabled.get()
                     self.ramdrive_enabled.set(False)
                 except Exception:
                     pass
@@ -1111,6 +1134,13 @@ class AdvancedFileMoverCustomTkinter:
                 except Exception:
                     pass
             else:
+                # Sorgente e destinazione non sul RamDrive: ripristina preferenza utente
+                try:
+                    if self._ramdrive_user_pref is not None:
+                        self.ramdrive_enabled.set(self._ramdrive_user_pref)
+                        self._ramdrive_user_pref = None
+                except Exception:
+                    pass
                 try:
                     if hasattr(self, 'ramdrive_checkbox'):
                         self.ramdrive_checkbox.configure(state='normal')
@@ -1129,6 +1159,12 @@ class AdvancedFileMoverCustomTkinter:
         try:
             self._queue_accurate_refresh_for_path(self.dest_path.get())
             self._schedule_accurate_storage_refresh()
+        except Exception:
+            pass
+
+        # Se la destinazione è sul RamDrive, disabilita l'opzione "Usa RamDrive"
+        try:
+            self._update_ramdrive_option_state()
         except Exception:
             pass
 
@@ -2853,7 +2889,10 @@ class AdvancedFileMoverCustomTkinter:
         # window_position non viene più salvata - la finestra si posiziona dinamicamente all'avvio
         self.config_manager.set('buffer_size', int(self.buffer_size.get()))
         self.config_manager.set('threads', int(self.threads.get()))
-        self.config_manager.set('ramdrive', self.ramdrive_enabled.get())
+        # Se il checkbox è disabilitato per override (sorgente/dest sul RamDrive),
+        # salva la preferenza reale dell'utente, non il False forzato.
+        ramdrive_to_save = self._ramdrive_user_pref if self._ramdrive_user_pref is not None else self.ramdrive_enabled.get()
+        self.config_manager.set('ramdrive', ramdrive_to_save)
         self.config_manager.set('overwrite', self.overwrite_enabled.get())
         self.config_manager.set('delete_source', self.delete_source_enabled.get())
         
