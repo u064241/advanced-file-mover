@@ -108,18 +108,19 @@ class StorageDetector:
     def _detect_windows(self, path):
         """Rileva il tipo di storage su Windows usando QueryDosDevice (veloce, accurato)"""
         try:
+            CREATE_NO_WINDOW = 0x08000000
             # Estrai la lettera drive
             drive_letter = path[0] if len(path) > 0 else 'C'
-            
+
             # PRIMA PRIORITA': Usa ramdrive_manager se disponibile (QueryDosDevice + cache)
             if self.ramdrive_manager:
                 try:
                     # scan_all_drives() usa QueryDosDevice per classificazione accurata
                     all_drives = self.ramdrive_manager.scan_all_drives()
-                    
+
                     if drive_letter in all_drives:
                         storage_type_str = all_drives[drive_letter]
-                        
+
                         # Mappa il tipo restituito al dizionario STORAGE_TYPES
                         type_map = {
                             'ram': 'RAMDRIVE',
@@ -129,30 +130,30 @@ class StorageDetector:
                             'nas': 'NAS',
                             'hdd': 'HDD',
                         }
-                        
+
                         type_key = type_map.get(storage_type_str, 'HDD')
                         return self.STORAGE_TYPES[type_key]
                 except:
                     pass
-            
+
             # FALLBACK: PowerShell Get-Volume se RamDriveManager non disponibile
             try:
                 import subprocess
-                
+
                 # PowerShell command per ottenere il drive type (moderno, non deprecato)
                 ps_command = f'Get-Volume -DriveLetter {drive_letter} | Select-Object DriveType | ConvertTo-Json'
-                
+
                 result = subprocess.run(
                     ['powershell', '-NoProfile', '-Command', ps_command],
                     capture_output=True,
                     text=True,
                     timeout=5,
-                    creationflags=0x08000000 if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0  # CREATE_NO_WINDOW
+                    creationflags=CREATE_NO_WINDOW
                 )
-                
+
                 if result.returncode == 0:
                     output = result.stdout.upper()
-                    
+
                     # DriveType: 1=Removable, 2=Fixed, 3=Network, 4=CDRom, 5=RamDisk
                     if '"Fixed"' in output or 'FIXED' in output:
                         # Fixed drive - controlla se SSD o HDD
@@ -165,32 +166,33 @@ class StorageDetector:
                 pass
         except:
             pass
-        
+
         # Default: SSD
         return self.STORAGE_TYPES['SSD']
     
     def _detect_ssd_or_hdd_windows(self, drive_letter):
         """Distingue tra SSD, NVMe e HDD su Windows usando PowerShell"""
         try:
+            CREATE_NO_WINDOW = 0x08000000
             import subprocess
-            
+
             # Usa PowerShell per rilevare il tipo di disco (più moderno di wmic deprecato)
             ps_command = (
                 "Get-PhysicalDisk | Select-Object -Property FriendlyName, MediaType | "
                 "ConvertTo-Json -Compress"
             )
-            
+
             result = subprocess.run(
                 ['powershell', '-NoProfile', '-Command', ps_command],
                 capture_output=True,
                 text=True,
                 timeout=5,
-                creationflags=0x08000000 if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0  # CREATE_NO_WINDOW
+                creationflags=CREATE_NO_WINDOW
             )
-            
+
             if result.returncode == 0:
                 output = result.stdout.upper()
-                
+
                 if 'NVME' in output or 'NVME' in output:
                     return self.STORAGE_TYPES['NVME']
                 elif 'SSD' in output:
@@ -199,28 +201,28 @@ class StorageDetector:
                     return self.STORAGE_TYPES['HDD']
         except:
             pass
-        
+
         # Se PowerShell fallisce, prova il metodo alternativo con volumi
         try:
             import subprocess
-            
+
             # Alternativa: usa Get-Volume per il drive letter
             ps_command = f'Get-Volume -DriveLetter {drive_letter} | Select-Object FileSystemType | ConvertTo-Json'
-            
+
             result = subprocess.run(
                 ['powershell', '-NoProfile', '-Command', ps_command],
                 capture_output=True,
                 text=True,
                 timeout=5,
-                creationflags=0x08000000 if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0  # CREATE_NO_WINDOW
+                creationflags=CREATE_NO_WINDOW
             )
-            
+
             if result.returncode == 0 and 'NTFS' in result.stdout.upper():
                 # È un NTFS - potrebbe essere SSD di default
                 return self.STORAGE_TYPES['SSD']
         except:
             pass
-        
+
         # Default: SSD
         return self.STORAGE_TYPES['SSD']
     

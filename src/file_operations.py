@@ -140,7 +140,7 @@ class FileOperationEngine:
 
             # Calcola size totale (ottimizzato per directory: un solo passaggio)
             if os.path.isfile(source):
-                self.total_size = self._get_total_size(source)
+                self.total_size = os.path.getsize(source)  # Single call instead of _get_total_size
                 self.file_count = 1
                 self.file_index = 0
             else:
@@ -243,7 +243,6 @@ class FileOperationEngine:
             # Pulizia cartella temporanea ramdrive
             if ramdrive_temp_path and os.path.exists(ramdrive_temp_path):
                 try:
-                    import shutil
                     shutil.rmtree(ramdrive_temp_path, ignore_errors=True)
                     self._log_info(f"✅ Cartella temporanea rimossa: {ramdrive_temp_path}")
                 except Exception as e:
@@ -546,12 +545,17 @@ class FileOperationEngine:
                 # Sequenziale: evita collisioni nel temp path
                 results = [process_one(item) for item in enumerate(files_to_process, start=1)]
             else:
-                max_workers = max(1, min(self.num_threads, total))
-                with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-                    results = list(executor.map(
-                        process_one,
-                        enumerate(files_to_process, start=1)
-                    ))
+                # Only use thread pool if we have multiple files and configured threads > 1
+                if total > 1 and self.num_threads > 1:
+                    max_workers = max(1, min(self.num_threads, total))
+                    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+                        results = list(executor.map(
+                            process_one,
+                            enumerate(files_to_process, start=1)
+                        ))
+                else:
+                    # Single file or single thread mode - no need for thread pool overhead
+                    results = [process_one(item) for item in enumerate(files_to_process, start=1)]
 
             if error_event.is_set() or not all(results):
                 return False
