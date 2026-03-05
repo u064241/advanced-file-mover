@@ -326,11 +326,12 @@ class RamDriveManager:
         """Controlla SoftPerfect RamDisk (processo, driver, volumi)"""
         try:
             # Metodo 1: Cerca il processo RAMDisk.exe
+            CREATE_NO_WINDOW = 0x08000000
             result = subprocess.run(
                 ["tasklist", "/FI", "IMAGENAME eq RAMDisk.exe"],
                 capture_output=True,
                 text=True,
-                creationflags=0x08000000
+                creationflags=CREATE_NO_WINDOW
             )
             
             if "RAMDisk.exe" not in result.stdout:
@@ -394,11 +395,12 @@ class RamDriveManager:
     def _check_ramdisk(self) -> bool:
         """Controlla se RAMDisk è installato"""
         try:
+            CREATE_NO_WINDOW = 0x08000000
             result = subprocess.run(
                 ["tasklist", "/FI", "IMAGENAME eq RAMDisk.exe"],
                 capture_output=True,
                 text=True,
-                creationflags=0x08000000  # CREATE_NO_WINDOW
+                creationflags=CREATE_NO_WINDOW
             )
             return "RAMDisk.exe" in result.stdout
         except:
@@ -416,6 +418,7 @@ class RamDriveManager:
         """Metodo WMI per rilevare RamDrive (Windows 10+)"""
         try:
             # Usa wmic per cercare dischi logici con characteristics di ramdrive
+            CREATE_NO_WINDOW = 0x08000000
             result = subprocess.run(
                 [
                     "wmic", "logicaldisk",
@@ -425,7 +428,7 @@ class RamDriveManager:
                 capture_output=True,
                 text=True,
                 timeout=5,
-                creationflags=0x08000000  # CREATE_NO_WINDOW
+                creationflags=CREATE_NO_WINDOW
             )
             
             if result.returncode == 0:
@@ -453,6 +456,7 @@ class RamDriveManager:
     def _check_powershell_ramdrive(self) -> bool:
         """Metodo PowerShell Get-Volume (nascosto)"""
         try:
+            CREATE_NO_WINDOW = 0x08000000
             # Comando PowerShell nascosto per Get-Volume
             ps_cmd = (
                 "Get-Volume | Where-Object {$_ -and $_.DriveLetter -and "
@@ -460,22 +464,22 @@ class RamDriveManager:
                 "$_.Description -match 'RAM|Memory|Virtual' -or $_.FileSystemLabel -match 'RAM')} | "
                 "Select-Object -ExpandProperty DriveLetter"
             )
-            
+
             result = subprocess.run(
                 ["powershell.exe", "-NoProfile", "-Command", ps_cmd],
                 capture_output=True,
                 text=True,
                 timeout=5,
-                creationflags=0x08000000 | 0x00000200  # CREATE_NO_WINDOW | CREATE_NEW_PROCESS_GROUP
+                creationflags=CREATE_NO_WINDOW
             )
-            
+
             if result.returncode == 0 and result.stdout.strip():
                 letter = result.stdout.strip()[0].upper()
                 if letter in 'CDEFGHIJKLMNOPQRSTUVWXYZ':
                     self.ramdrive_letter = letter
                     self.detected_software.append('PowerShell-detected')
                     return True
-            
+
             return False
         except:
             return False
@@ -483,6 +487,7 @@ class RamDriveManager:
     def _check_powershell_physical(self) -> bool:
         """Metodo PowerShell Get-PhysicalDisk per BusType/Name"""
         try:
+            CREATE_NO_WINDOW = 0x08000000
             ps_cmd = (
                 "Get-PhysicalDisk | Where-Object {$_ -and "
                 "( $_.BusType -eq 'RAM' -or $_.BusType -eq 6 -or "
@@ -496,7 +501,7 @@ class RamDriveManager:
                 capture_output=True,
                 text=True,
                 timeout=5,
-                creationflags=0x08000000 | 0x00000200
+                creationflags=CREATE_NO_WINDOW
             )
 
             if result.returncode == 0 and result.stdout.strip():
@@ -514,7 +519,7 @@ class RamDriveManager:
                     capture_output=True,
                     text=True,
                     timeout=5,
-                    creationflags=0x08000000 | 0x00000200
+                    creationflags=CREATE_NO_WINDOW
                 )
 
                 if map_res.returncode == 0 and map_res.stdout.strip():
@@ -892,25 +897,24 @@ class RamDriveManager:
         Legge BusType + FriendlyName via Get-Disk - timeout LUNGO ma accettabile in background thread.
         Per RAID, controlla FriendlyName per distinguere NVME RAID da SSD RAID."""
         try:
-            import subprocess
-            
+            CREATE_NO_WINDOW = 0x08000000
             # Nota: PowerShell 7 da Python ha overhead di startup significativo (~5-6s)
             # Poiché questo è in background thread, 10 secondi è accettabile
-            
+
             # Query sia BusType che FriendlyName
             ps_cmd = (
                 f"$disk = Get-Volume -DriveLetter {letter} -ErrorAction Stop | Get-Partition | Get-Disk; "
                 f"@{{BusType=$disk.BusType; FriendlyName=$disk.FriendlyName}} | ConvertTo-Json"
             )
-            
+
             result = subprocess.run(
                 ["pwsh", "-NoProfile", "-Command", ps_cmd],
                 capture_output=True,
                 text=True,
                 timeout=10.0,  # 10 secondi per timeout PowerShell
-                creationflags=0x08000000
+                creationflags=CREATE_NO_WINDOW
             )
-            
+
             if result.returncode == 0 and result.stdout.strip():
                 try:
                     import json
@@ -919,7 +923,7 @@ class RamDriveManager:
                     friendly_name = disk_info.get('FriendlyName', '').lower()
                 except:
                     return None
-                
+
                 # Mappa BusType -> storage type
                 if bus_type == 'nvme':
                     return 'nvme'
@@ -942,9 +946,9 @@ class RamDriveManager:
                     if 'raid' in bus_type:
                         return 'ssd'
                     return None
-            
+
             return None
-            
+
         except subprocess.TimeoutExpired:
             # Accetta timeout gracefully - prova di nuovo prossima volta
             return None
@@ -956,24 +960,23 @@ class RamDriveManager:
     def _detect_raid_underlying_storage_lazy(self, letter: str) -> str:
         """Controlla il FriendlyName del disco RAID per distinguere NVME RAID da SSD RAID"""
         try:
-            import subprocess
-            
+            CREATE_NO_WINDOW = 0x08000000
             ps_cmd = (
                 f"Get-Volume -DriveLetter {letter} | Get-Partition | Get-Disk | "
                 "Select-Object -ExpandProperty FriendlyName"
             )
-            
+
             result = subprocess.run(
                 ["powershell.exe", "-NoProfile", "-Command", ps_cmd],
                 capture_output=True,
                 text=True,
-                timeout=5,  # Timeout LUNGO per RAID detection
-                creationflags=0x08000000
+                timeout=5,
+                creationflags=CREATE_NO_WINDOW
             )
-            
+
             if result.returncode == 0:
                 friendly_name = result.stdout.strip().lower()
-                
+
                 # Controlla FriendlyName per keywords NVME
                 if any(kw in friendly_name for kw in ['nvme', 'nvm', 'pcie', 'm.2', 'intel']):
                     return 'nvme'
@@ -981,7 +984,7 @@ class RamDriveManager:
                 return 'ssd'
         except:
             pass
-        
+
         # Fallback: assume SSD per RAID sconosciuto
         return 'ssd'
     
