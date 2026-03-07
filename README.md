@@ -188,9 +188,9 @@ pyinstaller --clean gui_customtkinter.spec
 
 ---
 
+### v1.0.2 (2026-02-23) - Bug Fix Release
 
-#### 🐛 Bug Fixes
-- **Thread Safety (`processed_size`)**: All updates to `processed_size` in the copy/move engine are now protected by `threading.Lock`, eliminating race conditions during parallel transfers
+#### 🐛 Bug Fixes: All updates to `processed_size` in the copy/move engine are now protected by `threading.Lock`, eliminating race conditions during parallel transfers
 - **`on_complete` called exactly once**: Callback was previously invoked once per file in `_handle_file`; moved to `_perform_operation` so it fires a single time at the end of the operation
 - **Missing `_log_info()` method**: Absent method caused silent `AttributeError` when logging informational events; stub now defined alongside `_log_error()`
 - **MOVE cross-drive space check**: Free-space validation for cross-drive moves now correctly uses `total_size` as the required space (was always `0`)
