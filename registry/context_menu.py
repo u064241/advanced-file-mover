@@ -264,14 +264,11 @@ class ContextMenuRegistrar:
             # MUIVerb per il nome visualizzato
             winreg.SetValueEx(sub_key, "MUIVerb", 0, winreg.REG_SZ, label)
 
-            # Rimuove eventuale MultiSelectModel residuo (ora usiamo IPC Named Pipe)
-            try:
-                winreg.DeleteValue(sub_key, "MultiSelectModel")
-            except FileNotFoundError:
-                pass
-            except Exception:
-                pass
-            
+            # "Player" = mostra la voce per qualsiasi numero di file selezionati.
+            # "Document" (default quando assente) la nasconde oltre i 15 file.
+            # L'IPC --single-instance gestisce l'aggregazione: un'invocazione per file.
+            winreg.SetValueEx(sub_key, "MultiSelectModel", 0, winreg.REG_SZ, "Player")
+
             # Icone sulle sub-voci (come PowerShell 7)
             if operation == 'copy':
                 icon_path = exe_dir / "Icon" / "copy_icon.ico"
