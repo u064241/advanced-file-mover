@@ -1,12 +1,12 @@
 # Advanced File Mover Pro
 
-[![Version](https://img.shields.io/badge/version-1.0.5-blue.svg)](https://github.com/u064241/advanced-file-mover/releases/latest)
+[![Version](https://img.shields.io/badge/version-1.0.4-blue.svg)](https://github.com/u064241/advanced-file-mover/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](https://www.microsoft.com/windows)
 
 Professional Windows utility for copying and moving files and folders with real-time progress, hardware auto-optimization (buffer/threads), Windows Explorer context menu integration, and automatic updates from GitHub.
 
-**Version**: 1.0.5 (Stable)  
+**Version**: 1.0.4 (Stable)  
 **Release Date**: 2026-03-07  
 **Status**: ✅ Production Ready
 
@@ -69,12 +69,12 @@ Professional Windows utility for copying and moving files and folders with real-
 Download the latest version from [GitHub Releases](https://github.com/u064241/advanced-file-mover/releases/latest):
 
 ```text
-AdvancedFileMover_1.0.5_Setup.exe
+AdvancedFileMover_1.0.4_Setup.exe
 ```
 
 ### Automatic Installation
 
-1. Download `AdvancedFileMover_1.0.5_Setup.exe`
+1. Download `AdvancedFileMover_1.0.4_Setup.exe`
 2. Run the installer
 3. Follow the installation wizard
 4. Context menu will be automatically registered
@@ -115,7 +115,7 @@ cd C:\SOURCECODE\PYTHON\advanced-file-mover
 
 .\build.ps1 -Clean -Setup
 
-# Output: installer\Output\AdvancedFileMover_1.0.5_Setup.exe
+# Output: installer\Output\AdvancedFileMover_1.0.4_Setup.exe
 ```
 
 **PyInstaller Only (Executable)**
@@ -172,17 +172,10 @@ pyinstaller --clean gui_customtkinter.spec
 
 ## 🔄 Version & Changelog
 
-### v1.0.5 (2026-03-07) - Bug Fix Release
-
-#### 🐛 Bug Fixes
-- **Context menu still hidden beyond 15 files (complete fix)**: v1.0.4 set `MultiSelectModel = "Player"` only on the sub-commands (`Copy`/`Move`), but Windows evaluates this value on the **parent verb** (`*\shell\AdvancedFileMover`) when deciding whether to render the cascading menu for multi-file selections. Added `MultiSelectModel = "Player"` to the parent key in `_register_powershell_submenu()`; this is now propagated to all three registration paths (files `*`, directories `Directory`, drives `Drive`)
-
----
-
 ### v1.0.4 (2026-03-07) - Bug Fix Release
 
 #### 🐛 Bug Fixes
-- **Context menu hidden beyond 15 files**: The "Advanced File Mover" entry in the Windows Explorer Shift+Right-Click menu was not appearing when 16 or more files were selected. The root cause was the absence of a `MultiSelectModel` registry value on the shell sub-entries (`HKCU\Software\Classes\*\shell\AdvancedFileMover\shell\Copy|Move`). Without it, Windows defaults to `"Document"` behaviour which caps display at 15 items. Setting `MultiSelectModel = "Player"` instructs Windows to show the entry for any number of selected files; the existing `--single-instance` IPC mechanism already handles aggregation correctly
+- **Context menu hidden beyond 15 files**: The "Advanced File Mover" entry in the Windows Explorer Shift+Right-Click menu was not appearing when 16 or more files were selected. `MultiSelectModel = "Player"` is now set both on the **parent verb** (`*\shell\AdvancedFileMover`) — which is where Windows evaluates it to decide whether to render the cascading menu — and on each sub-command (`Copy`/`Move`). Without it, Windows defaults to `"Document"` behaviour which caps display at 15 items. The fix is propagated to all three registration paths (files `*`, directories `Directory`, drives `Drive`); the existing `--single-instance` IPC mechanism handles aggregation for any number of files
 
 ---
 
