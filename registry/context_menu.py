@@ -222,7 +222,11 @@ class ContextMenuRegistrar:
             
             # SubCommands = "" indica che le sub-voci sono in \\shell\\
             winreg.SetValueEx(parent_key, "SubCommands", 0, winreg.REG_SZ, "")
-            
+
+            # Mostra il cascading menu per qualsiasi numero di file selezionati.
+            # Senza questo, Windows usa il default "Document" che nasconde la voce oltre 15 file.
+            winreg.SetValueEx(parent_key, "MultiSelectModel", 0, winreg.REG_SZ, "Player")
+
             # Creare shell subkey per le voci cascata
             shell_key = winreg.CreateKey(parent_key, "shell")
             
