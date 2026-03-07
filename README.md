@@ -1,13 +1,13 @@
 # Advanced File Mover Pro
 
-[![Version](https://img.shields.io/badge/version-1.0.3-blue.svg)](https://github.com/u064241/advanced-file-mover/releases/latest)
+[![Version](https://img.shields.io/badge/version-1.0.4-blue.svg)](https://github.com/u064241/advanced-file-mover/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](https://www.microsoft.com/windows)
 
 Professional Windows utility for copying and moving files and folders with real-time progress, hardware auto-optimization (buffer/threads), Windows Explorer context menu integration, and automatic updates from GitHub.
 
-**Version**: 1.0.3 (Stable)  
-**Release Date**: 2026-02-25  
+**Version**: 1.0.4 (Stable)  
+**Release Date**: 2026-03-07  
 **Status**: ✅ Production Ready
 
 ---
@@ -69,12 +69,12 @@ Professional Windows utility for copying and moving files and folders with real-
 Download the latest version from [GitHub Releases](https://github.com/u064241/advanced-file-mover/releases/latest):
 
 ```text
-AdvancedFileMover_1.0.3_Setup.exe
+AdvancedFileMover_1.0.4_Setup.exe
 ```
 
 ### Automatic Installation
 
-1. Download `AdvancedFileMover_1.0.3_Setup.exe`
+1. Download `AdvancedFileMover_1.0.4_Setup.exe`
 2. Run the installer
 3. Follow the installation wizard
 4. Context menu will be automatically registered
@@ -115,7 +115,7 @@ cd C:\SOURCECODE\PYTHON\advanced-file-mover
 
 .\build.ps1 -Clean -Setup
 
-# Output: installer\Output\AdvancedFileMover_1.0.3_Setup.exe
+# Output: installer\Output\AdvancedFileMover_1.0.4_Setup.exe
 ```
 
 **PyInstaller Only (Executable)**
@@ -171,6 +171,13 @@ pyinstaller --clean gui_customtkinter.spec
 ---
 
 ## 🔄 Version & Changelog
+
+### v1.0.4 (2026-03-07) - Bug Fix Release
+
+#### 🐛 Bug Fixes
+- **Context menu hidden beyond 15 files**: The "Advanced File Mover" entry in the Windows Explorer Shift+Right-Click menu was not appearing when 16 or more files were selected. The root cause was the absence of a `MultiSelectModel` registry value on the shell sub-entries (`HKCU\Software\Classes\*\shell\AdvancedFileMover\shell\Copy|Move`). Without it, Windows defaults to `"Document"` behaviour which caps display at 15 items. Setting `MultiSelectModel = "Player"` instructs Windows to show the entry for any number of selected files; the existing `--single-instance` IPC mechanism already handles aggregation correctly
+
+---
 
 ### v1.0.3 (2026-02-25) - Bug Fix Release
 
