@@ -1294,6 +1294,8 @@ class AdvancedFileMoverCustomTkinter:
 
     def _add_source_paths(self, paths):
         added_any = False
+        added_bytes = 0
+        added_count = 0
         for p in paths:
             if not p:
                 continue
@@ -1304,12 +1306,32 @@ class AdvancedFileMoverCustomTkinter:
             if path_str not in self.source_paths:
                 added_any = True
                 self.source_paths.append(path_str)
+                # Se un'operazione è in corso in modalità batch (solo file), accumula
+                # i byte del nuovo file in modo da aggiornare _batch_total_size e
+                # _batch_file_count; questo evita che la barra rimanga bloccata al 100%
+                # mentre i file appena aggiunti vengono ancora elaborati.
+                try:
+                    if self.operation_in_progress and int(getattr(self, '_batch_total_size', 0) or 0) > 0:
+                        if os.path.isfile(long_path(path_str)):
+                            added_bytes += int(os.path.getsize(long_path(path_str)))
+                            added_count += 1
+                except Exception:
+                    pass
                 try:
                     self.source_listbox.insert('end', path_str)
                 except Exception:
                     pass
 
         if added_any:
+            # Aggiorna i contatori batch se l'operazione è in corso
+            try:
+                if self.operation_in_progress and int(getattr(self, '_batch_total_size', 0) or 0) > 0:
+                    if added_bytes > 0:
+                        self._batch_total_size += added_bytes
+                    if added_count > 0:
+                        self._batch_file_count += added_count
+            except Exception:
+                pass
             self._on_sources_changed()
 
     def _context_menu_pick_destination(self):

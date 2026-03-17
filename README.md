@@ -172,6 +172,13 @@ pyinstaller --clean gui_customtkinter.spec
 
 ## 🔄 Version & Changelog
 
+### v1.0.5 (2026-03-18) - Bug Fix Release
+
+#### 🐛 Bug Fixes
+- **Progress bar frozen at 100% when files added during operation**: When additional files were dragged into the source list while a copy/move was already running, the progress bar would jump to 100 % and stay there while those late-arriving files were still being processed. The root cause was that `_batch_total_size` and `_batch_file_count` were computed once at the start of `_operation_worker` and never updated. `_add_source_paths()` now increments both counters by the size (bytes) and count of every file that is appended while an operation is in progress, keeping the byte-based progress calculation accurate for the full dynamic queue
+
+---
+
 ### v1.0.4 (2026-03-07) - Bug Fix Release
 
 #### 🐛 Bug Fixes
