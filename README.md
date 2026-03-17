@@ -172,7 +172,17 @@ pyinstaller --clean gui_customtkinter.spec
 
 ## 🔄 Version & Changelog
 
-### v1.0.5 (2026-03-18) - Bug Fix Release
+### v1.0.5 (2026-03-18) - Feature & Bug Fix Release
+
+#### ✨ New Features
+- **Overwrite conflict dialog**: When the "Overwrite existing files" checkbox is **disabled** and a destination file already exists, a dialog is now shown instead of silently skipping. The user can choose:
+  - **Overwrite** — overwrite this file only, keep asking for subsequent conflicts
+  - **Skip** — skip this file only
+  - **Overwrite all** — overwrite this and all remaining conflicts without further prompts
+  - **Skip all** — skip this and all remaining conflicts without further prompts
+  - Closing the dialog with the × button is equivalent to *Skip*
+  
+  When the checkbox is **enabled** the operation proceeds automatically as before. The per-operation flags are reset at the start of each new operation. Fully translated into all 5 supported languages (it, en, de, es, fr)
 
 #### 🐛 Bug Fixes
 - **Progress bar frozen at 100% when files added during operation**: When additional files were dragged into the source list while a copy/move was already running, the progress bar would jump to 100 % and stay there while those late-arriving files were still being processed. The root cause was that `_batch_total_size` and `_batch_file_count` were computed once at the start of `_operation_worker` and never updated. `_add_source_paths()` now increments both counters by the size (bytes) and count of every file that is appended while an operation is in progress, keeping the byte-based progress calculation accurate for the full dynamic queue
