@@ -519,6 +519,12 @@ class AdvancedFileMoverCustomTkinter:
             self.file_engine.set_error_callback(self._on_engine_error)
         except Exception:
             pass
+
+        # Callback conflict: richiede decisione utente quando overwrite=False e file esiste
+        try:
+            self.file_engine.on_conflict = self._ask_overwrite_conflict
+        except Exception:
+            pass
         
         # Context menu (passa le etichette tradotte nella lingua corrente)
         self.context_manager = ContextMenuRegistrar(
@@ -2557,7 +2563,7 @@ class AdvancedFileMoverCustomTkinter:
                     pass
 
                 if result_state == 'success':
-                    delay_ms = 3500
+                    delay_ms = 1800
                     try:
                         self._auto_close_after_id = self.root.after(delay_ms, self._on_closing)
                     except Exception:
@@ -2683,7 +2689,77 @@ class AdvancedFileMoverCustomTkinter:
             self._set_progress_text(status_text, percentage)
         except Exception:
             pass
-    
+
+    def _ask_overwrite_conflict(self, source: str, destination: str) -> str:
+        """Mostra popup di conflitto sovrascrittura sul main thread e blocca il worker fino alla risposta.
+        Restituisce 'overwrite', 'skip', 'overwrite_all' o 'skip_all'."""
+        import threading as _threading
+        event = _threading.Event()
+        result = ['skip']  # default sicuro
+
+        def _show_popup():
+            try:
+                popup = ctk.CTkToplevel(self.root)
+                popup.title(self._t('conflict_title', 'File già esistente'))
+                popup.resizable(False, False)
+                popup.grab_set()
+                popup.lift()
+                popup.focus_force()
+
+                # Centra il popup sulla finestra principale
+                try:
+                    px = self.root.winfo_x() + self.root.winfo_width() // 2 - 280
+                    py = self.root.winfo_y() + self.root.winfo_height() // 2 - 100
+                    popup.geometry(f"560x200+{px}+{py}")
+                except Exception:
+                    popup.geometry("560x200")
+
+                src_name = source if len(source) <= 60 else f"...{source[-57:]}"
+                dst_name = destination if len(destination) <= 60 else f"...{destination[-57:]}"
+
+                ctk.CTkLabel(popup,
+                             text=self._t('conflict_msg',
+                                          'Il file di destinazione esiste già.\n'
+                                          'Sorgente: {src}\nDestinazione: {dst}').format(
+                                 src=src_name, dst=dst_name),
+                             justify='left', wraplength=520).pack(padx=16, pady=(16, 8))
+
+                btn_frame = ctk.CTkFrame(popup, fg_color='transparent')
+                btn_frame.pack(pady=(4, 16))
+
+                def _choose(choice):
+                    result[0] = choice
+                    popup.grab_release()
+                    popup.destroy()
+                    event.set()
+
+                ctk.CTkButton(btn_frame, width=120,
+                              text=self._t('conflict_overwrite', 'Sovrascrivi'),
+                              command=lambda: _choose('overwrite')).grid(row=0, column=0, padx=6)
+                ctk.CTkButton(btn_frame, width=120,
+                              text=self._t('conflict_skip', 'Salta'),
+                              command=lambda: _choose('skip')).grid(row=0, column=1, padx=6)
+                ctk.CTkButton(btn_frame, width=140,
+                              text=self._t('conflict_overwrite_all', 'Sovrascrivi tutti'),
+                              command=lambda: _choose('overwrite_all')).grid(row=0, column=2, padx=6)
+                ctk.CTkButton(btn_frame, width=120,
+                              text=self._t('conflict_skip_all', 'Salta tutti'),
+                              command=lambda: _choose('skip_all')).grid(row=0, column=3, padx=6)
+
+                # Se il popup viene chiuso con la X → skip
+                popup.protocol("WM_DELETE_WINDOW", lambda: _choose('skip'))
+            except Exception:
+                result[0] = 'skip'
+                event.set()
+
+        try:
+            self.root.after(0, _show_popup)
+        except Exception:
+            return 'skip'
+
+        event.wait(timeout=300)  # timeout di sicurezza 5 minuti
+        return result[0]
+
     def cancel_operation(self):
         """Annulla operazione in corso"""
         self.cancel_requested = True

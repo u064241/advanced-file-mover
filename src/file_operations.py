@@ -65,6 +65,13 @@ class FileOperationEngine:
         self.on_progress: Optional[Callable] = None
         self.on_error: Optional[Callable] = None
         self.on_complete: Optional[Callable] = None
+        # Conflict callback: chiamato quando overwrite=False e il file esiste.
+        # Firma: on_conflict(source, destination) -> str
+        # Valori di ritorno: 'overwrite', 'skip', 'overwrite_all', 'skip_all'
+        self.on_conflict: Optional[Callable] = None
+        # Flag memorizzati per la durata dell'operazione
+        self._conflict_overwrite_all: bool = False
+        self._conflict_skip_all: bool = False
     
     def set_progress_callback(self, callback: Callable):
         """Imposta callback per progress"""
@@ -101,6 +108,8 @@ class FileOperationEngine:
             self.is_cancelled = False
             self.file_index = 0
             self.file_count = 0
+            self._conflict_overwrite_all = False
+            self._conflict_skip_all = False
     
     def copy(self, source: str, destination: str) -> bool:
         """
@@ -355,10 +364,30 @@ class FileOperationEngine:
             if os.path.isdir(destination):
                 destination = os.path.join(destination, os.path.basename(source))
             
-            # Controllo overwrite: se la destinazione esiste e overwrite=False, salta
+            # Controllo overwrite: se la destinazione esiste e overwrite=False, chiedi
             if os.path.exists(destination) and not self.overwrite:
-                self._log_info(f"Skip (esistente): {strip_long_path_prefix(destination)}")
-                return True
+                if self._conflict_skip_all:
+                    self._log_info(f"Skip (esistente): {strip_long_path_prefix(destination)}")
+                    return True
+                if self._conflict_overwrite_all:
+                    pass  # procede con la sovrascrittura
+                elif self.on_conflict is not None:
+                    decision = self.on_conflict(strip_long_path_prefix(source),
+                                                strip_long_path_prefix(destination))
+                    if decision == 'skip_all':
+                        self._conflict_skip_all = True
+                        self._log_info(f"Skip (esistente): {strip_long_path_prefix(destination)}")
+                        return True
+                    elif decision == 'skip':
+                        self._log_info(f"Skip (esistente): {strip_long_path_prefix(destination)}")
+                        return True
+                    elif decision == 'overwrite_all':
+                        self._conflict_overwrite_all = True
+                        # procede con la sovrascrittura
+                    # 'overwrite' → procede normalmente
+                else:
+                    self._log_info(f"Skip (esistente): {strip_long_path_prefix(destination)}")
+                    return True
 
             # Creare directory destinazione se necessaria
             dest_dir = os.path.dirname(destination)
@@ -576,10 +605,30 @@ class FileOperationEngine:
             source = long_path(source)
             destination = long_path(destination)
 
-            # Controllo overwrite: se destinazione esiste e overwrite=False, salta
+            # Controllo overwrite: se destinazione esiste e overwrite=False, chiedi
             if os.path.exists(destination) and not self.overwrite:
-                self._log_info(f"Skip (esistente): {strip_long_path_prefix(destination)}")
-                return True
+                if self._conflict_skip_all:
+                    self._log_info(f"Skip (esistente): {strip_long_path_prefix(destination)}")
+                    return True
+                if self._conflict_overwrite_all:
+                    pass  # procede con la sovrascrittura
+                elif self.on_conflict is not None:
+                    decision = self.on_conflict(strip_long_path_prefix(source),
+                                                strip_long_path_prefix(destination))
+                    if decision == 'skip_all':
+                        self._conflict_skip_all = True
+                        self._log_info(f"Skip (esistente): {strip_long_path_prefix(destination)}")
+                        return True
+                    elif decision == 'skip':
+                        self._log_info(f"Skip (esistente): {strip_long_path_prefix(destination)}")
+                        return True
+                    elif decision == 'overwrite_all':
+                        self._conflict_overwrite_all = True
+                        # procede con la sovrascrittura
+                    # 'overwrite' → procede normalmente
+                else:
+                    self._log_info(f"Skip (esistente): {strip_long_path_prefix(destination)}")
+                    return True
 
             # Fase 1: Sorgente → RamDrive
             # Usa un nome univoco per evitare collisioni in operazioni parallele future

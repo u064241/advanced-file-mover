@@ -1,4 +1,4 @@
-{
+﻿{
   "app_title": "Advanced File Mover Pro",
   "tab_main": "📋 Principale",
   "tab_info": "ℹ️ Informazioni",
@@ -178,5 +178,10 @@
   ,"registry_drive_move_ok": "✅ Unità → ✂️ Sposta [Avanzata]"
   ,"registry_drive_move_missing": "❌ Unità → Sposta [Avanzata] (non trovata)"
   ,"registry_drive_not_registered": "❌ Unità → Menu non registrato"
-  ,"registry_error_reading": "Errore nel leggere lo stato"
+  ,"registry_error_reading": "Errore nel leggere lo stato"  ,"conflict_title": "File già esistente"
+  ,"conflict_msg": "Il file di destinazione esiste già.\nSorgente: {src}\nDestinazione: {dst}"
+  ,"conflict_overwrite": "Sovrascrivi"
+  ,"conflict_skip": "Salta"
+  ,"conflict_overwrite_all": "Sovrascrivi tutti"
+  ,"conflict_skip_all": "Salta tutti"
 }
