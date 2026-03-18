@@ -2702,9 +2702,32 @@ class AdvancedFileMoverCustomTkinter:
                 popup = ctk.CTkToplevel(self.root)
                 popup.title(self._t('conflict_title', 'File già esistente'))
                 popup.resizable(False, False)
-                popup.grab_set()
-                popup.lift()
-                popup.focus_force()
+
+                # Se la finestra principale è always-on-top, disabilitalo temporaneamente
+                # così il popup può venire in primo piano senza dover competere con essa
+                try:
+                    was_topmost = self.root.wm_attributes('-topmost')
+                    if was_topmost:
+                        self.root.wm_attributes('-topmost', False)
+                except Exception:
+                    was_topmost = False
+
+                def _restore_topmost():
+                    try:
+                        if was_topmost:
+                            self.root.wm_attributes('-topmost', True)
+                    except Exception:
+                        pass
+
+                def _choose(choice):
+                    result[0] = choice
+                    try:
+                        popup.grab_release()
+                        popup.destroy()
+                    except Exception:
+                        pass
+                    _restore_topmost()
+                    event.set()
 
                 # Centra il popup sulla finestra principale
                 try:
@@ -2713,6 +2736,11 @@ class AdvancedFileMoverCustomTkinter:
                     popup.geometry(f"560x200+{px}+{py}")
                 except Exception:
                     popup.geometry("560x200")
+
+                popup.wm_attributes('-topmost', True)
+                popup.grab_set()
+                popup.lift()
+                popup.focus_force()
 
                 src_name = source if len(source) <= 60 else f"...{source[-57:]}"
                 dst_name = destination if len(destination) <= 60 else f"...{destination[-57:]}"
@@ -2726,12 +2754,6 @@ class AdvancedFileMoverCustomTkinter:
 
                 btn_frame = ctk.CTkFrame(popup, fg_color='transparent')
                 btn_frame.pack(pady=(4, 16))
-
-                def _choose(choice):
-                    result[0] = choice
-                    popup.grab_release()
-                    popup.destroy()
-                    event.set()
 
                 ctk.CTkButton(btn_frame, width=120,
                               text=self._t('conflict_overwrite', 'Sovrascrivi'),
