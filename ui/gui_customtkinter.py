@@ -1039,7 +1039,7 @@ class AdvancedFileMoverCustomTkinter:
             for p in candidates:
                 try:
                     if p.exists():
-                        with open(p, 'r', encoding='utf-8') as f:
+                        with open(p, 'r', encoding='utf-8-sig') as f:
                             data = json.load(f)
                         return data if isinstance(data, dict) else {}
                 except Exception:
