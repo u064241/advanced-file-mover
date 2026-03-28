@@ -2497,6 +2497,15 @@ class AdvancedFileMoverCustomTkinter:
                 except Exception:
                     item_destination = destination
 
+                # Cattura la dimensione prima dell'operazione: per MOVE la sorgente
+                # viene eliminata e os.path.isfile(source) sarebbe False dopo.
+                _source_size_before = 0
+                try:
+                    if int(getattr(self, '_batch_total_size', 0) or 0) > 0 and os.path.isfile(long_path(source)):
+                        _source_size_before = int(os.path.getsize(long_path(source)))
+                except Exception:
+                    pass
+
                 if operation_type == 'copy':
                     try:
                         self._last_engine_error = None
@@ -2514,8 +2523,8 @@ class AdvancedFileMoverCustomTkinter:
 
                 # Aggiorna bytes completati per batch (solo file)
                 try:
-                    if success and int(getattr(self, '_batch_total_size', 0) or 0) > 0 and os.path.isfile(long_path(source)):
-                        self._batch_completed_bytes += int(os.path.getsize(long_path(source)))
+                    if success and _source_size_before > 0:
+                        self._batch_completed_bytes += _source_size_before
                 except Exception:
                     pass
                 

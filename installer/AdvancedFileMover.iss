@@ -5,7 +5,7 @@
 ; Nota: versione letta automaticamente da config.json durante build.ps1
 
 #ifndef MyAppVersion
-  #define MyAppVersion "1.0.3"
+  #define MyAppVersion "1.0.6"
 #endif
 
 [Setup]
@@ -46,45 +46,3 @@ Filename: "{app}\AdvancedFileMoverPro.exe"; Parameters: "--register-context-menu
 [UninstallRun]
 ; Rimuove il menu contestuale prima della disinstallazione
 Filename: "{app}\AdvancedFileMoverPro.exe"; Parameters: "--unregister-context-menu"; Flags: waituntilterminated; RunOnceId: "UnregisterContextMenu"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
