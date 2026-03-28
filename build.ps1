@@ -293,20 +293,19 @@ if ($Release -and $Setup) {
         if (-not (Test-Path $SetupFile)) {
             Write-Host "     ❌ Setup.exe non trovato: $SetupFile" -ForegroundColor $Red
         } else {
-            # 1) Rimuovi binari da TUTTE le release precedenti (mantieni solo note/changelog)
-            Write-Host "     🧹 Pulizia binari dalle release precedenti..." -ForegroundColor $Cyan
+            # 1) Elimina TUTTE le release e i tag precedenti (mantieni solo l'ultima)
+            Write-Host "     🧹 Eliminazione release e tag precedenti..." -ForegroundColor $Cyan
             try {
                 $AllReleases = gh release list --json tagName --jq '.[].tagName' 2>$null
                 if ($AllReleases) {
                     foreach ($OldTag in $AllReleases) {
                         if ($OldTag -eq $TagName) { continue }  # Salta la release corrente
-                        $OldAssets = gh release view $OldTag --json assets --jq '.assets[].name' 2>$null
-                        if ($OldAssets) {
-                            foreach ($Asset in $OldAssets) {
-                                Write-Host "       Rimuovo $Asset da $OldTag" -ForegroundColor $Cyan
-                                gh release delete-asset $OldTag $Asset --yes 2>$null
-                            }
-                            Write-Host "       ✓ Binari rimossi da $OldTag" -ForegroundColor $Green
+                        Write-Host "       Elimino release $OldTag..." -ForegroundColor $Cyan
+                        gh release delete $OldTag --yes --cleanup-tag 2>$null
+                        if ($LASTEXITCODE -eq 0) {
+                            Write-Host "       ✓ Release e tag $OldTag eliminati" -ForegroundColor $Green
+                        } else {
+                            Write-Host "       ⚠️ Errore eliminazione $OldTag" -ForegroundColor $Yellow
                         }
                     }
                 }
