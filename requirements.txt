@@ -1,5 +1,4 @@
 # Advanced File Mover Pro - CustomTkinter Edition
-# Python 3.12 (.venv312)
 
 # System utilities
 psutil>=6.0.0
