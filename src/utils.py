@@ -100,6 +100,26 @@ def create_directory_if_not_exists(path: str) -> bool:
         return False
 
 
+def get_filesystem_type(path: str) -> str:
+    """Ritorna il tipo di filesystem (es. 'FAT32', 'NTFS', 'exFAT') della destinazione, '' se non determinabile."""
+    if os.name != 'nt':
+        return ''
+    try:
+        drive = os.path.splitdrive(path)[0]
+        if not drive:
+            return ''
+        root = drive + '\\'
+        fs_name = ctypes.create_unicode_buffer(260)
+        ok = ctypes.windll.kernel32.GetVolumeInformationW(
+            ctypes.c_wchar_p(root),
+            None, 0, None, None, None,
+            fs_name, 260
+        )
+        return fs_name.value if ok else ''
+    except Exception:
+        return ''
+
+
 def get_command_output(command: str) -> str:
     """Esegue comando e ritorna output"""
     try:

@@ -10,7 +10,7 @@ import tempfile
 from pathlib import Path
 from typing import Callable, Optional
 from enum import Enum
-from .utils import long_path, strip_long_path_prefix
+from .utils import long_path, strip_long_path_prefix, get_filesystem_type
 
 
 class OperationType(Enum):
@@ -26,6 +26,7 @@ class FileOperationEngine:
     BUFFER_SIZE = 10 * 1024 * 1024  # 10 MB default
     LARGE_FILE_THRESHOLD = 100 * 1024 * 1024  # 100 MB
     LARGE_FILE_BUFFER = 50 * 1024 * 1024  # 50 MB per file grandi
+    FAT32_MAX_FILE_SIZE = 4 * 1024 * 1024 * 1024 - 1  # limite file singolo su FAT32 (2^32 - 1 byte)
     
     def __init__(self,
                  buffer_size: int = BUFFER_SIZE,
@@ -161,6 +162,24 @@ class FileOperationEngine:
                 self.file_count = len(files_to_process)
                 self.file_index = 0
             
+            # Controllo limite FAT32 (4GB per singolo file): su FAT32 Windows ritorna
+            # ERROR_DISK_FULL / [Errno 28] "No space left" a metà copia anche con spazio libero,
+            # quindi va rilevato PRIMA di scrivere per dare un errore chiaro.
+            dest_fs = get_filesystem_type(destination)
+            if dest_fs.upper() == 'FAT32':
+                if os.path.isfile(source):
+                    oversized = [source] if os.path.getsize(source) > self.FAT32_MAX_FILE_SIZE else []
+                else:
+                    oversized = [s for s, _ in files_to_process
+                                 if os.path.getsize(s) > self.FAT32_MAX_FILE_SIZE]
+                if oversized:
+                    names = ", ".join(strip_long_path_prefix(f) for f in oversized[:3])
+                    suffix = f" e altri {len(oversized) - 3}" if len(oversized) > 3 else ""
+                    self._log_error(
+                        f"Destinazione FAT32: non supporta file > 4GB. File troppo grande/i: {names}{suffix}"
+                    )
+                    return False
+
             # Decidi se usare flusso a 2 fasi (con RamDrive) o diretto
             use_ramdrive_buffer = False
             ramdrive_temp_path = None
