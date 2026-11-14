@@ -1,12 +1,12 @@
 # Advanced File Mover Pro
 
-[![Version](https://img.shields.io/badge/version-1.0.7-blue.svg)](https://github.com/u064241/advanced-file-mover/releases/latest)
+[![Version](https://img.shields.io/badge/version-1.0.9-blue.svg)](https://github.com/u064241/advanced-file-mover/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](https://www.microsoft.com/windows)
 
 Professional Windows utility for copying and moving files and folders with real-time progress, hardware auto-optimization (buffer/threads), Windows Explorer context menu integration, and automatic updates from GitHub.
 
-**Version**: 1.0.7 (Stable)
+**Version**: 1.0.9 (Stable)
 **Release Date**: 2026-11-14
 **Status**: ✅ Production Ready
 
@@ -76,12 +76,12 @@ Professional Windows utility for copying and moving files and folders with real-
 Download the latest version from [GitHub Releases](https://github.com/u064241/advanced-file-mover/releases/latest):
 
 ```text
-AdvancedFileMover_1.0.8_Setup.exe
+AdvancedFileMover_1.0.9_Setup.exe
 ```
 
 ### Automatic Installation
 
-1. Download `AdvancedFileMover_1.0.8_Setup.exe`
+1. Download `AdvancedFileMover_1.0.9_Setup.exe`
 2. Run the installer
 3. Follow the installation wizard
 4. Context menu will be automatically registered
@@ -182,6 +182,14 @@ pyinstaller --clean gui_customtkinter.spec
 ## 🔄 Version & Changelog
 
 <!-- markdownlint-disable MD024 -->
+
+### v1.0.9 (2026-11-14) - Packaging Fix Release
+
+#### 🐛 Bug Fixes
+
+- **Missing CustomTkinter dependency**: the build environment did not contain `customtkinter`, so PyInstaller generated an executable that failed immediately at startup. The dependency is now installed and the build script fails early when required GUI imports are missing.
+
+---
 
 ### v1.0.8 (2026-11-14) - Transfer Reliability Release
 

@@ -104,6 +104,20 @@ if (-not $PyInstaller) {
 
 Write-Host "     ✓ PyInstaller trovato`n" -ForegroundColor $Green
 
+# Verifica le dipendenze importate dalla GUI prima di avviare PyInstaller.
+# PyInstaller può altrimenti continuare anche quando un hidden import manca,
+# producendo un EXE che fallisce solo all'avvio.
+$RequiredImports = @('customtkinter', 'psutil', 'requests', 'tkinterdnd2', 'PIL')
+foreach ($ImportName in $RequiredImports) {
+    & $PythonExe -c "import $ImportName" 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "     ❌ Dipendenza Python mancante: $ImportName" -ForegroundColor $Red
+        Write-Host "     Installa con: $PythonExe -m pip install -r requirements.txt`n" -ForegroundColor $Yellow
+        exit 1
+    }
+}
+Write-Host "     ✓ Dipendenze GUI verificate`n" -ForegroundColor $Green
+
 # Build con PyInstaller
 Write-Host "[3/3] 🔨 Compilazione con PyInstaller..." -ForegroundColor $Yellow
 
