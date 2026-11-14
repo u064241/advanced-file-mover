@@ -5,7 +5,7 @@ param(
     [switch]$Clean = $false,
     [switch]$Setup = $false,
     [switch]$Release = $false,
-    [string]$IsccPath = 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe',
+    [string]$IsccPath = 'C:\Program Files\Inno Setup 7\ISCC.exe',
     [switch]$Help = $false
 )
 
