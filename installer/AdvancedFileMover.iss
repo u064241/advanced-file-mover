@@ -47,3 +47,4 @@ Filename: "{app}\AdvancedFileMoverPro.exe"; Parameters: "--register-context-menu
 ; Rimuove il menu contestuale prima della disinstallazione
 Filename: "{app}\AdvancedFileMoverPro.exe"; Parameters: "--unregister-context-menu"; Flags: waituntilterminated; RunOnceId: "UnregisterContextMenu"
 
+

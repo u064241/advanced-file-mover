@@ -15,6 +15,7 @@ Professional Windows utility for copying and moving files and folders with real-
 ## 🎯 Key Features
 
 ### ⚡ Performance & Optimization
+
 - **Smart Auto-tuning**: Automatically adjusts buffer size and thread count based on storage type
   - NVMe: 256MB buffer, 12 threads
   - SSD: 128MB buffer, 8 threads
@@ -22,6 +23,7 @@ Professional Windows utility for copying and moving files and folders with real-
   - USB: 64MB buffer, 4 threads
   - NAS: 32MB buffer, 2 threads
   - RamDrive: 8MB buffer, 16 threads
+
 - **Long Path Support**: Full support for paths exceeding 260 characters (Windows MAX_PATH limit)
 - **RamDrive Detection**: Auto-detect and accelerate operations on RamDrive
 - **Multi-threaded Engine**: Efficient concurrent copy/move operations
@@ -29,6 +31,7 @@ Professional Windows utility for copying and moving files and folders with real-
 - **Device Auto-detection**: Monitor for USB and storage device changes
 
 ### 🎨 Modern User Interface
+
 - **CustomTkinter GUI**: Modern, responsive design with dark/light theme toggle
 - **Real-time Progress Display**: Continuous speed and ETA updates
 - **Responsive Layout**: Consistent 900×720px non-resizable window with grid-based design
@@ -36,6 +39,7 @@ Professional Windows utility for copying and moving files and folders with real-
 - **Drag & Drop Support**: Native tkinterdnd2 integration - even works with elevated privileges
 
 ### 🌍 Complete Internationalization
+
 - **5 Supported Languages**: Italian, English, French, German, Spanish
 - **Auto-detect System Language**: Automatically detects and uses system language on first launch
 - **Runtime Language Switching**: Change language instantly - entire GUI updates dynamically
@@ -43,6 +47,7 @@ Professional Windows utility for copying and moving files and folders with real-
 - **Registry Status Translation**: Context menu status messages now translate to all supported languages
 
 ### 🔧 Windows Explorer Integration
+
 - **Context Menu**: Right-click access via Shift + Right-Click in Windows Explorer
 - **Submenu with Copy/Move**: "Copy [Advanced]" and "Move [Advanced]" options
 - **Smart Status Display**: Real-time verification of registered menu items with language support
@@ -50,12 +55,14 @@ Professional Windows utility for copying and moving files and folders with real-
 - **Single-Instance IPC**: Named Pipe integration for efficient multi-selection aggregation
 
 ### 🚀 Auto-Update System
+
 - **Automatic Update Checking**: Checks for updates on application startup (background)
 - **Manual Update Check**: "Check Updates" button in the Info tab
 - **Silent Installation**: Automatic download and installation of updates
 - **Version Synchronization**: Version synced from `config.json` automatically
 
 ### 📦 Installation & Distribution
+
 - **Inno Setup Installer**: Professional Windows installer with upgrade support
 - **PyInstaller One-Dir**: RamDrive-compatible, no temporary extraction
 - **Portable Friendly**: Minimal system dependencies required
@@ -109,7 +116,8 @@ pip install -r requirements.txt
 
 #### Build Options
 
-**Complete Build (PyInstaller + Installer)**
+##### Complete Build (PyInstaller + Installer)
+
 ```powershell
 cd C:\SOURCECODE\PYTHON\advanced-file-mover
 
@@ -118,7 +126,8 @@ cd C:\SOURCECODE\PYTHON\advanced-file-mover
 # Output: installer\Output\AdvancedFileMover_1.0.7_Setup.exe
 ```
 
-**PyInstaller Only (Executable)**
+##### PyInstaller Only (Executable)
+
 ```powershell
 pyinstaller --clean gui_customtkinter.spec
 
@@ -172,9 +181,12 @@ pyinstaller --clean gui_customtkinter.spec
 
 ## 🔄 Version & Changelog
 
+<!-- markdownlint-disable MD024 -->
+
 ### v1.0.7 (2026-08-25) - Bug Fix Release
 
 #### 🐛 Bug Fixes
+
 - **Misleading "No space left on device" error on FAT32 destinations**: Copying a file larger than 4GB to a FAT32-formatted destination failed mid-transfer with `[Errno 28] No space left on device`, even with plenty of free space — because FAT32 has a hard 4GB single-file size limit and Windows reports `ERROR_DISK_FULL` when that limit is hit. The engine now detects the destination filesystem type before starting the transfer and, if it's FAT32 with a file exceeding 4GB, fails fast with a clear error instead of writing partway through and hitting the misleading OS error
 
 ---
@@ -182,6 +194,7 @@ pyinstaller --clean gui_customtkinter.spec
 ### v1.0.6 (2026-03-28) - Bug Fix Release
 
 #### 🐛 Bug Fixes
+
 - **Progress bar stuck at ~50% on batch MOVE**: When moving multiple files, the progress bar would stop at a fraction of 100% (e.g. 50% for 2 files, 33% for 3 files) instead of completing. The root cause was that `_batch_completed_bytes` was only updated via `os.path.isfile(source)` *after* the operation — but MOVE deletes the source, so that check always returned `False` and the accumulator stayed permanently at 0. The fix captures the source file size *before* calling `file_engine.move()` and uses that pre-captured value to update `_batch_completed_bytes` on success, regardless of whether the source still exists
 
 ---
@@ -189,6 +202,7 @@ pyinstaller --clean gui_customtkinter.spec
 ### v1.0.5 (2026-03-18) - Feature & Bug Fix Release
 
 #### ✨ New Features
+
 - **Overwrite conflict dialog**: When the "Overwrite existing files" checkbox is **disabled** and a destination file already exists, a dialog is now shown instead of silently skipping. The user can choose:
   - **Overwrite** — overwrite this file only, keep asking for subsequent conflicts
   - **Skip** — skip this file only
@@ -199,6 +213,7 @@ pyinstaller --clean gui_customtkinter.spec
   When the checkbox is **enabled** the operation proceeds automatically as before. The per-operation flags are reset at the start of each new operation. Fully translated into all 5 supported languages (it, en, de, es, fr)
 
 #### 🐛 Bug Fixes
+
 - **Progress bar frozen at 100% when files added during operation**: When additional files were dragged into the source list while a copy/move was already running, the progress bar would jump to 100 % and stay there while those late-arriving files were still being processed. The root cause was that `_batch_total_size` and `_batch_file_count` were computed once at the start of `_operation_worker` and never updated. `_add_source_paths()` now increments both counters by the size (bytes) and count of every file that is appended while an operation is in progress, keeping the byte-based progress calculation accurate for the full dynamic queue
 
 ---
@@ -206,6 +221,7 @@ pyinstaller --clean gui_customtkinter.spec
 ### v1.0.4 (2026-03-07) - Bug Fix Release
 
 #### 🐛 Bug Fixes
+
 - **Context menu hidden beyond 15 files**: The "Advanced File Mover" entry in the Windows Explorer Shift+Right-Click menu was not appearing when 16 or more files were selected. `MultiSelectModel = "Player"` is now set both on the **parent verb** (`*\shell\AdvancedFileMover`) — which is where Windows evaluates it to decide whether to render the cascading menu — and on each sub-command (`Copy`/`Move`). Without it, Windows defaults to `"Document"` behaviour which caps display at 15 items. The fix is propagated to all three registration paths (files `*`, directories `Directory`, drives `Drive`); the existing `--single-instance` IPC mechanism handles aggregation for any number of files
 
 ---
@@ -213,6 +229,7 @@ pyinstaller --clean gui_customtkinter.spec
 ### v1.0.3 (2026-02-25) - Bug Fix Release
 
 #### 🐛 Bug Fixes
+
 - **RamDrive preference persistence**: The "Use RamDrive" checkbox state is now correctly preserved across sessions. Previously, when the source or destination was on the RamDrive (forcing the checkbox off), the forced `False` value was saved to `config.json` — so on next launch the option remained disabled even with unrelated paths. A separate `_ramdrive_user_pref` field now tracks the real user preference independently from the forced override
 - **Destination RamDrive check**: `_update_ramdrive_option_state()` now also checks the destination path, not only the sources (both source and destination on RamDrive must disable the checkbox)
 - **Preference restored on path change**: When source/destination no longer reside on the RamDrive, the user's original preference is automatically restored into the checkbox
@@ -222,6 +239,7 @@ pyinstaller --clean gui_customtkinter.spec
 ### v1.0.2 (2026-02-23) - Bug Fix Release
 
 #### 🐛 Bug Fixes: All updates to `processed_size` in the copy/move engine are now protected by `threading.Lock`, eliminating race conditions during parallel transfers
+
 - **`on_complete` called exactly once**: Callback was previously invoked once per file in `_handle_file`; moved to `_perform_operation` so it fires a single time at the end of the operation
 - **Missing `_log_info()` method**: Absent method caused silent `AttributeError` when logging informational events; stub now defined alongside `_log_error()`
 - **MOVE cross-drive space check**: Free-space validation for cross-drive moves now correctly uses `total_size` as the required space (was always `0`)
@@ -243,6 +261,7 @@ pyinstaller --clean gui_customtkinter.spec
 ### v1.0.1 (2026-02-18) - Patch Release
 
 #### 🐛 Bug Fixes
+
 - **Long Path Support**: Added `\\?\` prefix to all filesystem operations, fixing failures on paths exceeding Windows MAX_PATH (260 characters)
 - All `os.walk`, `os.makedirs`, `open()`, `os.remove`, `os.path.exists` calls in the copy/move engine now support paths > 260 characters
 - Drag & drop path validation now works correctly with long paths
@@ -250,6 +269,7 @@ pyinstaller --clean gui_customtkinter.spec
 - Error messages display clean paths (without `\\?\` prefix) for readability
 
 #### ✨ Improvements
+
 - New utility functions: `long_path()` and `strip_long_path_prefix()` in `src/utils.py`
 - `is_path_accessible()`, `is_path_writable()`, `get_file_size()`, `create_directory_if_not_exists()` now support long paths
 - Works on all Windows systems regardless of `LongPathsEnabled` registry setting
@@ -259,6 +279,7 @@ pyinstaller --clean gui_customtkinter.spec
 ### v1.0.0 (2026-02-15) - Stable Release
 
 #### ✨ New Features
+
 - Native drag & drop support (tkinterdnd2) - drop files directly on source listbox
 - Admin drag & drop - works even when app runs with elevated privileges
 - Multi-file context menu via IPC (Named Pipe + file-based aggregation)
@@ -281,22 +302,26 @@ pyinstaller --clean gui_customtkinter.spec
 - PyInstaller one-dir packaging (no temp extraction, RamDrive compatible)
 
 #### 🐛 Bug Fixes
+
 - ✅ Registry status text now fully translatable in all languages
 - ✅ Menu status section updates language correctly on language change
 - ✅ All hardcoded Italian strings in registry status mapped to i18n keys
 - ✅ Dynamic translation mapping for registry output (copy/move/missing status)
 
 #### 📋 Improvements
+
 - Complete i18n support for all UI elements, dialogs, and system messages
 - Comprehensive documentation with installation and troubleshooting guides
 - Professional Inno Setup installer with upgrade support
 - Development-friendly project structure with clear separation of concerns
 
+<!-- markdownlint-enable MD024 -->
+
 ---
 
 ## 📂 Project Structure
 
-```
+```text
 advanced-file-mover/
 ├── ui/
 │   ├── gui_customtkinter.py      # Main GUI application
@@ -381,7 +406,7 @@ On first launch, if `config.json` doesn't exist, it's created automatically.
 ## 🌐 Supported Languages
 
 | Language | Code | Status |
-|----------|------|--------|
+| -------- | ---- | ------ |
 | 🇮🇹 Italiano (Italian) | it | ✅ Complete |
 | 🇬🇧 English | en | ✅ Complete |
 | 🇫🇷 Français (French) | fr | ✅ Complete |
@@ -389,6 +414,7 @@ On first launch, if `config.json` doesn't exist, it's created automatically.
 | 🇪🇸 Español (Spanish) | es | ✅ Complete |
 
 To change language:
+
 1. Open the application
 2. Click the **View** tab
 3. Select desired language from **🌐 Interface Language** dropdown
@@ -401,27 +427,32 @@ To change language:
 
 ### Context Menu Registration (Command Line)
 
-**Register via EXE:**
+#### Register via EXE
+
 ```powershell
 dist\AdvancedFileMoverPro.exe --register-context-menu
 ```
 
-**Unregister via EXE:**
+#### Unregister via EXE
+
 ```powershell
 dist\AdvancedFileMoverPro.exe --unregister-context-menu
 ```
 
-**Register via Python (HKCU - Current User):**
+#### Register via Python (HKCU - Current User)
+
 ```powershell
 python.exe .\registry\context_menu.py --register
 ```
 
-**Register for All Users (HKLM - Requires Admin):**
+#### Register for All Users (HKLM - Requires Admin)
+
 ```powershell
 python.exe .\registry\context_menu.py --register --admin
 ```
 
-**Unregister via Python:**
+#### Unregister via Python
+
 ```powershell
 python.exe .\registry\context_menu.py --unregister
 ```
@@ -437,7 +468,8 @@ Version is centrally managed in `config.json`:
 }
 ```
 
-**To update version:**
+#### To update version
+
 1. Modify `version` field in `config.json`
 2. Run `.\build.ps1 -Clean -Setup`
 3. Build script automatically updates installer version
@@ -451,6 +483,7 @@ Version is centrally managed in `config.json`:
 ### Issue: Drag & Drop Not Working
 
 **Solution**: Ensure you have tkinterdnd2 installed:
+
 ```powershell
 pip install tkinterdnd2
 ```
@@ -460,6 +493,7 @@ If still not working with Administrator privileges, the app handles this automat
 ### Issue: Python Cache Errors
 
 **Solution**: Clear Python cache:
+
 ```powershell
 taskkill /F /IM python.exe
 Remove-Item -Recurse -Force .\ui\__pycache__, .\src\__pycache__ -ErrorAction SilentlyContinue
@@ -468,6 +502,7 @@ Remove-Item -Recurse -Force .\ui\__pycache__, .\src\__pycache__ -ErrorAction Sil
 ### Issue: Context Menu Not Appearing
 
 **Solution**: Verify registration and check Windows Registry:
+
 1. Run the application as Administrator
 2. Go to the **Context Menu** tab
 3. Click **"Check Status"** button
@@ -476,6 +511,7 @@ Remove-Item -Recurse -Force .\ui\__pycache__, .\src\__pycache__ -ErrorAction Sil
 ### Issue: Update Not Downloading
 
 **Solution**: Check internet connection and verify GitHub releases:
+
 1. Go to the **Info** tab
 2. Click **"Check Updates"**
 3. Ensure you have internet connectivity
@@ -484,6 +520,7 @@ Remove-Item -Recurse -Force .\ui\__pycache__, .\src\__pycache__ -ErrorAction Sil
 ### Issue: RamDrive Not Detected
 
 **Solution**: Ensure RamDrive is properly installed and mounted:
+
 1. Go to the **Info** tab
 2. Check **RamDrive** section for drive letter and status
 3. Verify drive is mounted in Windows Disk Management
@@ -492,6 +529,7 @@ Remove-Item -Recurse -Force .\ui\__pycache__, .\src\__pycache__ -ErrorAction Sil
 ### Getting Help
 
 For additional support:
+
 - **GitHub Issues**: [Report a bug](https://github.com/u064241/advanced-file-mover/issues)
 - **GitHub Discussions**: [Ask a question](https://github.com/u064241/advanced-file-mover/discussions)
 
@@ -524,6 +562,7 @@ Contributions, issues and feature requests are welcome!
 ### Testing
 
 Before submitting a PR:
+
 ```powershell
 # Run the GUI
 .\run_gui.ps1
@@ -541,7 +580,7 @@ pyinstaller --clean gui_customtkinter.spec
 
 ### Core Dependencies
 
-```
+```text
 customtkinter>=5.0.0        # Modern GUI framework
 psutil>=5.9.0               # System monitoring
 tkinterdnd2>=0.3.0          # Drag and drop support
@@ -549,7 +588,7 @@ tkinterdnd2>=0.3.0          # Drag and drop support
 
 ### Optional Dependencies
 
-```
+```text
 pyinstaller>=6.0            # For building executables
 inno-setup                  # For creating Windows installer (system-wide)
 ```
