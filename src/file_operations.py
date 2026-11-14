@@ -7,6 +7,7 @@ import threading
 import concurrent.futures
 import time
 import tempfile
+import stat
 from pathlib import Path
 from typing import Callable, Optional
 from enum import Enum
@@ -310,12 +311,15 @@ class FileOperationEngine:
             file_count = 0
             files_to_process = []
             total_size = 0
+            scan_error = False
 
             # Applica long path prefix
             lp_source = long_path(source)
             lp_destination = long_path(destination)
 
             def _on_walk_error(err):
+                nonlocal scan_error
+                scan_error = True
                 try:
                     self._log_error(f"Errore accesso directory durante scansione: {getattr(err, 'filename', '')} ({err})")
                 except Exception:
@@ -338,8 +342,12 @@ class FileOperationEngine:
                     file_count += 1
                     try:
                         total_size += os.path.getsize(src_file)
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        scan_error = True
+                        self._log_error(
+                            f"Errore lettura file durante scansione: "
+                            f"{strip_long_path_prefix(src_file)} ({self._format_exc(e)})"
+                        )
 
                     # Update UI (throttled)
                     now = time.time()
@@ -354,6 +362,11 @@ class FileOperationEngine:
             self.current_file = f"Scansione...({int(file_count)} file)"
             self._report_progress()
 
+            if scan_error:
+                self._log_error(
+                    "Scansione incompleta: copia/spostamento annullato per errori di accesso."
+                )
+                return None
             return files_to_process, total_size
         except Exception as e:
             self._log_error(f"Errore preparazione directory: {e}")
@@ -370,6 +383,14 @@ class FileOperationEngine:
             return str(e)
         except Exception:
             return repr(e)
+
+    def _remove_file(self, path: str) -> None:
+        """Rimuove un file anche quando è marcato read-only."""
+        try:
+            os.chmod(path, stat.S_IWRITE | stat.S_IREAD)
+        except Exception:
+            pass
+        os.remove(path)
     
     def _handle_file(self, source: str, destination: str,
                     operation: OperationType) -> bool:
@@ -445,8 +466,9 @@ class FileOperationEngine:
                 self._log_error(f"Errore apertura sorgente: {strip_long_path_prefix(source)} ({self._format_exc(e)})")
                 return False
 
+            temp_destination = f"{destination}.afm-part-{os.getpid()}-{threading.get_ident()}"
             try:
-                dst_fh = open(destination, 'wb')
+                dst_fh = open(temp_destination, 'wb')
             except Exception as e:
                 try:
                     src_fh.close()
@@ -459,7 +481,7 @@ class FileOperationEngine:
                 while True:
                     if self.is_cancelled:
                         try:
-                            os.remove(destination)
+                            self._remove_file(temp_destination)
                         except:
                             pass
                         return False
@@ -472,18 +494,31 @@ class FileOperationEngine:
                     with self._processed_size_lock:
                         self.processed_size += len(chunk)
                     self._report_progress()
+
+            # Pubblica il file solo dopo una copia completa.
+            if os.path.exists(destination):
+                self._remove_file(destination)
+            os.replace(temp_destination, destination)
             
             # Se move, cancellare sorgente
             if operation == OperationType.MOVE:
-                os.remove(source)
+                try:
+                    self._remove_file(source)
+                except Exception as e:
+                    self._log_error(
+                        f"Copia completata ma impossibile rimuovere la sorgente: "
+                        f"{strip_long_path_prefix(source)} ({self._format_exc(e)})"
+                    )
+                    return False
             
             return True
         
         except Exception as e:
             self._log_error(f"Errore copia file: {strip_long_path_prefix(source)} -> {strip_long_path_prefix(destination)} ({self._format_exc(e)})")
-            if os.path.exists(destination):
+            for candidate in (locals().get('temp_destination'), destination):
                 try:
-                    os.remove(destination)
+                    if candidate and os.path.exists(candidate):
+                        self._remove_file(candidate)
                 except:
                     pass
             return False
@@ -607,9 +642,13 @@ class FileOperationEngine:
             # MOVE: rimuovi la struttura directory sorgente (tutti i file sono già stati eliminati)
             if operation == OperationType.MOVE:
                 try:
-                    shutil.rmtree(source, ignore_errors=True)
-                except Exception:
-                    pass
+                    shutil.rmtree(source)
+                except Exception as e:
+                    self._log_error(
+                        f"File trasferiti ma impossibile rimuovere la directory sorgente: "
+                        f"{strip_long_path_prefix(source)} ({self._format_exc(e)})"
+                    )
+                    return False
 
             return True
         except Exception as e:
@@ -675,9 +714,13 @@ class FileOperationEngine:
             # Se move, cancella source
             if operation == OperationType.MOVE:
                 try:
-                    os.remove(source)
-                except:
-                    pass
+                    self._remove_file(source)
+                except Exception as e:
+                    self._log_error(
+                        f"Copia completata ma impossibile rimuovere la sorgente: "
+                        f"{strip_long_path_prefix(source)} ({self._format_exc(e)})"
+                    )
+                    return False
             
             return True
         except Exception as e:
@@ -691,11 +734,12 @@ class FileOperationEngine:
             source = long_path(source)
             destination = long_path(destination)
 
-            with open(source, 'rb') as src, open(destination, 'wb') as dst:
+            temp_destination = f"{destination}.afm-part-{os.getpid()}-{threading.get_ident()}"
+            with open(source, 'rb') as src, open(temp_destination, 'wb') as dst:
                 while True:
                     if self.is_cancelled:
                         try:
-                            os.remove(destination)
+                            self._remove_file(temp_destination)
                         except:
                             pass
                         return False
@@ -709,9 +753,18 @@ class FileOperationEngine:
                         self.processed_size += len(chunk)
                     self._report_progress()
             
+            if os.path.exists(destination):
+                self._remove_file(destination)
+            os.replace(temp_destination, destination)
             return True
         except Exception as e:
             self._log_error(f"Errore copia interna: {strip_long_path_prefix(source)} -> {strip_long_path_prefix(destination)} ({self._format_exc(e)})")
+            for candidate in (locals().get('temp_destination'),):
+                try:
+                    if candidate and os.path.exists(candidate):
+                        self._remove_file(candidate)
+                except Exception:
+                    pass
             return False
     
     def _report_progress(self):
